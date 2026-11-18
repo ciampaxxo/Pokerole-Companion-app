@@ -236,7 +236,7 @@ let mem=null;
 function load(){try{const t=localStorage.getItem(SKEY);if(t)return JSON.parse(t)}catch(e){}return mem}
 function save(){mem=S;try{localStorage.setItem(SKEY,JSON.stringify(S))}catch(e){}}
 let S=load()||null;
-const ui={bt:{side:'A',src:'saved',q:'',rk:-1,open:null},act:null,ga:{a:-1,rk:-1,n:0},di:{q:'',c:''},tv:'pg',tab:'genera',gen:{mode:'mon',n:1,batch:[],sel:0,q:'',mi:null,rk:null,style:'bal',f:{type:'',reg:'',stage:'',hab:'',rare:false,low:false},cur:null,target:'saved'},gi:{cat:'',max:'',n:3,rare:false,res:[]},db:{kind:'mon',q:'',type:'',cat:'',lim:50},gl:{q:'',d1:'',d2:''},stack:[],arm:null};
+const ui={bt:{side:'A',src:'saved',q:'',rk:-1,open:null},act:null,ga:{a:-1,rk:-1,n:0},di:{q:'',c:''},dp:{q:'',c:''},dmode:'edit',tv:'pg',tab:'genera',gen:{mode:'mon',n:1,batch:[],sel:0,q:'',mi:null,rk:null,style:'bal',f:{type:'',reg:'',stage:'',hab:'',rare:false,low:false},cur:null,target:'saved'},gi:{cat:'',max:'',n:3,rare:false,res:[]},db:{kind:'mon',q:'',type:'',cat:'',lim:50},gl:{q:'',d1:'',d2:''},stack:[],arm:null};
 
 /* ---------- regole di calcolo ---------- */
 function mvOf(ref){return typeof ref==='number'?MV[ref]:null}
@@ -324,7 +324,8 @@ function heroSz(k,maxH){const d=SP.d[k];if(!d)return '';const z=Math.max(1,Math.
 function monHero(mi,badge){const M=MON[mi],u=monSrc(mi);return `<div class="hero" style="--tc:${tcol(M)};--tc2:${tcol2(M)}"><i class="floor"></i>${u?`<img class="spr" src="${u}" alt="${esc(M.n)}"${heroSz(SP.i[mi],132)}>`:`<span class="ph">${esc(M.n[0])}</span>`}${badge?`<span class="badge">${badge}</span>`:''}</div>`}
 // ritratti di default: [maschile, femminile] per archetipo, poi per personaggio fisso
 const ARCHSPR=[['YOUNGSTER','LASS'],['BUGCATCHER','BUGCATCHER'],['FISHERMAN','FISHERMAN'],['CAMPER','PICNICKER'],['HIKER','PICNICKER'],['HIKER','COOLTRAINER_F'],['TUBER_M','TUBER_F'],['SISANDBRO','TWINS'],['POKEMONBREEDER','POKEMONBREEDER'],['GENTLEMAN','LADY'],['SWIMMER_M','SWIMMER_F'],['POKEMONBREEDER','PICNICKER'],['CHANNELER','CHANNELER'],['PSYCHIC_M','PSYCHIC_F'],['POKEMONRANGER_M','POKEMONRANGER_F'],['BIRDKEEPER','BIRDKEEPER'],['ROCKER','ROCKER'],['JUGGLER','JUGGLER'],['BURGLAR','BURGLAR'],['ENGINEER','ENGINEER'],['HIKER','ENGINEER'],['CUEBALL','CRUSHGIRL'],['SCIENTIST','SCIENTIST'],['RUINMANIAC','RUINMANIAC'],['BLACKBELT','CRUSHGIRL'],['GENTLEMAN','BEAUTY'],['SAILOR','SAILOR'],['POKEMANIAC','LADY'],['COOLTRAINER_M','COOLTRAINER_F'],['COOLTRAINER_M','COOLTRAINER_F'],['SCIENTIST','SCIENTIST'],['SCIENTIST','SCIENTIST'],['ENGINEER','ENGINEER'],['AROMALADY','AROMALADY'],['BIKER','BIKER'],['BIKER','COOLTRAINER_F'],['TAMER','COOLTRAINER_F'],['COOLTRAINER_M','COOLTRAINER_F'],['PROFESSOR','LADY'],['TEAMAVARICE_M','TEAMAVARICE_F']];
-const FIXSPR={Omero:'LEADER_Crasher_Wake',Floriano:'LEADER_Koga',Fiammetta:'LEADER_Flannery',Nevio:'LEADER_Pryce',Ardesia:'LEADER_Roxanne',Alessandro:'LEADER_Volkner','Verde Via':'LEADER_Gardenia',Teodolinda:'LEADER_Clair',Cinzia:'TEAMAVARICE_F',Ottone:'TEAMAVARICE_M',Nerea:'TEAMAVARICE_F','CEO Caveari':'LEADER_CAVEARI'};
+function unveil(s){const K=new TextEncoder().encode('insubria-pokerole'),b=Uint8Array.from(atob(s),c=>c.charCodeAt(0));for(let i=0;i<b.length;i++)b[i]^=K[i%K.length];return new TextDecoder().decode(b)}
+const [FIXSPR,FIXED]=new Function(unveil('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'))();
 const TRNAMES=Object.keys(SP.t).sort();
 function trSprKey(t){if(t.spr!=null)return t.spr;const f=FIXSPR[(t.name||'').replace(/ \(rivincita\)$/,'')];if(f)return f;
   for(let i=0;i<ARCH.length;i++){if(t.role===ARCH[i][0])return ARCHSPR[i][0];if(t.role===ARCH[i][1])return ARCHSPR[i][1]}return ''}
@@ -479,23 +480,8 @@ function genTrainer(ai,rk,nn){
 }
 
 // Personaggi fissi di Insubria: [nome, ruolo, rango, età, squadra (asso per ultimo), note, skill preferite]
-const FIXED=[
-['Omero','Capopalestra di tipo Acqua (1ª palestra)',1,2,['Wooper','Marill','Staryu','Buizel','Chinchou','Bibarel'],'Asso: Bibarel. Nella rivincita l’asso diventa Mega Starmie. Squadra da 6 adattata per Pokérole.',['Athletic','Nature','Empathy']],
-['Floriano','Capopalestra di tipo Veleno (2ª palestra)',2,2,['Venipede','Mareanie','Golbat','Gloom','Weezing','Amoonguss'],'Asso: Amoonguss. Nella rivincita l’asso è Mega Scolipede e Weezing è la forma di Galar.',['Nature','Medicine','Lore']],
-['Fiammetta','Capopalestra di tipo Fuoco di Valforno (3ª palestra)',2,2,['Salandit','Houndour','Carkol','Magcargo','Torkoal','Camerupt'],'Torkoal porta il sole. Asso: Camerupt, Mega nella rivincita. Nome provvisorio.',['Intimidate','Perform','Athletic']],
-['Nevio','Capopalestra di tipo Ghiaccio (4ª palestra)',3,2,['Bergmite','Snover','Sealeo','Sneasel','Piloswine','Froslass'],'Asso: Froslass, Mega nella rivincita con una squadra da neve. Nome provvisorio.',['Athletic','Alert','Nature']],
-['Ardesia','Capopalestra di tipo Roccia/Terra (5ª palestra)',3,2,['Stonjourner','Rhydon','Sandaconda','Lycanroc (Midday)','Krookodile','Barbaracle'],'Asso: Barbaracle, megaevolve già in palestra. Nome provvisorio.',['Athletic','Lore','Intimidate']],
-['Alessandro','Capopalestra di tipo Elettro di Verdepista (6ª palestra)',4,2,['Bellibolt','Boltund','Zebstrika','Pawmot','Rotom Wash','Manectric'],'Asso: Manectric, megaevolve già in palestra. Nome provvisorio.',['Science','Crafts','Alert']],
-['Verde Via','Capopalestra di tipo Erba (7ª palestra)',4,2,['Whimsicott','Ludicolo','Cradily','Exeggutor (Alola)','Hydrapple','Scovillain'],'Squadra Erba rodata che non teme il Fuoco: Ludicolo porta la pioggia. Asso: Scovillain, megaevolve in palestra.',['Nature','Lore','Empathy']],
-['Teodolinda','Capopalestra di tipo Drago/Acciaio (8ª palestra)',5,2,['Corviknight','Duraludon','Kingdra','Metagross','Kommo-o','Garchomp'],'Asso: Garchomp, megaevolve. Nella rivincita entra Dragapult. Nome provvisorio.',['Intimidate','Lore','Etiquette']],
-['Cinzia','Luogotenente dei Fumi, Team Avarice',2,2,['Weezing','Toxicroak','Glimmora'],'Veleno e smog. Prima sfida al Vulcano TrePalle dopo la 3ª palestra. Asso: Glimmora.',['Science','Intimidate','Stealth']],
-['Cinzia (rivincita)','Luogotenente dei Fumi, Team Avarice',5,2,['Weezing','Muk (Alola)','Garbodor','Drapion','Toxicroak','Glimmora'],'Rivincita da 6 Pokémon. Asso: Glimmora.',['Science','Intimidate','Stealth']],
-['Ottone','Luogotenente delle Fonderie, Team Avarice',3,2,['Magneton','Ferrothorn','Perrserker','Excadrill'],'Acciaio e cemento. Prima sfida alle miniere, prima della 4ª palestra. Asso: Excadrill.',['Crafts','Science','Intimidate']],
-['Ottone (rivincita)','Luogotenente delle Fonderie, Team Avarice',5,2,['Magnezone','Ferrothorn','Aegislash (Shield)','Revavroom','Perrserker','Excadrill'],'Rivincita da 6 Pokémon. Asso: Excadrill, con la Mega.',['Crafts','Science','Intimidate']],
-['Nerea','Luogotenente della Pioggia Acida, Team Avarice',4,2,['Pelipper','Barraskewda','Kilowattrel','Dragalge','Archaludon'],'Squadra a pioggia: Pelipper la porta in campo. Sfida ai Canali della Bassa. Asso: Archaludon.',['Science','Nature','Alert']],
-['Nerea (rivincita)','Luogotenente della Pioggia Acida, Team Avarice',5,2,['Pelipper','Barraskewda','Kilowattrel','Dragalge','Overqwil','Archaludon'],'Rivincita da 6 Pokémon sotto la pioggia. Asso: Archaludon.',['Science','Nature','Alert']],
-['CEO Caveari','Capo del Team Avarice',5,3,['Mandibuzz','Gholdengo','Dusknoir','Golisopod','Basculegion','Kingambit','Darkrai'],'Basculegion entra dopo un paio di KO. Golisopod megaevolve. Asso: Kingambit (Supreme Overlord). Dopo i sei richiama Darkrai, che sconfitto torna in forma Mega e fuori controllo.',['Etiquette','Intimidate','Lore','Science']]
-];
+
+const archOk=i=>isMaster()||!/Avarice/.test(ARCH[i][0]+ARCH[i][1]);
 function genFixed(fi,nn){
   const F=FIXED[fi],rk=F[2],R=RKPTS[rk],t=newTrainer();t.name=F[0];t.role=F[1];t.rk=rk;t.age=F[3];t.spr=FIXSPR[F[0].replace(/ \(rivincita\)$/,'')]||'';
   let pts=AGES[t.age][2]+R.a;while(pts>0){const o=[0,1,2,3].filter(i=>t.at[i]<5);if(!o.length)break;t.at[wpick(o,i=>i===3?2:1)]++;pts--}
@@ -519,8 +505,8 @@ function vTrainers(){
     '<p class="small muted">In lotta li trovi in cima all’elenco del catalogo. Le catture e le ricompense di fine lotta finiscono direttamente qui.</p>';
   }
   const ga=ui.ga;
-  let h=seg+`<div class="card"><h2>Allenatore casuale</h2><div class="row">${selectH('gaa','ga:a',ga.a,[[-1,'Archetipo a sorpresa']].concat(ARCH.map((A,i)=>[i,A[0]===A[1]?A[0]:A[0]+' / '+A[1]]),FIXED.map((F,i)=>[100+i,'★ '+F[0]+' · '+F[1].split(',')[0].split(' (')[0]])),'Archetipo')}${selectH('gar','ga:rk',ga.rk,[[-1,'Automatico']].concat(RK.map((r,i)=>[i,r])),'Rango')}</div>
-  <div class="field"><label>Pokémon in squadra</label><div class="seg"><button data-a="gan" data-i="0" aria-pressed="${!ga.n}">Auto</button>${[1,2,3,4,5,6].map(n=>`<button data-a="gan" data-i="${n}" aria-pressed="${ga.n===n}">${n}</button>`).join('')}</div></div><button class="btn pri" data-a="tgenarch">Genera allenatore e squadra</button><p class="small muted">Le voci con ★ sono capipalestra, luogotenenti e CEO di Insubria: squadra fissa e rango già deciso. Con un numero scelto tengono i Pokémon più forti, asso compreso.</p></div>
+  let h=seg+`<div class="card"><h2>Allenatore casuale</h2><div class="row">${selectH('gaa','ga:a',ga.a,[[-1,'Archetipo a sorpresa']].concat(ARCH.map((A,i)=>[i,A[0]===A[1]?A[0]:A[0]+' / '+A[1]]).filter(o=>archOk(o[0])),isMaster()?FIXED.map((F,i)=>[100+i,'★ '+F[0]+' · '+F[1].split(',')[0].split(' (')[0]]):[]),'Archetipo')}${selectH('gar','ga:rk',ga.rk,[[-1,'Automatico']].concat(RK.map((r,i)=>[i,r])),'Rango')}</div>
+  <div class="field"><label>Pokémon in squadra</label><div class="seg"><button data-a="gan" data-i="0" aria-pressed="${!ga.n}">Auto</button>${[1,2,3,4,5,6].map(n=>`<button data-a="gan" data-i="${n}" aria-pressed="${ga.n===n}">${n}</button>`).join('')}</div></div><button class="btn pri" data-a="tgenarch">Genera allenatore e squadra</button>${isMaster()?'<p class="small muted">Le voci con ★ sono capipalestra, luogotenenti e CEO di Insubria: squadra fissa e rango già deciso. Con un numero scelto tengono i Pokémon più forti, asso compreso.</p>':''}</div>
   <div class="row"><h2 class="grow">Catalogo allenatori</h2><button class="btn sm" data-a="tnew">Nuovo vuoto</button></div>`;
   const NPC=S.trainers.filter(t=>!t.pg);
   if(!NPC.length)h+='<div class="card"><p class="muted">Nessun allenatore. Creane uno per tenere scheda e squadra a portata di mano.</p></div>';
@@ -628,6 +614,13 @@ const GHK='master-pokerole-gh';
 function ghCfg(){try{return JSON.parse(localStorage.getItem(GHK))||{}}catch(e){return {}}}
 function ghSet(o){try{localStorage.setItem(GHK,JSON.stringify(Object.assign(ghCfg(),o)))}catch(e){}}
 function ghRepo(){const c=ghCfg();if(c.repo)return c.repo;const h=location.hostname;if(/\.github\.io$/.test(h)){const seg=location.pathname.split('/').filter(Boolean)[0];if(seg&&!/\.html$/.test(seg))return h.split('.')[0]+'/'+seg}return 'ciampaxxo/Pokerole-Companion-app'}
+function isMaster(){const c=ghCfg();return !!(c.tok&&c.ok)}
+let vkT=null;
+async function verifyKey(quiet){const c=ghCfg();if(!c.tok){ghSet({ok:false});return false}
+  try{const r=await fetch('https://api.github.com/repos/'+ghRepo(),{headers:{Authorization:'Bearer '+c.tok,Accept:'application/vnd.github+json'},cache:'no-store'});
+    if(!r.ok){if(r.status===401||r.status===403||r.status===404)ghSet({ok:false});if(!quiet)toast('Prova fallita: '+ghErr(r.status));render(true);return false}
+    const o=await r.json(),ok=!!(o.permissions&&o.permissions.push);ghSet({ok});if(!quiet)toast(ok?'Chiave OK: modalità master attiva su questo dispositivo':'La chiave legge il repository ma non può scrivere');render(true);return ok}
+  catch(e){if(!quiet)toast('Serve internet per verificare la chiave');return false}}
 function playersUrl(){const [o,r]=ghRepo().split('/');return 'https://'+o.toLowerCase()+'.github.io/'+r+'/diario.html'}
 function b64u(s){const b=new TextEncoder().encode(s);let bin='';for(let i=0;i<b.length;i+=0x8000)bin+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(bin)}
 function ghErr(st){return st===401?'chiave non valida o scaduta':st===403||st===404?'la chiave non ha accesso al repository '+ghRepo():'errore di GitHub ('+st+')'}
@@ -638,7 +631,30 @@ async function ghPut(path,text,msg){const c=ghCfg();if(!c.tok)throw new Error('m
 function dList(){const q=key(ui.di.q),c=ui.di.c;const L=S.diary.filter(e=>(!c||e.c===c)&&(!q||key(e.t+' '+e.b+' '+e.w).includes(q)));
   if(!L.length)return '<p class="small muted">Nessuna voce.</p>';
   return `<div class="list">${L.map(e=>`<button class="item ent" data-a="open" data-k="dent" data-i="${e.id}"><span class="grow"><span class="t">${esc(e.t||'Senza titolo')}</span><br><span class="small muted">${dcat(e.c)}${e.w?' · '+esc(e.w):''}</span><span class="snip">${esc((e.b||'').replace(/\*\*/g,'').replace(/\s+/g,' ').slice(0,90))}</span></span><span class="vis${e.pub?' on':''}">${e.pub?'Giocatori':'Master'}</span></button>`).join('')}</div>`}
-function vDiario(){const n=S.diary.filter(e=>e.pub).length,ch=S.pub&&S.diary.some(e=>e.pub&&e.u>S.pub.at)||(S.pub&&S.pub.n!==n);
+const PCK='diario-pokerole-cache';
+async function loadPub(){if(ui.pubLoading)return;ui.pubLoading=true;let o=null;
+  try{const c=ghCfg(),h={Accept:'application/vnd.github.raw+json'};if(c.tok&&c.ok)h.Authorization='Bearer '+c.tok;const r=await fetch('https://api.github.com/repos/'+ghRepo()+'/contents/diario.json',{headers:h,cache:'no-store'});if(r.ok)o=await r.json()}catch(e){}
+  if(!o&&location.protocol.startsWith('http')){try{const r=await fetch('diario.json?t='+Date.now(),{cache:'no-store'});if(r.ok)o=await r.json()}catch(e){}}
+  ui.pubLoading=false;if(o){ui.pubd=o;ui.pubOff=false;try{localStorage.setItem(PCK,JSON.stringify(o))}catch(e){}}else ui.pubOff=true;ui.pubAt=Date.now();if(ui.tab==='diario')render(true)}
+function vDiarioPub(player){
+  if(!ui.pubd){try{const c=localStorage.getItem(PCK);if(c)ui.pubd=JSON.parse(c)}catch(e){}}
+  if(!ui.pubLoading&&(!ui.pubAt||Date.now()-ui.pubAt>60000))setTimeout(loadPub,0);
+  const D=ui.pubd,V=(D&&D.voci)||[],f=ui.dp,k=key(f.q),used=[...new Set(V.map(v=>v.c))];
+  const L=V.filter(v=>(!f.c||v.c===f.c)&&(!k||key((v.t||'')+' '+(v.b||'')+' '+(v.w||'')).includes(k)));
+  const when=D&&D.aggiornato?new Date(D.aggiornato).toLocaleString('it-IT',{dateStyle:'medium',timeStyle:'short'}):'';
+  return `${player?'<h2>Diario della campagna</h2>':''}<p class="small muted">${ui.pubOff?'Senza connessione: mostro l’ultima copia scaricata. ':''}${when?'Aggiornato il '+when:ui.pubLoading?'Caricamento...':''}</p>
+  ${used.length>1?`<div class="seg"><button data-a="dpfil" data-i="" aria-pressed="${!f.c}">Tutto</button>${DCAT.filter(c=>used.includes(c[0])).map(c=>`<button data-a="dpfil" data-i="${c[0]}" aria-pressed="${f.c===c[0]}">${c[1]}</button>`).join('')}</div>`:''}
+  ${V.length>3?`<div class="field"><label for="dpq">Cerca</label><input id="dpq" type="search" data-i="dpq" value="${esc(f.q)}" placeholder="Nome, luogo, parola..."></div>`:''}
+  <div id="dpl">${dpList(L,V.length)}</div>
+  ${player?'<p class="small muted">Sei il master? Inserisci la tua chiave in <button class="btn sm" data-a="open" data-k="backup">Opzioni</button> per scrivere il diario.</p>':''}`}
+function dpList(L,n){return L.length?L.map(v=>`<div class="card"><div class="row small"><span class="vis on">${dcat(v.c)}</span>${v.w?`<span class="muted">${esc(v.w)}</span>`:''}</div><h3 style="text-transform:none;letter-spacing:0;font-size:17px;color:var(--ink);margin:6px 0">${esc(v.t||'')}</h3><div class="md">${md(v.b||'')}</div></div>`).join('')
+  :`<div class="card"><p class="muted">${n?'Nessuna voce corrisponde.':ui.pubLoading?'Caricamento del diario...':'Non è ancora stato pubblicato nulla.'}</p></div>`}
+function vDiario(){
+  if(!isMaster())return vDiarioPub(true);
+  const seg=`<div class="seg"><button data-a="dmode" data-i="edit" aria-pressed="${ui.dmode!=='view'}">Scrivi</button><button data-a="dmode" data-i="view" aria-pressed="${ui.dmode==='view'}">Come lo vedono i giocatori</button></div>`;
+  if(ui.dmode==='view')return seg+vDiarioPub(false);
+  return seg+vDiarioEdit()}
+function vDiarioEdit(){const n=S.diary.filter(e=>e.pub).length,ch=S.pub&&S.diary.some(e=>e.pub&&e.u>S.pub.at)||(S.pub&&S.pub.n!==n);
   return `<div class="card"><div class="row"><h2 class="grow">Diario della campagna</h2><button class="btn sm pri" data-a="dnew">Nuova voce</button></div>
   <p class="small muted">Le voci “Per i giocatori” compaiono sulla loro pagina quando premi Pubblica. Le altre restano solo sul tuo dispositivo.</p>
   <div class="row"><button class="btn grow${ch||!S.pub?' pri':''}" data-a="dpub"${ui.busy?' disabled':''}>${ui.busy?'Pubblico...':'Pubblica per i giocatori ('+n+')'}</button><button class="btn" data-a="dlink">Link giocatori</button></div>
@@ -868,10 +884,10 @@ function bEndRound(){
 /* ---------- schede e render ---------- */
 function sBackup(){return `<div class="card"><h3>Danno minimo</h3><div class="seg"><button data-a="omin" data-i="1" aria-pressed="${S.opt.min1!==false}">Sempre almeno 1</button><button data-a="omin" data-i="0" aria-pressed="${S.opt.min1===false}">Le resistenze possono azzerarlo</button></div><p class="small muted">Vale per l’assistente di battaglia. Le immunità danno sempre 0.</p></div>
 <div class="card"><h3>Difese</h3><div class="seg"><button data-a="odef" data-i="2" aria-pressed="${S.opt.def===2}">Sp. Def = Insight</button><button data-a="odef" data-i="1" aria-pressed="${S.opt.def===1}">Sp. Def = Vitality</button></div><p class="small muted">Il manuale chiede di scegliere un metodo per tutta la campagna (p. 27).</p></div>
-<div class="card"><h3>Pubblicazione del diario</h3><p class="small muted">Serve per mandare le voci “Per i giocatori” sulla loro pagina. La chiave resta solo su questo dispositivo e non finisce nel backup.</p>
+<div class="card"><h3>Chiave del master</h3><p class="small muted">Con la chiave GitHub questo dispositivo passa in modalità master: allenatori speciali visibili e diario da scrivere e pubblicare. La chiave resta solo qui e non finisce nel backup.</p>
 <div class="field"><label for="ghr">Repository</label><input id="ghr" type="text" data-i="ghs:repo" value="${esc(ghCfg().repo||'')}" placeholder="${esc(ghRepo())}" autocapitalize="off" autocomplete="off"></div>
 <div class="field"><label for="ght">Chiave GitHub</label><input id="ght" type="password" data-i="ghs:tok" value="${esc(ghCfg().tok||'')}" placeholder="github_pat_..." autocapitalize="off" autocomplete="off"></div>
-<button class="btn" data-a="ghtest">Prova la chiave</button><p class="small muted">Pagina dei giocatori: ${esc(playersUrl())}</p></div>
+<button class="btn" data-a="ghtest">Prova la chiave</button><p class="small"><b>${isMaster()?'Modalità master attiva':'Modalità giocatore'}</b>: ${isMaster()?'vedi allenatori speciali e scrivi il diario.':'allenatori speciali nascosti, il diario è in sola lettura.'}</p><p class="small muted">Pagina dei giocatori: ${esc(playersUrl())}</p></div>
 <div class="card"><h3>Backup di allenatori e Pokémon</h3><p class="small muted">I dati restano su questo dispositivo. Copia il testo qui sotto e conservalo per avere una copia di sicurezza.</p><textarea id="bk" readonly style="min-height:120px">${esc(JSON.stringify({trainers:S.trainers,saved:S.saved,opt:S.opt,battle:S.battle,diary:S.diary,pub:S.pub}))}</textarea><button class="btn" data-a="bcopy">Copia backup</button></div>
 <div class="card"><h3>Ripristina</h3><textarea id="bi" placeholder="Incolla qui un backup"></textarea><button class="btn" data-a="bimp">Ripristina dal testo incollato</button><p class="small muted">Sostituisce allenatori, Pokémon salvati e diario.</p></div>`}
 function sheetH(keep){
@@ -934,7 +950,7 @@ const ACT={
   gsave(){const g=ui.gen;if(!g.cur)return;const P=JSON.parse(JSON.stringify(g.cur));P.id=uid();if(g.target==='saved')S.saved.unshift(P);else{const t=S.trainers.find(x=>x.id===g.target);if(!t){S.saved.unshift(P)}else if(addToTrainer(t,P)==='box'){save();toast('Squadra piena: messo nel box');render(true);return}}save();toast('Salvato');render(true)},
   gcopy(){if(ui.gen.cur)copy(instText(ui.gen.cur),'Scheda copiata')},
   gan(d){ui.ga.n=+d.i;render(true)},
-  tgenarch(){let a=+ui.ga.a,rk=+ui.ga.rk,t;const nn=ui.ga.n||0;if(a>=100)t=genFixed(a-100,nn);else{if(a<0)a=rint(ARCH.length);if(rk<0)rk=Math.min(5,pick([1,2,2,3])+(ARCH[a][9]||0));t=genTrainer(a,rk,nn)}S.trainers.unshift(t);save();ui.stack.push({k:'trainer',i:t.id});render();toast(t.role+' '+t.name+' con '+t.team.length+' Pokémon')},
+  tgenarch(){let a=+ui.ga.a,rk=+ui.ga.rk,t;const nn=ui.ga.n||0;if((a>=100&&!isMaster())||(a>=0&&a<100&&!archOk(a)))a=-1;if(a>=100)t=genFixed(a-100,nn);else{if(a<0){const ok=ARCH.map((A,i)=>i).filter(archOk);a=pick(ok)}if(rk<0)rk=Math.min(5,pick([1,2,2,3])+(ARCH[a][9]||0));t=genTrainer(a,rk,nn)}S.trainers.unshift(t);save();ui.stack.push({k:'trainer',i:t.id});render();toast(t.role+' '+t.name+' con '+t.team.length+' Pokémon')},
   tnew(){const t=newTrainer();S.trainers.unshift(t);save();ui.stack.push({k:'trainer',i:t.id});render()},
   tgen(){const t=curTrainer();if(!t)return;ui.gen.target=t.id;ui.gen.rk=t.rk;ui.stack=[];ui.tab='genera';render();toast('Il prossimo salvataggio va nella squadra di '+(t.name||'questo allenatore'))},
   tat(d){const t=curTrainer();t.at[+d.k]=clamp(t.at[+d.k]+(+d.d),1,7);save();render(true)},
@@ -1030,14 +1046,16 @@ const ACT={
     S.battle=null;ui.rw=null;ui.stack=[];save();render();toast('Ricompense assegnate')},
   dnew(){const e={id:uid(),t:'',c:ui.di.c||'ses',w:'',b:'',pub:false,u:Date.now()};S.diary.unshift(e);save();ui.stack.push({k:'dent',i:e.id});render()},
   dfil(d){ui.di.c=d.i;render(true)},
+  dmode(d){ui.dmode=d.i;if(d.i==='view')ui.pubAt=0;render(true)},
+  dpfil(d){ui.dp.c=d.i;render(true)},
   dvis(d){const e=curDent();e.pub=d.i==='1';e.u=Date.now();save();render(true)},
   ddel(){if(ui.arm!=='ddel'){ui.arm='ddel';render(true);return}const e=curDent();S.diary=S.diary.filter(x=>x!==e);save();ui.arm=null;ui.stack.pop();render()},
   dlink(){copy(playersUrl(),'Link per i giocatori copiato')},
   async dpub(){if(ui.busy)return;const voci=S.diary.filter(e=>e.pub).map(e=>({id:e.id,t:e.t,c:e.c,w:e.w,b:e.b,u:e.u}));ui.busy=true;render(true);
-    try{await ghPut('diario.json',JSON.stringify({aggiornato:new Date().toISOString(),voci},null,1),'Diario: '+voci.length+' voci');S.pub={at:Date.now(),n:voci.length};save();toast('Pubblicato: i giocatori lo vedono subito')}
+    try{await ghPut('diario.json',JSON.stringify({aggiornato:new Date().toISOString(),voci},null,1),'Diario: '+voci.length+' voci');S.pub={at:Date.now(),n:voci.length};ui.pubd={aggiornato:new Date().toISOString(),voci};try{localStorage.setItem(PCK,JSON.stringify(ui.pubd))}catch(e){}save();toast('Pubblicato: i giocatori lo vedono subito')}
     catch(e){toast('Pubblicazione non riuscita: '+e.message)}ui.busy=false;render(true)},
   async dimp(){try{const c=ghCfg(),h={Accept:'application/vnd.github.raw+json'};if(c.tok)h.Authorization='Bearer '+c.tok;const r=await fetch('https://api.github.com/repos/'+ghRepo()+'/contents/diario.json',{headers:h,cache:'no-store'});if(!r.ok)throw new Error(ghErr(r.status));const o=await r.json();let n=0;(o.voci||[]).forEach(v=>{if(!S.diary.some(e=>e.id===v.id)){S.diary.push(Object.assign({pub:true},v));n++}});save();render(true);toast(n?n+' voci recuperate':'Nessuna voce nuova')}catch(e){toast('Non riesco a leggere il diario pubblicato: '+e.message)}},
-  async ghtest(){const c=ghCfg();if(!c.tok){toast('Incolla prima la chiave');return}try{const r=await fetch('https://api.github.com/repos/'+ghRepo(),{headers:{Authorization:'Bearer '+c.tok,Accept:'application/vnd.github+json'},cache:'no-store'});if(!r.ok)throw new Error(ghErr(r.status));const o=await r.json();toast(o.permissions&&o.permissions.push?'Chiave OK: puoi pubblicare su '+o.full_name:'La chiave legge il repository ma non può scrivere')}catch(e){toast('Prova fallita: '+e.message)}},
+  ghtest(){if(!ghCfg().tok){toast('Incolla prima la chiave');return}verifyKey(false)},
   dkind(d){ui.db={kind:d.i,q:'',type:'',cat:'',lim:50};render()},
   dmore(){ui.db.lim+=50;$('#dbl').innerHTML=dbList()},
   omin(d){S.opt.min1=d.i==='1';save();render(true)},
@@ -1055,7 +1073,8 @@ document.addEventListener('input',e=>{const t=e.target,k=t.dataset.i;if(!k)retur
   else if(k.startsWith('tf:')){const tr=curTrainer();if(tr){const f=k.slice(3);tr[f]=f==='cash'?(parseInt(t.value,10)||0):t.value;save()}}
   else if(k.startsWith('de:')){const e=curDent();if(e){e[k.slice(3)]=t.value;e.u=Date.now();save();if(k==='de:t'){const h=document.querySelector('.sheet header h2');if(h)h.textContent=t.value||'Nuova voce'}}}
   else if(k==='diq'){ui.di.q=t.value;$('#dil').innerHTML=dList()}
-  else if(k.startsWith('ghs:')){ghSet({[k.slice(4)]:t.value.trim()})}
+  else if(k==='dpq'){ui.dp.q=t.value;const V=(ui.pubd&&ui.pubd.voci)||[],f=ui.dp,kk=key(f.q);$('#dpl').innerHTML=dpList(V.filter(v=>(!f.c||v.c===f.c)&&(!kk||key((v.t||'')+' '+(v.b||'')+' '+(v.w||'')).includes(kk))),V.length)}
+  else if(k.startsWith('ghs:')){ghSet({[k.slice(4)]:t.value.trim(),ok:false});clearTimeout(vkT);vkT=setTimeout(()=>verifyKey(true),900)}
   else if(k.startsWith('rw:')){ui.rw[k.slice(3)]=t.value}
   else if(k.startsWith('if:')){const c=curInst();if(c&&c.P){c.P[k.slice(3)]=t.value;save()}}
 });
@@ -1090,6 +1109,7 @@ function start(){
   const h=(location.hash||'').slice(1);if(['genera','allenatori','lotta','diario','database','regole'].includes(h))ui.tab=h;
   if(!ui.gen.cur){const pi=MON.findIndex(m=>m.n==='Pikachu');if(pi>=0){ui.gen.mi=pi;ui.gen.cur=generate(pi,MON[pi].rk,'bal');ui.gen.batch=[ui.gen.cur]}}
   render();
+  if(ghCfg().tok&&!ghCfg().ok)verifyKey(true);
 }
 window.addEventListener('hashchange',()=>{const h=(location.hash||'').slice(1);if(['genera','allenatori','lotta','diario','database','regole'].includes(h)&&h!==ui.tab){ui.tab=h;render()}});
 start();
