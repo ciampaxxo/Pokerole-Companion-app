@@ -1264,7 +1264,9 @@ async function playMove(fx,nm){const A=FXE.ctr(fx.a),t=fx.mv.t;VIEW.say(`${nm(fx
   if(fx.mv.c==='Support'&&!hit.length){const S2=sup.length?sup.map(x=>x.C):[A];
     for(const T of S2){if(plan==='heal')await FXE.heal(T);else if(plan==='shield')await FXE.shield(T,t);else if(plan==='up')await FXE.stat(T,true);else if(plan==='down'){await FXE.proj(A,T,t,2,30);await FXE.stat(T,false)}
       else if(plan==='powder')await FXE.powder(T,t);else if(plan==='weather')await FXE.weather(t);else{if(T!==A)await FXE.proj(A,T,t,3,50);await FXE.aura(T,t)}}}
-  else{let first=true;for(const x of hit){await doHit(x,first);first=false}
+  else{if(hit.length){if(['quake','wave','boom'].includes(plan)){await doHit(hit[0],true);await Promise.all(hit.slice(1).map(x=>doHit(x,false)))}
+      else if(['phys','slash','bite'].includes(plan)){await FXE.lunge(A,hit[0].C);await Promise.all(hit.map(x=>doHit(x,false)))}
+      else await Promise.all(hit.map((x,k)=>FXE.wait(k*120).then(()=>doHit(x,k===0))))}
     for(const x of eva){if(plan==='phys'||plan==='slash'||plan==='bite')await FXE.lunge(A,x.C);else if(plan==='beam')FXE.beam(A,x.C,t);else FXE.proj(A,{x:x.C.x+90,y:x.C.y-40},t,2,30);await FXE.dodge(x.C);VIEW.say(`${nm(x.id)} schiva l’attacco!`);await FXE.wait(500)}}
   await FXE.wait(380);
   if(fx.crit&&hit.length){VIEW.say('Brutto colpo!');await FXE.wait(700)}
@@ -1300,11 +1302,11 @@ const VIEW={on:false,code:null,g:null,pc:null,sub:null,st:null,ok:false,fb:null,
     let mons='',hud='',tx='';
     if(!s||s.idle){tx=s&&s.setup?'Il master sta preparando la lotta…':(conn||'Nessuna lotta in corso')}
     else{const A=s.f.filter(f=>f.s==='A'),B=s.f.filter(f=>f.s==='B'),cur=s.f.find(f=>f.id===s.cur);
-      const place=(L,near)=>L.map((f,i)=>{const n=L.length,sp=port?(near?92:84):(near?54:50),x=port?(near?4:8)+(i+.5)*(sp/n):near?(n===1?28:6+(i+.5)*(sp/n)):(n===1?70:44+(i+.5)*(sp/n)),y=near?(n>3?93:94):(n>3?57:58),slot=Math.max(70,W*sp/100/n-8);
+      const place=(L,near)=>L.map((f,i)=>{const n=L.length,two=n>3,row=two?(i%2?1:0):0,sp=port?(near?92:84):(near?56:52),x=port?(near?4:8)+(i+.5)*(sp/n):near?(n===1?28:5+(i+.5)*(sp/n)):(n===1?70:44+(i+.5)*(sp/n)),y=(near?94:58)-row*(near?(port?7:9):(port?5:7)),slot=Math.max(70,W*sp/100/n*(two?2:1)-8);
         const key=SP.i[f.m],back=near&&SP.b&&SP.b[key],src=key?W64+(back?SP.b[key]:SP.s[key]):'',dm=SP.d[(back?'b:':'')+key]||[40,40];
-        const z=k0*(near?3.4:2.5)*(n>3?.75:n>2?.9:1),hh=Math.round(dm[1]*z),ww=Math.round(dm[0]*z);
+        const z=k0*(near?3.4:2.5)*(n>4?.7:n>3?.76:n>2?.9:1),hh=Math.round(dm[1]*z),ww=Math.round(dm[0]*z);
         const p=f.H?Math.max(0,f.h/f.H):0,pp=this.hpPrev[f.id]!=null?this.hpPrev[f.id]:p,col=v=>v>.5?'#3fbf6a':v>.2?'#f0b429':'#e5484d';this.hpPrev[f.id]=p;
-        return `<div class="mon ${f.s}${f.id===s.cur?' cur':''}${f.h<=0?' ko':''}" data-id="${f.id}" style="left:${x}%;top:${y}%"><i class="pf" style="width:${Math.max(ww*1.5,70*k0*2)}px"></i>
+        return `<div class="mon ${f.s}${f.id===s.cur?' cur':''}${f.h<=0?' ko':''}" data-id="${f.id}" style="left:${x}%;top:${y}%;z-index:${row?1:2}"><i class="pf" style="width:${Math.max(ww*1.5,70*k0*2)}px"></i>
           <div class="plate" style="max-width:${Math.min(slot,320)}px;min-width:${Math.min(slot,port?96:150)}px"><b>${esc(f.n)}</b>${f.o?`<small>${esc(f.o)}</small>`:''}<div class="hpb"><i data-p="${p}" style="width:${100*pp}%;background:${col(pp)}"></i></div>${f.x?`<em>PS ${f.h}/${f.H}</em>`:''}${f.st.length?`<div class="sts">${f.st.map(x=>`<span>${esc(x)}</span>`).join('')}</div>`:''}</div>
           ${src?`<img class="spr${near?' back':''}" src="${src}" alt="" style="height:${hh}px;width:${ww}px">`:''}</div>`}).join('');
       mons=place(B,false)+place(A,true);
