@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Diario della campagna</title>
+<link rel="manifest" href="diario.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<meta name="theme-color" content="#18212b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Diario Pokérole">
+<style>
+:root{--bg:#eef1f4;--surface:#fff;--sunk:#f3f5f7;--ink:#18212b;--muted:#5d6a77;--line:#d9dfe5;--accent:#c4283c;
+  --display:ui-rounded,"SF Pro Rounded","Segoe UI",system-ui,sans-serif;--body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+@media (prefers-color-scheme:dark){:root{--bg:#11171d;--surface:#1a222b;--sunk:#141b22;--ink:#e7ecf1;--muted:#97a4b1;--line:#2b3641;--accent:#ff5a6e}}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg) radial-gradient(color-mix(in srgb,var(--ink) 7%,transparent) 1px,transparent 1.4px) 0 0/18px 18px;color:var(--ink);font:16px/1.5 var(--body);-webkit-text-size-adjust:100%}
+header{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;padding:calc(12px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 12px calc(16px + env(safe-area-inset-left));
+  background:linear-gradient(180deg,var(--surface),color-mix(in srgb,var(--surface) 92%,var(--accent)));border-bottom:3px solid var(--accent)}
+.ball{width:28px;height:28px;flex:none;border-radius:50%;border:2.5px solid var(--ink);background:linear-gradient(var(--accent) 0 44%,var(--ink) 44% 56%,#fff 56%);position:relative}
+.ball::after{content:"";position:absolute;inset:50% auto auto 50%;width:8px;height:8px;margin:-6.5px 0 0 -6.5px;border-radius:50%;background:#fff;border:2.5px solid var(--ink)}
+h1{margin:0;font:800 19px/1.1 var(--display);letter-spacing:.02em;text-transform:uppercase}
+h1+small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+main{max-width:720px;margin:0 auto;padding:14px 16px calc(32px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 12px;font:600 13px/1 var(--display)}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+input{width:100%;font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:0 1px 2px rgba(0,0,0,.05),0 4px 14px -8px rgba(0,0,0,.18)}
+.card h2{margin:4px 0 8px;font:700 18px/1.25 var(--display)}
+.meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.tag{font:700 11px/1 var(--display);text-transform:uppercase;letter-spacing:.05em;padding:4px 8px;border-radius:999px;background:color-mix(in srgb,var(--accent) 14%,var(--surface));color:var(--accent)}
+.md p{margin:0 0 8px}.md ul{margin:0 0 8px;padding-left:20px}.md :last-child{margin-bottom:0}
+.muted{color:var(--muted)}.small{font-size:13px}
+.empty{text-align:center;padding:30px 10px}
+</style>
+</head>
+<body>
+<header><span class="ball" aria-hidden="true"></span><div><h1>Diario della campagna</h1><small id="st">Caricamento...</small></div></header>
+<main>
+  <div class="seg" id="cats"></div>
+  <input id="q" type="search" placeholder="Cerca nel diario" aria-label="Cerca nel diario">
+  <div id="list" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+<script>
+const REPO="ciampaxxo/Pokerole-Companion-app";
+const CAT={ses:'Sessione',png:'Personaggi',luo:'Luoghi',mis:'Missioni',med:'Medaglie',not:'Note'};
+const CK='diario-pokerole-cache';
+let data=null,cat='',q='';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const key=s=>String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+function md(s){const L=esc(s).split(/\n/);let h='',ul=false;L.forEach(l=>{const b=l.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');if(/^\s*[-•]\s+/.test(l)){if(!ul){h+='<ul>';ul=true}h+='<li>'+b.replace(/^\s*[-•]\s+/,'')+'</li>'}else{if(ul){h+='</ul>';ul=false}if(b.trim())h+='<p>'+b+'</p>'}});if(ul)h+='</ul>';return h}
+function repo(){const h=location.hostname;if(/\.github\.io$/.test(h)){const seg=location.pathname.split('/').filter(Boolean)[0];if(seg&&!/\.html$/.test(seg))return h.split('.')[0]+'/'+seg}return REPO}
+function render(){
+  const V=(data&&data.voci)||[];const used=[...new Set(V.map(v=>v.c))];
+  document.getElementById('cats').innerHTML=used.length>1?`<button data-c="" aria-pressed="${!cat}">Tutto</button>`+Object.keys(CAT).filter(c=>used.includes(c)).map(c=>`<button data-c="${c}" aria-pressed="${cat===c}">${CAT[c]}</button>`).join(''):'';
+  const k=key(q),L=V.filter(v=>(!cat||v.c===cat)&&(!k||key((v.t||'')+' '+(v.b||'')+' '+(v.w||'')).includes(k)));
+  document.getElementById('list').innerHTML=L.length?L.map(v=>`<article class="card"><div class="meta"><span class="tag">${esc(CAT[v.c]||'Note')}</span>${v.w?`<span>${esc(v.w)}</span>`:''}</div><h2>${esc(v.t||'')}</h2><div class="md">${md(v.b||'')}</div></article>`).join('')
+    :`<div class="card empty muted">${V.length?'Nessuna voce corrisponde alla ricerca.':'Il master non ha ancora pubblicato nulla. Torna più tardi!'}</div>`;
+}
+function stamp(off){const st=document.getElementById('st');if(!data){st.textContent=off?'Non riesco a caricare il diario: serve internet la prima volta.':'Caricamento...';return}
+  const d=data.aggiornato?new Date(data.aggiornato).toLocaleString('it-IT',{dateStyle:'medium',timeStyle:'short'}):'';st.textContent=(off?'Senza connessione · ':'')+(d?'Aggiornato il '+d:'')}
+async function load(){
+  try{const c=localStorage.getItem(CK);if(c){data=JSON.parse(c);render();stamp(false)}}catch(e){}
+  let o=null;
+  try{const r=await fetch('https://api.github.com/repos/'+repo()+'/contents/diario.json',{headers:{Accept:'application/vnd.github.raw+json'},cache:'no-store'});if(r.ok)o=await r.json()}catch(e){}
+  if(!o){try{const r=await fetch('diario.json?t='+Date.now(),{cache:'no-store'});if(r.ok)o=await r.json()}catch(e){}}
+  if(o){data=o;try{localStorage.setItem(CK,JSON.stringify(o))}catch(e){}render();stamp(false)}else{render();stamp(true)}
+}
+document.getElementById('cats').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;cat=b.dataset.c;render()});
+document.getElementById('q').addEventListener('input',e=>{q=e.target.value;render()});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')load()});
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+load();
+</script>
+</body>
+</html>

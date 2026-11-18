@@ -49,8 +49,8 @@ header.top{display:flex;align-items:center;gap:10px;padding:10px 16px;background
 .brand b{color:var(--accent)}
 .brand small{display:block;font:500 11px/1.3 var(--body);letter-spacing:.02em;text-transform:none;color:var(--muted);margin-top:3px}
 main{flex:1;overflow-y:auto;padding:14px 16px 24px;display:flex;flex-direction:column;gap:12px}
-nav.tabs{display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface);border-top:1px solid var(--line)}
-nav.tabs button{background:none;border:0;border-top:3px solid transparent;padding:10px 1px 12px;font:600 12px/1.1 var(--display);letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
+nav.tabs{display:grid;grid-template-columns:repeat(6,1fr);background:var(--surface);border-top:1px solid var(--line)}
+nav.tabs button{background:none;border:0;border-top:3px solid transparent;padding:10px 1px 12px;font:600 10.5px/1.1 var(--display);letter-spacing:0;text-transform:uppercase;color:var(--muted)}
 nav.tabs button[aria-current="page"]{color:var(--ink);border-top-color:var(--accent)}
 h2{font:700 15px/1.2 var(--display);letter-spacing:.08em;text-transform:uppercase;margin:0;text-wrap:balance}
 h3{font:700 13px/1.2 var(--display);letter-spacing:.08em;text-transform:uppercase;margin:0;color:var(--muted)}
@@ -66,7 +66,7 @@ p{margin:0}
 .btn.danger{color:var(--warn)}
 .field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:120px}
 .field label{font:600 11px/1 var(--display);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
-input[type=text],input[type=search],input[type=number],select,textarea{width:100%;background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:9px 10px;min-height:40px}
+input[type=text],input[type=search],input[type=number],input[type=password],select,textarea{width:100%;background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:9px 10px;min-height:40px}
 textarea{min-height:76px;resize:vertical}
 .chip{display:inline-flex;align-items:center;border-radius:999px;padding:2px 9px;font:700 11.5px/1.5 var(--display);letter-spacing:.05em;text-transform:uppercase;color:#fff;white-space:nowrap}
 .chip.dark{color:#16202b}
@@ -161,6 +161,17 @@ nav.tabs button[aria-current="page"] svg{color:var(--accent)}
 .team button{border:1px solid var(--line);background:var(--sunk);border-radius:10px;padding:4px;display:flex;flex-direction:column;align-items:center;gap:2px;width:64px;font:600 10.5px/1.1 var(--display);text-transform:uppercase;letter-spacing:.03em}
 .team button .av{width:52px;height:46px;border:0;background:none}
 .team button span{max-width:58px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* giocatori, cattura, diario */
+.money{font:700 15px/1 var(--display);color:var(--ink)}
+.ent .snip{display:block;color:var(--muted);font-size:13px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:62vw}
+.md p{margin:0 0 8px}.md ul{margin:0 0 8px;padding-left:18px}
+.vis{font:600 11px/1 var(--display);text-transform:uppercase;letter-spacing:.04em;padding:3px 7px;border-radius:999px;background:var(--sunk);color:var(--muted);border:1px solid var(--line);white-space:nowrap}
+.vis.on{background:color-mix(in srgb,var(--accent) 14%,var(--surface));color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
+.rwrow{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.rwrow:first-of-type{border-top:0}
+textarea.big{min-height:260px}
+.chk{display:flex;gap:8px;align-items:flex-start;line-height:1.35}.chk input,.rwrow input[type=checkbox]{accent-color:var(--accent);width:18px;height:18px;flex:none;margin:1px 0 0}
+.rwrow label{display:flex;gap:6px;align-items:flex-start}
 /* margini sicuri per notch e barra home (iPhone, Android a tutto schermo) */
 header.top,.sheet header{padding-top:calc(10px + env(safe-area-inset-top));padding-left:calc(12px + env(safe-area-inset-left));padding-right:calc(12px + env(safe-area-inset-right))}
 nav.tabs{padding-bottom:env(safe-area-inset-bottom)}
@@ -181,6 +192,7 @@ nav.tabs{padding-bottom:env(safe-area-inset-bottom)}
     <button data-a="tab" data-t="genera"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M18 6l-2.5 2.5M8.5 15.5L6 18"/></svg>Genera</button>
     <button data-a="tab" data-t="allenatori"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-4 3.6-6 7-6s6.2 2 7 6"/></svg>Allenatori</button>
     <button data-a="tab" data-t="lotta"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19L15 9M14 4l6 6M9 5l10 10M4 15l5 5"/></svg>Lotta</button>
+    <button data-a="tab" data-t="diario"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h10l3 3v15H6z"/><path d="M9 9h7M9 13h7M9 17h4"/></svg>Diario</button>
     <button data-a="tab" data-t="database"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="12" cy="10" r="3.2"/><path d="M8 17h8"/></svg>Database</button>
     <button data-a="tab" data-t="regole"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h9a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h9"/></svg>Regole</button>
   </nav>
@@ -224,7 +236,7 @@ let mem=null;
 function load(){try{const t=localStorage.getItem(SKEY);if(t)return JSON.parse(t)}catch(e){}return mem}
 function save(){mem=S;try{localStorage.setItem(SKEY,JSON.stringify(S))}catch(e){}}
 let S=load()||null;
-const ui={bt:{side:'A',src:'saved',q:'',rk:-1,open:null},act:null,ga:{a:-1,rk:-1,n:0},tab:'genera',gen:{mode:'mon',n:1,batch:[],sel:0,q:'',mi:null,rk:null,style:'bal',f:{type:'',reg:'',stage:'',hab:'',rare:false,low:false},cur:null,target:'saved'},gi:{cat:'',max:'',n:3,rare:false,res:[]},db:{kind:'mon',q:'',type:'',cat:'',lim:50},gl:{q:'',d1:'',d2:''},stack:[],arm:null};
+const ui={bt:{side:'A',src:'saved',q:'',rk:-1,open:null},act:null,ga:{a:-1,rk:-1,n:0},di:{q:'',c:''},tv:'pg',tab:'genera',gen:{mode:'mon',n:1,batch:[],sel:0,q:'',mi:null,rk:null,style:'bal',f:{type:'',reg:'',stage:'',hab:'',rare:false,low:false},cur:null,target:'saved'},gi:{cat:'',max:'',n:3,rare:false,res:[]},db:{kind:'mon',q:'',type:'',cat:'',lim:50},gl:{q:'',d1:'',d2:''},stack:[],arm:null};
 
 /* ---------- regole di calcolo ---------- */
 function mvOf(ref){return typeof ref==='number'?MV[ref]:null}
@@ -361,7 +373,7 @@ function instCard(P,o){
 /* ---------- vista: genera ---------- */
 function monMatches(q,lim){const k=key(q);if(!k)return [];const a=[],b=[];for(let i=0;i<MON.length&&a.length<lim;i++){const n=key(MON[i].n);if(n.startsWith(k))a.push(i);else if(n.includes(k)||(MON[i].num||'').includes(q.trim()))b.push(i)}return a.concat(b).slice(0,lim)}
 function sugH(){const g=ui.gen;if(!g.q)return '';const r=monMatches(g.q,7);return r.length?`<div class="list">${r.map(i=>`<button class="item" data-a="gpick" data-i="${i}">${monAv(i,'sm')}<span class="dexn">${esc(MON[i].num||'—')}</span><span class="t grow">${esc(MON[i].n)}</span>${MON[i].ty.map(tchip).join('')}</button>`).join('')}</div>`:'<p class="small muted">Nessun Pokémon con questo nome.</p>'}
-function targetOpts(){return [['saved','Pokémon salvati (selvatici)']].concat(S.trainers.map(t=>[t.id,'Squadra di '+(t.name||'senza nome')]))}
+function targetOpts(){return [['saved','Pokémon salvati (selvatici)']].concat(pgs().map(t=>[t.id,'Giocatore: '+(t.name||'senza nome')]),S.trainers.filter(t=>!t.pg).map(t=>[t.id,'Squadra di '+(t.name||'senza nome')]))}
 function vGen(){
   const g=ui.gen,f=g.f;const regs=[...new Set(MON.map(m=>m.reg))];
   const modeH=`<div class="seg"><button data-a="gmode" data-i="mon" aria-pressed="${g.mode==='mon'}">Pokémon</button><button data-a="gmode" data-i="item" aria-pressed="${g.mode==='item'}">Oggetti</button></div>`;
@@ -498,19 +510,29 @@ function genFixed(fi,nn){
 function newTrainer(){const sk={};TSK.forEach(k=>sk[k]=0);return {id:uid(),name:'',role:'',age:1,rk:1,at:[1,1,1,1],so:[1,1,1,1,1],sk,notes:'',money:'',dmg:0,team:[]}}
 function tDer(t){return {hp:4+t.at[2]+(t.rk===6?3:0),will:t.at[3]+3+(t.rk===6?3:0),init:t.at[1]+(t.sk.Alert||0)+(t.rk===6?3:0)}}
 function vTrainers(){
+  const tv=ui.tv||'pg';
+  const seg=`<div class="seg"><button data-a="tview" data-i="pg" aria-pressed="${tv==='pg'}">Giocatori (${pgs().length})</button><button data-a="tview" data-i="npc" aria-pressed="${tv==='npc'}">Allenatori PNG (${S.trainers.length-pgs().length})</button></div>`;
+  if(tv==='pg'){const L=pgs();
+    return seg+`<div class="row"><h2 class="grow">Squadre dei giocatori</h2><button class="btn sm pri" data-a="tnewpg">Nuovo personaggio</button></div>`+
+    (L.length?`<div class="list">${L.map(t=>`<button class="item" data-a="open" data-k="trainer" data-i="${t.id}">${trAv(t)}<span class="grow"><span class="t">${esc(t.name||'Senza nome')}</span><br><span class="small muted">${t.player?esc(t.player)+' · ':''}${RK[t.rk]} · <span class="money">${money(t.cash)}</span>${(t.box||[]).length?' · box '+t.box.length:''}</span></span>${strip(t.team)}</button>`).join('')}</div>`
+    :'<div class="card"><p class="muted">Nessun personaggio giocante. Creane uno per ogni giocatore: la squadra, i soldi, lo zaino e lo stato dei Pokémon restano salvati tra una sessione e l’altra.</p></div>')+
+    '<p class="small muted">In lotta li trovi in cima all’elenco del catalogo. Le catture e le ricompense di fine lotta finiscono direttamente qui.</p>';
+  }
   const ga=ui.ga;
-  let h=`<div class="card"><h2>Allenatore casuale</h2><div class="row">${selectH('gaa','ga:a',ga.a,[[-1,'Archetipo a sorpresa']].concat(ARCH.map((A,i)=>[i,A[0]===A[1]?A[0]:A[0]+' / '+A[1]]),FIXED.map((F,i)=>[100+i,'★ '+F[0]+' · '+F[1].split(',')[0].split(' (')[0]])),'Archetipo')}${selectH('gar','ga:rk',ga.rk,[[-1,'Automatico']].concat(RK.map((r,i)=>[i,r])),'Rango')}</div>
+  let h=seg+`<div class="card"><h2>Allenatore casuale</h2><div class="row">${selectH('gaa','ga:a',ga.a,[[-1,'Archetipo a sorpresa']].concat(ARCH.map((A,i)=>[i,A[0]===A[1]?A[0]:A[0]+' / '+A[1]]),FIXED.map((F,i)=>[100+i,'★ '+F[0]+' · '+F[1].split(',')[0].split(' (')[0]])),'Archetipo')}${selectH('gar','ga:rk',ga.rk,[[-1,'Automatico']].concat(RK.map((r,i)=>[i,r])),'Rango')}</div>
   <div class="field"><label>Pokémon in squadra</label><div class="seg"><button data-a="gan" data-i="0" aria-pressed="${!ga.n}">Auto</button>${[1,2,3,4,5,6].map(n=>`<button data-a="gan" data-i="${n}" aria-pressed="${ga.n===n}">${n}</button>`).join('')}</div></div><button class="btn pri" data-a="tgenarch">Genera allenatore e squadra</button><p class="small muted">Le voci con ★ sono capipalestra, luogotenenti e CEO di Insubria: squadra fissa e rango già deciso. Con un numero scelto tengono i Pokémon più forti, asso compreso.</p></div>
   <div class="row"><h2 class="grow">Catalogo allenatori</h2><button class="btn sm" data-a="tnew">Nuovo vuoto</button></div>`;
-  if(!S.trainers.length)h+='<div class="card"><p class="muted">Nessun allenatore. Creane uno per tenere scheda e squadra a portata di mano.</p></div>';
-  else h+=`<div class="list">${S.trainers.map(t=>`<button class="item" data-a="open" data-k="trainer" data-i="${t.id}">${trAv(t)}<span class="grow"><span class="t">${esc(t.name||'Senza nome')}</span><br><span class="small muted"><i class="pip" style="--pc:${RKCOL[t.rk]}"></i> ${esc(t.role||AGES[t.age][1])} · ${RK[t.rk]} · ${t.team.length} Pokémon</span></span>${strip(t.team)}</button>`).join('')}</div>`;
+  const NPC=S.trainers.filter(t=>!t.pg);
+  if(!NPC.length)h+='<div class="card"><p class="muted">Nessun allenatore. Creane uno per tenere scheda e squadra a portata di mano.</p></div>';
+  else h+=`<div class="list">${NPC.map(t=>`<button class="item" data-a="open" data-k="trainer" data-i="${t.id}">${trAv(t)}<span class="grow"><span class="t">${esc(t.name||'Senza nome')}</span><br><span class="small muted"><i class="pip" style="--pc:${RKCOL[t.rk]}"></i> ${esc(t.role||AGES[t.age][1])} · ${RK[t.rk]} · ${t.team.length} Pokémon</span></span>${strip(t.team)}</button>`).join('')}</div>`;
   return h;
 }
 function sTrainer(t){
   const d=tDer(t),R=RKPTS[t.rk],A=AGES[t.age];
   const spentA=t.at.reduce((a,b)=>a+b,0)-4,spentS=t.so.reduce((a,b)=>a+b,0)-5,spentK=Object.values(t.sk).reduce((a,b)=>a+b,0);
   const hpNow=Math.max(0,d.hp-(t.dmg||0));
-  return `<div class="card">${trHero(t)}${t.team.length?`<div class="team">${t.team.map(P=>`<button data-a="open" data-k="inst" data-i="${P.id}" data-o="${t.id}">${monAv(P.m)}<span>${esc(P.nick||MON[P.m].n)}</span></button>`).join('')}</div>`:''}<div class="row"><div class="field"><label for="tn">Nome</label><input id="tn" type="text" data-i="tf:name" value="${esc(t.name)}" placeholder="Es. Capopalestra Livia"></div><div class="field"><label for="tr">Ruolo</label><input id="tr" type="text" data-i="tf:role" value="${esc(t.role)}" placeholder="Rivale, capopalestra, PNG..."></div></div>
+  const pgH=`<div class="seg"><button data-a="tpg" data-i="1" aria-pressed="${!!t.pg}">Personaggio giocante</button><button data-a="tpg" data-i="0" aria-pressed="${!t.pg}">Allenatore PNG</button></div>`;
+  return `${pgH}<div class="card">${trHero(t)}${t.team.length?`<div class="team">${t.team.map(P=>`<button data-a="open" data-k="inst" data-i="${P.id}" data-o="${t.id}">${monAv(P.m)}<span>${esc(P.nick||MON[P.m].n)}</span></button>`).join('')}</div>`:''}<div class="row"><div class="field"><label for="tn">Nome</label><input id="tn" type="text" data-i="tf:name" value="${esc(t.name)}" placeholder="Es. Capopalestra Livia"></div><div class="field"><label for="tr">Ruolo</label><input id="tr" type="text" data-i="tf:role" value="${esc(t.role)}" placeholder="Rivale, capopalestra, PNG..."></div></div>${t.pg?`<div class="row"><div class="field"><label for="tpl">Giocatore</label><input id="tpl" type="text" data-i="tf:player" value="${esc(t.player||'')}" placeholder="Chi lo interpreta"></div><div class="field"><label for="tca">Denaro (₽)</label><input id="tca" type="number" inputmode="numeric" data-i="tf:cash" value="${+t.cash||0}"></div></div>`:''}
   <div class="row">${selectH('ta','tsel:age',t.age,AGES.map((a,i)=>[i,a[1]]),'Età')}${selectH('tk','tsel:rk',t.rk,RK.map((r,i)=>[i,r]),'Rango')}${selectH('tsp','tspr',trSprKey(t),[['','Nessun ritratto']].concat(TRNAMES.map(n=>[n,n.replace(/_/g,' ').toLowerCase()])),'Ritratto')}</div>
   <div class="derived"><div><b>${d.hp}</b><span>HP</span></div><div><b>${d.will}</b><span>Will</span></div><div><b>${d.init}</b><span>Init +1d6</span></div><div><b>${R.t}</b><span>Bersagli max</span></div></div>
   <div class="hp"><b class="num">HP ${hpNow}/${d.hp}</b><div class="bar"><i style="width:${100*hpNow/d.hp}%"></i></div>${stepper('tdmg','',"")}</div></div>
@@ -518,20 +540,119 @@ function sTrainer(t){
   <h3>Social <span class="small">(punti ${spentS}/${A[3]+R.s}, max 5)</span></h3><div class="grid2">${SOC.map((a,i)=>`<div class="srow"><span>${a}</span>${stepper('tso',i,t.so[i])}</div>`).join('')}</div>
   <h3>Skills <span class="small">(punti ${spentK}/${R.k}, limite ${R.l})</span></h3><div class="grid2">${TSK.map(k=>`<div class="srow"><span>${k}</span>${stepper('tsk',k,t.sk[k]||0)}</div>`).join('')}</div></div>
   <div class="card"><div class="row"><h3 class="grow">Squadra (${t.team.length}/6)</h3><button class="btn sm pri" data-a="tgen">Genera per la squadra</button></div>
-  ${t.team.length?`<div class="list">${t.team.map(P=>instItem(P,t.id)).join('')}</div>`:'<p class="small muted">Squadra vuota. Genera un Pokémon e salvalo qui.</p>'}</div>
-  <div class="card"><div class="field"><label for="tm">Denaro e oggetti</label><input id="tm" type="text" data-i="tf:money" value="${esc(t.money)}"></div><div class="field"><label for="tno">Note</label><textarea id="tno" data-i="tf:notes" placeholder="Personalità, obiettivi, tattiche...">${esc(t.notes)}</textarea></div></div>
+  ${t.team.length?`<div class="list">${t.team.map(P=>instItem(P,t.id)).join('')}</div>`:'<p class="small muted">Squadra vuota. Genera un Pokémon e salvalo qui.</p>'}
+  ${t.pg?`<h3>Box (${(t.box||[]).length})</h3>${(t.box||[]).length?`<div class="list">${t.box.map(P=>instItem(P,t.id)).join('')}</div>`:'<p class="small muted">Vuoto. Oltre il sesto Pokémon le catture finiscono qui.</p>'}`:''}</div>
+  <div class="card">${t.pg?`<div class="field"><label for="tinv">Zaino</label><textarea id="tinv" data-i="tf:inv" placeholder="Pokéball, pozioni, oggetti chiave...">${esc(t.inv||'')}</textarea></div>`:`<div class="field"><label for="tm">Denaro e oggetti</label><input id="tm" type="text" data-i="tf:money" value="${esc(t.money)}" placeholder="Es. 3000 ₽, Pozione"></div>`}<div class="field"><label for="tno">Note</label><textarea id="tno" data-i="tf:notes" placeholder="Personalità, obiettivi, tattiche...">${esc(t.notes)}</textarea></div></div>
   <div class="row"><button class="btn grow" data-a="tdup">Duplica</button><button class="btn danger grow" data-a="tdel">${ui.arm==='tdel'?'Tocca ancora per eliminare':'Elimina allenatore'}</button></div>`;
 }
-function findInst(id,owner){const arr=owner==='battle'?((S.battle&&S.battle.wild)||[]):owner==='saved'?S.saved:(S.trainers.find(t=>t.id===owner)||{team:[]}).team;return {arr,P:arr.find(p=>p.id===id)}}
+function findInst(id,owner){
+  if(owner==='battle'||owner==='saved'){const arr=owner==='battle'?((S.battle&&S.battle.wild)||[]):S.saved;return {arr,P:arr.find(p=>p.id===id)}}
+  const t=S.trainers.find(x=>x.id===owner)||{team:[],box:[]};let arr=t.team,P=arr.find(p=>p.id===id);
+  if(!P&&t.box){arr=t.box;P=arr.find(p=>p.id===id)}return {arr,P,t}}
+const PERS=['b1','b2','b3','par','psn','tox','frz','slp'];
+const BALLS=[['poke','Poké Ball',4],['mega','Mega Ball',6],['ultra','Ultra Ball',8],['spec','Ball speciale',9],['master','Master Ball',0]];
+const CATCHREQ=[3,4,6,8,9,10,11,12];
+const pgs=()=>S.trainers.filter(t=>t.pg);
+const isPg=o=>{const t=S.trainers.find(x=>x.id===o);return !!(t&&t.pg)};
+const money=n=>(+n||0).toLocaleString('it-IT')+' ₽';
+function addToTrainer(t,P){if(t.pg&&t.team.length>=6){(t.box=t.box||[]).push(P);return 'box'}t.team.push(P);return 'team'}
+function parseMoney(s){const m=String(s||'').match(/\d[\d.]*/);return m?parseInt(m[0].replace(/\./g,''),10)||0:0}
+function md(s){const L=esc(s).split(/\n/);let h='',ul=false;L.forEach(l=>{const b=l.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');if(/^\s*[-•]\s+/.test(l)){if(!ul){h+='<ul>';ul=true}h+='<li>'+b.replace(/^\s*[-•]\s+/,'')+'</li>'}else{if(ul){h+='</ul>';ul=false}if(b.trim())h+='<p>'+b+'</p>'}});if(ul)h+='</ul>';return h}
 function sInst(top){
   const {P}=findInst(top.i,top.o);if(!P)return '<p class="muted">Pokémon non trovato.</p>';
   return `<div class="card"><div class="row"><div class="field"><label for="ink">Soprannome</label><input id="ink" type="text" data-i="if:nick" value="${esc(P.nick)}" placeholder="${esc(MON[P.m].n)}"></div>${selectH('irk','isel:rk',P.rk,RK.map((r,i)=>[i,r]),'Rango')}</div>
   <div class="row">${selectH('inat','isel:nat',P.nat,NAT.map(n=>[n,n]),'Nature')}${selectH('iab','isel:ab',P.ab,MON[P.m].ab.map(a=>[a,a]),'Ability')}</div></div>
-  ${instCard(P,{track:true,edit:!!top.edit})}
+  ${instCard(P,{track:true,edit:!!top.edit})}${isPg(top.o)?bondH(P,top):''}
   <div class="row"><button class="btn grow" data-a="iedit">${top.edit?'Fine modifica':'Modifica punti e mosse'}</button><button class="btn" data-a="icopy">Copia testo</button><button class="btn" data-a="iheal">Cura</button></div>
   <div class="card"><div class="field"><label for="ino">Note</label><textarea id="ino" data-i="if:notes">${esc(P.notes)}</textarea></div></div>
   <div class="row"><button class="btn grow" data-a="open" data-k="mon" data-i="${P.m}">Scheda specie</button><button class="btn danger grow" data-a="idel">${ui.arm==='idel'?'Tocca ancora per eliminare':'Elimina'}</button></div>`;
 }
+
+function bondH(P,top){const t=S.trainers.find(x=>x.id===top.o),inBox=(t.box||[]).includes(P);
+  return `<div class="card"><h3>Legame e allenamento</h3><div class="grid2"><div class="srow"><span>Amicizia</span>${stepper('ibond','hap',P.hap||0)}</div><div class="srow"><span>Lealtà</span>${stepper('ibond','loy',P.loy||0)}</div><div class="srow"><span>Punti allenamento</span>${stepper('ibond','tp',P.tp||0)}</div></div>
+  <div class="row"><div class="field"><label for="iit">Oggetto tenuto</label><input id="iit" type="text" data-i="if:item" value="${esc(P.item||'')}" placeholder="Nessuno"></div>${selectH('iball','isel:ball',P.ball||'poke',BALLS.map(b=>[b[0],b[1]]),'Ball')}</div>
+  <h3>Stati che restano dopo la lotta</h3><div class="seg">${STATI.filter(x=>PERS.includes(x[0])).map(x=>`<button data-a="ist" data-k="${x[0]}" aria-pressed="${(P.st||[]).includes(x[0])}">${x[1]}</button>`).join('')}</div>
+  <div class="row"><button class="btn grow" data-a="ibox">${inBox?'Porta in squadra':'Sposta nel box'}</button></div><p class="small muted">${inBox?'È nel box di '+esc(t.name||'questo giocatore')+'.':'È in squadra con '+esc(t.name||'questo giocatore')+'.'}</p></div>`}
+/* ---------- cattura ---------- */
+function catchCalc(f){const P=bP(f),d=bDer(f),c=ui.cat,req=CATCHREQ[P.rk],ko=d.hpNow<=0;
+  let hpB=0;if(!ko){if(d.hpNow<=1&&d.hp>1)hpB=2;else if(d.hpNow<=Math.floor(d.hp/2))hpB=1}
+  const fam=new Set(f.st.filter(k=>PERS.includes(k)).map(k=>/^b/.test(k)?'b':k==='tox'?'psn':k));const stB=ko?0:fam.size;
+  const ball=BALLS.find(b=>b[0]===c.ball)||BALLS[0],dice=ball[0]==='spec'?c.spec:ball[2],tot=c.s+hpB+stB;
+  const out=ball[0]==='master'?'ok':tot>=req?'ok':tot<=req-3?'break':'fail';
+  return {P,d,req,ko,hpB,stB,ball,dice,tot,out}}
+function sCatch(top){const f=bF(top.i);if(!f||!bP(f))return '<p class="muted">Pokémon non più in lotta.</p>';const c=ui.cat,x=catchCalc(f),M=MON[x.P.m],L=pgs();
+  let h=`<div class="card"><div class="row">${monAv(x.P.m)}<div class="grow"><span class="t">${esc(bName(f))}</span><div class="small muted">${RK[x.P.rk]} · HP ${x.d.hpNow}/${x.d.hp}</div></div>${M.ty.map(tchip).join('')}</div>
+  <p>Successi richiesti per il rango: <b class="big">${x.req}</b>${x.P.rk>5?' <span class="small muted">(il manuale arriva fino ad Ace: valore indicativo)</span>':''}</p>
+  ${x.ko?'<p class="note">È esausto: niente successi bonus. Se lo catturi, Amicizia e Lealtà partono da 0.</p>':`<div class="kv"><span>Indebolito <b>+${x.hpB}</b></span><span>Stati alterati <b>+${x.stB}</b></span></div><p class="small muted">+1 a metà HP, +2 a 1 HP, +1 per ogni stato alterato.</p>`}</div>
+  <div class="card"><h3>1 · Lancio</h3><p class="small">L’allenatore usa un’azione e tira <b>Dexterity o Strength + Throw</b>. Il selvatico può provare a schivare o a rompere la Ball.</p>
+  <h3>2 · Sigillo</h3><div class="seg">${BALLS.map(b=>`<button data-a="cball" data-i="${b[0]}" aria-pressed="${c.ball===b[0]}">${b[1]}${b[2]?' · '+(b[0]==='spec'?'fino a 9':b[2])+'d':''}</button>`).join('')}</div>
+  ${c.ball==='spec'?`<div class="srow"><span>Dadi del sigillo</span>${stepper('cspec','',c.spec)}</div>`:''}
+  ${x.ball[0]==='master'?'<p>La Master Ball cattura sempre.</p>':`<p>Tira <b class="big">${x.dice} dadi</b> per il sigillo.</p><div class="srow"><span>Successi del sigillo</span>${stepper('cs','',c.s)}</div>
+  <div class="res"><span>${c.s} + ${x.hpB+x.stB} bonus = <b>${x.tot}</b> su ${x.req}</span><span class="${x.out==='ok'?'ok':'no'}">${x.out==='ok'?'Catturato!':x.out==='break'?'Si libera e la Ball si rompe':'Esce dalla Ball'}</span></div>
+  ${x.out==='fail'?'<p class="small muted">La Ball si può recuperare a fine scena.</p>':''}`}</div>`;
+  if(x.out==='ok'){
+    if(!L.length)h+=`<div class="card"><p class="small">Non ci sono ancora personaggi giocanti: lo salvo tra i Pokémon salvati. Puoi crearli in Allenatori → Giocatori.</p><button class="btn pri" data-a="cdo">Conferma la cattura</button></div>`;
+    else{if(!L.some(t=>t.id===c.to))c.to=L[0].id;
+      h+=`<div class="card"><h3>3 · A chi va</h3><div class="seg">${L.map(t=>`<button data-a="cto" data-i="${t.id}" aria-pressed="${c.to===t.id}">${esc(t.name||'Senza nome')}</button>`).join('')}</div>
+      <p class="small muted">Amicizia ${x.ko?0:2}, Lealtà ${x.ko?0:1}. Se la squadra è piena va nel box.</p><button class="btn pri" data-a="cdo">Conferma la cattura</button></div>`}
+  }else h+=`<div class="row"><button class="btn grow" data-a="cfail">${x.out==='break'?'Registra: Ball distrutta':'Registra il tentativo fallito'}</button></div>`;
+  return h}
+/* ---------- fine lotta e ricompense ---------- */
+function rwData(){const b=B(),r=ui.rw,rows=[];
+  b.f.forEach(f=>{const P=bP(f);if(!P||!isPg(f.o))return;const foes=b.f.filter(x=>x.side!==f.side).map(bP).filter(Boolean);const mx=foes.length?Math.max(...foes.map(Q=>Q.rk)):P.rk;
+    const ro=r.rows[f.id]||(r.rows[f.id]={part:true,ko:bDer(f).hpNow<=0,adj:0});
+    const diff=P.rk>mx?0:P.rk===mx?1:P.rk===mx-1?2:3,res=r.win?(ro.ko?1:2):1,multi=r.multi?2:0;
+    rows.push({f,P,ro,diff,res,multi,tot:ro.part?Math.max(0,diff+res+multi+ro.adj):0})});
+  return rows}
+function rwFoesNpc(){const b=B(),side=b.f.filter(f=>isPg(f.o)).map(f=>f.side)[0]||'A';const ids=[...new Set(b.f.filter(f=>f.side!==side&&f.o!=='battle'&&f.o!=='saved'&&!isPg(f.o)).map(f=>f.o))];return ids.map(id=>S.trainers.find(t=>t.id===id)).filter(Boolean)}
+function sRew(){const b=B();if(!b)return '';const r=ui.rw,rows=rwData(),L=pgs(),inBattle=[...new Set(b.f.filter(f=>isPg(f.o)).map(f=>f.o))];
+  const npc=rwFoesNpc(),sug=npc.reduce((a,t)=>a+Math.floor(parseMoney(t.money)/2),0);
+  let h=`<div class="card"><h3>Esito per i giocatori</h3><div class="seg"><button data-a="rwin" data-i="1" aria-pressed="${r.win}">Vittoria</button><button data-a="rwin" data-i="0" aria-pressed="${!r.win}">Sconfitta</button></div>
+  <label class="chk small"><input type="checkbox" data-c="rw:multi" ${r.multi?'checked':''}> C’erano più avversari in campo insieme (+2 a tutti)</label></div>`;
+  h+=`<div class="card"><h3>Punti allenamento</h3>${rows.length?rows.map(x=>`<div class="rwrow">${monAv(x.P.m,'sm')}<div><span class="t">${esc(bName(x.f))}</span><div class="small muted">rango ${x.diff} · esito ${x.res}${x.multi?' · più avversari 2':''}${x.ro.adj?' · extra '+(x.ro.adj>0?'+':'')+x.ro.adj:''}</div>
+    <div class="row small"><label><input type="checkbox" data-c="rwp:${x.f.id}" ${x.ro.part?'checked':''}> almeno un round intero</label><label><input type="checkbox" data-c="rwk:${x.f.id}" ${x.ro.ko?'checked':''}> esausto o ritirato prima della fine</label></div></div>
+    <div style="text-align:center"><b class="big">${x.tot}</b>${stepper('rwadj',x.f.id,'')}</div></div>`).join(''):'<p class="small muted">Nessun Pokémon dei giocatori in questa lotta.</p>'}
+    <p class="small muted">Rango rispetto all’avversario più forte: superiore 0, pari 1, uno sotto 2, due o più sotto 3. Vittoria 2, sconfitta 1, vittoria da esausto 1.</p></div>`;
+  if(L.length){if(!r.to||(r.to!=='split'&&!L.some(t=>t.id===r.to)))r.to=inBattle.length>1?'split':(inBattle[0]||L[0].id);
+    h+=`<div class="card"><h3>Denaro</h3><p class="small muted">${r.win?'Nelle lotte ufficiali il vincitore riceve la cifra concordata o, senza accordi, metà del denaro dello sconfitto.'+(npc.length?' Suggerito: '+money(sug)+' ('+npc.map(t=>esc(t.name||'PNG')).join(', ')+').':''):'In caso di sconfitta i giocatori pagano la cifra concordata o metà del loro denaro.'}</p>
+    <div class="row"><div class="field"><label for="rwa">${r.win?'Ricevono (₽)':'Pagano (₽)'}</label><input id="rwa" type="number" inputmode="numeric" data-i="rw:amt" value="${r.amt}"></div>${selectH('rwt','rw:to',r.to,(inBattle.length>1?[['split','Diviso tra i giocatori in lotta']]:[]).concat(L.map(t=>[t.id,t.name||'Senza nome'])),'A chi')}</div>
+    ${r.win&&sug&&+r.amt!==sug?`<button class="btn sm" data-a="rwsug">Usa ${money(sug)}</button>`:''}</div>
+    <div class="card"><h3>Oggetti ottenuti</h3><div class="row"><div class="field"><label for="rwi">Oggetti</label><input id="rwi" type="text" data-i="rw:items" value="${esc(r.items)}" placeholder="Es. 2 Pozioni, Pietrafocaia"></div>${selectH('rwit','rw:ito',r.ito||L[0].id,L.map(t=>[t.id,t.name||'Senza nome']),'Nello zaino di')}</div></div>`}
+  h+=`<div class="card"><label class="chk"><input type="checkbox" data-c="rw:diary" ${r.diary?'checked':''}> Annota la lotta nel diario (solo master)</label>${b.wild.length?`<label class="chk"><input type="checkbox" data-c="rw:keep" ${r.keep?'checked':''}> Salva i selvatici rimasti tra i Pokémon salvati</label>`:''}</div>
+  <button class="btn pri" data-a="rwdo">Assegna e chiudi la lotta</button><p class="small muted">HP, Will e stati alterati dei Pokémon dei giocatori restano come sono adesso.</p>`;
+  return h}
+/* ---------- diario ---------- */
+const DCAT=[['ses','Sessione'],['png','Personaggi'],['luo','Luoghi'],['mis','Missioni'],['med','Medaglie'],['not','Note']];
+const dcat=c=>(DCAT.find(x=>x[0]===c)||DCAT[5])[1];
+const GHK='master-pokerole-gh';
+function ghCfg(){try{return JSON.parse(localStorage.getItem(GHK))||{}}catch(e){return {}}}
+function ghSet(o){try{localStorage.setItem(GHK,JSON.stringify(Object.assign(ghCfg(),o)))}catch(e){}}
+function ghRepo(){const c=ghCfg();if(c.repo)return c.repo;const h=location.hostname;if(/\.github\.io$/.test(h)){const seg=location.pathname.split('/').filter(Boolean)[0];if(seg&&!/\.html$/.test(seg))return h.split('.')[0]+'/'+seg}return 'ciampaxxo/Pokerole-Companion-app'}
+function playersUrl(){const [o,r]=ghRepo().split('/');return 'https://'+o.toLowerCase()+'.github.io/'+r+'/diario.html'}
+function b64u(s){const b=new TextEncoder().encode(s);let bin='';for(let i=0;i<b.length;i+=0x8000)bin+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(bin)}
+function ghErr(st){return st===401?'chiave non valida o scaduta':st===403||st===404?'la chiave non ha accesso al repository '+ghRepo():'errore di GitHub ('+st+')'}
+async function ghPut(path,text,msg){const c=ghCfg();if(!c.tok)throw new Error('manca la chiave GitHub (Opzioni → Pubblicazione del diario)');
+  const url='https://api.github.com/repos/'+ghRepo()+'/contents/'+path,h={Authorization:'Bearer '+c.tok,Accept:'application/vnd.github+json'};
+  let sha;const g=await fetch(url,{headers:h,cache:'no-store'});if(g.ok)sha=(await g.json()).sha;else if(g.status!==404)throw new Error(ghErr(g.status));
+  const r=await fetch(url,{method:'PUT',headers:h,body:JSON.stringify({message:msg,content:b64u(text),sha})});if(!r.ok)throw new Error(ghErr(r.status));return r.json()}
+function dList(){const q=key(ui.di.q),c=ui.di.c;const L=S.diary.filter(e=>(!c||e.c===c)&&(!q||key(e.t+' '+e.b+' '+e.w).includes(q)));
+  if(!L.length)return '<p class="small muted">Nessuna voce.</p>';
+  return `<div class="list">${L.map(e=>`<button class="item ent" data-a="open" data-k="dent" data-i="${e.id}"><span class="grow"><span class="t">${esc(e.t||'Senza titolo')}</span><br><span class="small muted">${dcat(e.c)}${e.w?' · '+esc(e.w):''}</span><span class="snip">${esc((e.b||'').replace(/\*\*/g,'').replace(/\s+/g,' ').slice(0,90))}</span></span><span class="vis${e.pub?' on':''}">${e.pub?'Giocatori':'Master'}</span></button>`).join('')}</div>`}
+function vDiario(){const n=S.diary.filter(e=>e.pub).length,ch=S.pub&&S.diary.some(e=>e.pub&&e.u>S.pub.at)||(S.pub&&S.pub.n!==n);
+  return `<div class="card"><div class="row"><h2 class="grow">Diario della campagna</h2><button class="btn sm pri" data-a="dnew">Nuova voce</button></div>
+  <p class="small muted">Le voci “Per i giocatori” compaiono sulla loro pagina quando premi Pubblica. Le altre restano solo sul tuo dispositivo.</p>
+  <div class="row"><button class="btn grow${ch||!S.pub?' pri':''}" data-a="dpub"${ui.busy?' disabled':''}>${ui.busy?'Pubblico...':'Pubblica per i giocatori ('+n+')'}</button><button class="btn" data-a="dlink">Link giocatori</button></div>
+  ${S.pub?`<p class="small muted">Ultima pubblicazione: ${new Date(S.pub.at).toLocaleString('it-IT',{dateStyle:'short',timeStyle:'short'})}${ch?' · ci sono modifiche da pubblicare':''}</p>`:''}${ghCfg().tok?'':'<p class="note">Per pubblicare serve la chiave GitHub: <button class="btn sm" data-a="open" data-k="backup">Opzioni</button></p>'}</div>
+  <div class="seg"><button data-a="dfil" data-i="" aria-pressed="${!ui.di.c}">Tutte</button>${DCAT.map(c=>`<button data-a="dfil" data-i="${c[0]}" aria-pressed="${ui.di.c===c[0]}">${c[1]}</button>`).join('')}</div>
+  <div class="field"><label for="diq">Cerca</label><input id="diq" type="search" data-i="diq" value="${esc(ui.di.q)}" placeholder="Nome, luogo, parola..."></div>
+  <div id="dil">${dList()}</div><button class="btn sm" data-a="dimp">Recupera le voci già pubblicate</button>`}
+function curDent(){const t=ui.stack[ui.stack.length-1];return t&&t.k==='dent'?S.diary.find(e=>e.id===t.i):null}
+function sDent(e){return `<div class="card"><div class="field"><label for="det">Titolo</label><input id="det" type="text" data-i="de:t" value="${esc(e.t)}" placeholder="Es. Arrivo a Varese"></div>
+  <div class="row">${selectH('dec','de:c',e.c,DCAT,'Categoria')}<div class="field"><label for="dew">Quando</label><input id="dew" type="text" data-i="de:w" value="${esc(e.w||'')}" placeholder="Es. Sessione 4"></div></div>
+  <div class="seg"><button data-a="dvis" data-i="0" aria-pressed="${!e.pub}">Solo master</button><button data-a="dvis" data-i="1" aria-pressed="${!!e.pub}">Per i giocatori</button></div>
+  <div class="field"><label for="deb">Testo</label><textarea id="deb" class="big" data-i="de:b" placeholder="Cosa è successo, chi hanno incontrato, cosa sanno...">${esc(e.b||'')}</textarea></div>
+  <p class="small muted">Puoi usare **grassetto** e righe che iniziano con - per gli elenchi.${e.pub&&S.pub&&e.u>S.pub.at?' Modificata dopo l’ultima pubblicazione: ricordati di pubblicare.':''}</p></div>
+  <button class="btn danger" data-a="ddel">${ui.arm==='ddel'?'Tocca ancora per eliminare':'Elimina voce'}</button>`}
 
 /* ---------- vista: database ---------- */
 function dbList(){
@@ -622,13 +743,13 @@ function bF(id){return B().f.find(x=>x.id===id)}
 function bP(f){return findInst(f.i,f.o).P}
 function bOwner(f){if(f.o==='battle')return 'selvatico';if(f.o==='saved')return 'salvato';const t=S.trainers.find(x=>x.id===f.o);return t?(t.name||'allenatore'):''}
 function bName(f){const P=bP(f);if(!P)return '?';const n=P.nick||MON[P.m].n;const same=B().f.filter(x=>{const Q=bP(x);return Q&&(Q.nick||MON[Q.m].n)===n});return same.length>1?n+' '+(same.indexOf(f)+1):n}
-function bAdd(o,i,side){const b=B();if(b.f.some(x=>x.o===o&&x.i===i))return;b.f.push({id:uid(),side,o,i,d6:0,acts:0,used:[],st:[],mod:[0,0,0,0,0,0,0]})}
+function bAdd(o,i,side){const b=B();if(b.f.some(x=>x.o===o&&x.i===i))return;const P=findInst(i,o).P;b.f.push({id:uid(),side,o,i,d6:0,acts:0,used:[],st:((P&&P.st)||[]).slice(),mod:[0,0,0,0,0,0,0]})}
 function bEff(f){const P=bP(f),Q=Object.assign({},P,{at:P.at.map((v,k)=>Math.max(0,v+(f.mod[k]||0)))});if(f.st.includes('par'))Q.at[1]=Math.max(0,Q.at[1]-2);return Q}
 function bDer(f){const Q=bEff(f),M=MON[Q.m],d=derive(Q),P=bP(f),w=B().weather;d.hp=derive(P).hp;d.will=derive(P).will;d.def+=f.mod[5]||0;d.sdef+=f.mod[6]||0;if(w==='snow'&&M.ty.includes('Ice'))d.def++;if(w==='sand'&&M.ty.includes('Rock'))d.sdef++;d.hpNow=Math.max(0,d.hp-(P.dmg||0));d.wNow=Math.max(0,d.will-(P.wsp||0));d.pain=d.hpNow<=0?0:d.hpNow<=1&&d.hp>1?2:d.hpNow<=Math.floor(d.hp/2)?1:0;return d}
 function bLog(t){const b=B();b.log.unshift('R'+b.round+' · '+t);b.log.length=Math.min(b.log.length,40)}
 function bHurt(f,n,why){const P=bP(f),d=bDer(f);P.dmg=clamp((P.dmg||0)+n,0,d.hp);if(n)bLog(bName(f)+(n>0?' subisce '+n+' dann'+(n===1?'o':'i'):' recupera '+(-n)+' HP')+(why?' ('+why+')':'')+(d.hp-P.dmg<=0?' ed è KO':''))}
 function bOrder(){const b=B();return b.f.slice().sort((x,y)=>{const a=bDer(x),c=bDer(y);return (c.init+y.d6)-(a.init+x.d6)||c.init-a.init})}
-function bSources(){return [['saved','Pokémon salvati']].concat(S.trainers.map(t=>[t.id,(t.name||'Senza nome')+' ('+t.team.length+')']))}
+function bSources(){return [['saved','Pokémon salvati']].concat(pgs().map(t=>[t.id,'Giocatore: '+(t.name||'Senza nome')+' ('+t.team.length+')']),S.trainers.filter(t=>!t.pg).map(t=>[t.id,(t.name||'Senza nome')+' ('+t.team.length+')']))}
 function bSug(){const q=ui.bt.q;if(!q)return '';const r=monMatches(q,6);return r.length?`<div class="list">${r.map(i=>`<button class="item" data-a="bwild" data-i="${i}">${monAv(i,'sm')}<span class="dexn">${esc(MON[i].num||'—')}</span><span class="t grow">${esc(MON[i].n)}</span>${rtag(MON[i].rk)}</button>`).join('')}</div>`:'<p class="small muted">Nessun Pokémon con questo nome.</p>'}
 function vBattle(){
   const b=B();if(b){b.f=b.f.filter(f=>bP(f))}
@@ -661,7 +782,7 @@ function bCard(f,cur){
   let h=`<div class="card fc ${f.side}${cur?' cur':''}${ko?' ko':''}"><div class="row">${monAv(bP(f).m)}<div class="grow"><span class="t">${esc(bName(f))}</span> <span class="small muted">${esc(bOwner(f))} · iniz. ${d.init+f.d6}</span></div>${M.ty.map(tchip).join('')}</div>
   <div class="hp"><b class="num">HP ${d.hpNow}/${d.hp}</b><div class="bar"><i style="width:${d.hp?100*d.hpNow/d.hp:0}%"></i></div>${stepper('bhp',f.id,'')}</div>
   <div class="row small"><span class="tag">Will ${d.wNow}/${d.will}</span><span class="tag">Def ${d.def} · Sp.Def ${d.sdef}</span><span class="tag">Azioni ${f.acts}/5</span>${ko?'<span class="tag no">KO</span>':d.pain?`<span class="tag no">Dolore −${d.pain}</span>`:''}${stl.map(x=>`<span class="tag no">${x}</span>`).join('')}</div>
-  <div class="row"><button class="btn pri sm grow" data-a="bact" data-i="${f.id}"${ko||f.acts>=5?' disabled':''}>Agisci (servono ${f.acts+1} successi)</button><button class="btn sm" data-a="bopen" data-i="${f.id}">${open?'Chiudi':'Stati e bonus'}</button><button class="btn sm" data-a="open" data-k="inst" data-i="${P.id}" data-o="${f.o}">Scheda</button></div>`;
+  <div class="row"><button class="btn pri sm grow" data-a="bact" data-i="${f.id}"${ko||f.acts>=5?' disabled':''}>Agisci (servono ${f.acts+1} successi)</button><button class="btn sm" data-a="bopen" data-i="${f.id}">${open?'Chiudi':'Stati e bonus'}</button><button class="btn sm" data-a="open" data-k="inst" data-i="${P.id}" data-o="${f.o}">Scheda</button></div>${f.o==='battle'||f.o==='saved'?`<button class="btn sm" data-a="bcatch" data-i="${f.id}">Prova a catturarlo</button>`:''}`;
   if(open)h+=`<div class="seg">${STATI.map(x=>`<button data-a="bst" data-i="${f.id}" data-k="${x[0]}" aria-pressed="${f.st.includes(x[0])}">${x[1]}</button>`).join('')}</div>
   <div class="grid2">${MODL.map((m,k)=>`<div class="srow"><span>${m} ${f.mod[k]>0?'+':''}${f.mod[k]||0}</span>${stepper('bmod',f.id+':'+k,'')}</div>`).join('')}</div>
   <div class="row"><span class="small grow">Will speso</span>${stepper('bwl',f.id,'')}<button class="btn sm" data-a="bfree" data-i="${f.id}">+1 azione generica</button></div>`;
@@ -674,7 +795,8 @@ function bFight(){
   ${cur?`<p class="small">Tocca a <b>${esc(bName(cur))}</b>. Chi ha ancora azioni può agire di nuovo dopo il giro.</p>`:''}</div>
   ${ord.map(f=>bCard(f,f===cur)).join('')}
   ${b.log.length?`<div class="card"><h3>Registro</h3><div class="small" style="display:flex;flex-direction:column;gap:3px">${b.log.slice(0,14).map(l=>`<span>${esc(l)}</span>`).join('')}</div></div>`:''}
-  <div class="row"><button class="btn grow" data-a="bheal">Cura tutti</button><button class="btn grow" data-a="bendk">Termina e salva i selvatici</button><button class="btn danger grow" data-a="bend">${ui.arm==='bend'?'Tocca ancora per terminare':'Termina'}</button></div>`;
+  <button class="btn pri" data-a="brew">Fine lotta e ricompense</button>
+  <div class="row"><button class="btn grow" data-a="bheal">Cura tutti</button><button class="btn danger grow" data-a="bend">${ui.arm==='bend'?'Tocca ancora: chiudi senza ricompense':'Chiudi senza ricompense'}</button></div>`;
 }
 function bCalc(){
   const a=ui.act,f=bF(a.fid),P=bEff(f),M=MON[P.m],d=bDer(f),mv=mvOf(a.mv),w=B().weather,req=f.acts+1;
@@ -746,8 +868,12 @@ function bEndRound(){
 /* ---------- schede e render ---------- */
 function sBackup(){return `<div class="card"><h3>Danno minimo</h3><div class="seg"><button data-a="omin" data-i="1" aria-pressed="${S.opt.min1!==false}">Sempre almeno 1</button><button data-a="omin" data-i="0" aria-pressed="${S.opt.min1===false}">Le resistenze possono azzerarlo</button></div><p class="small muted">Vale per l’assistente di battaglia. Le immunità danno sempre 0.</p></div>
 <div class="card"><h3>Difese</h3><div class="seg"><button data-a="odef" data-i="2" aria-pressed="${S.opt.def===2}">Sp. Def = Insight</button><button data-a="odef" data-i="1" aria-pressed="${S.opt.def===1}">Sp. Def = Vitality</button></div><p class="small muted">Il manuale chiede di scegliere un metodo per tutta la campagna (p. 27).</p></div>
-<div class="card"><h3>Backup di allenatori e Pokémon</h3><p class="small muted">I dati restano su questo dispositivo. Copia il testo qui sotto e conservalo per avere una copia di sicurezza.</p><textarea id="bk" readonly style="min-height:120px">${esc(JSON.stringify({trainers:S.trainers,saved:S.saved,opt:S.opt,battle:S.battle}))}</textarea><button class="btn" data-a="bcopy">Copia backup</button></div>
-<div class="card"><h3>Ripristina</h3><textarea id="bi" placeholder="Incolla qui un backup"></textarea><button class="btn" data-a="bimp">Ripristina dal testo incollato</button><p class="small muted">Sostituisce allenatori e Pokémon salvati.</p></div>`}
+<div class="card"><h3>Pubblicazione del diario</h3><p class="small muted">Serve per mandare le voci “Per i giocatori” sulla loro pagina. La chiave resta solo su questo dispositivo e non finisce nel backup.</p>
+<div class="field"><label for="ghr">Repository</label><input id="ghr" type="text" data-i="ghs:repo" value="${esc(ghCfg().repo||'')}" placeholder="${esc(ghRepo())}" autocapitalize="off" autocomplete="off"></div>
+<div class="field"><label for="ght">Chiave GitHub</label><input id="ght" type="password" data-i="ghs:tok" value="${esc(ghCfg().tok||'')}" placeholder="github_pat_..." autocapitalize="off" autocomplete="off"></div>
+<button class="btn" data-a="ghtest">Prova la chiave</button><p class="small muted">Pagina dei giocatori: ${esc(playersUrl())}</p></div>
+<div class="card"><h3>Backup di allenatori e Pokémon</h3><p class="small muted">I dati restano su questo dispositivo. Copia il testo qui sotto e conservalo per avere una copia di sicurezza.</p><textarea id="bk" readonly style="min-height:120px">${esc(JSON.stringify({trainers:S.trainers,saved:S.saved,opt:S.opt,battle:S.battle,diary:S.diary,pub:S.pub}))}</textarea><button class="btn" data-a="bcopy">Copia backup</button></div>
+<div class="card"><h3>Ripristina</h3><textarea id="bi" placeholder="Incolla qui un backup"></textarea><button class="btn" data-a="bimp">Ripristina dal testo incollato</button><p class="small muted">Sostituisce allenatori, Pokémon salvati e diario.</p></div>`}
 function sheetH(keep){
   const top=ui.stack[ui.stack.length-1];if(!top)return '';
   let title='',body='';
@@ -759,11 +885,14 @@ function sheetH(keep){
   else if(top.k==='inst'){const f=findInst(top.i,top.o);title=f.P?(f.P.nick||MON[f.P.m].n):'Pokémon';body=sInst(top)}
   else if(top.k==='backup'){title='Opzioni e backup';body=sBackup()}
   else if(top.k==='act'){title='Azione';body=ui.act&&B()?sAct():''}
+  else if(top.k==='catch'){title='Cattura';body=B()?sCatch(top):''}
+  else if(top.k==='rew'){title='Fine lotta';body=B()&&ui.rw?sRew():'<p class="muted">Nessuna lotta in corso.</p>'}
+  else if(top.k==='dent'){const e=S.diary.find(x=>x.id===top.i);title=e?(e.t||'Nuova voce'):'Diario';body=e?sDent(e):'<p class="muted">Voce non trovata.</p>'}
   return `<div class="sheet${keep?'':' anim'}" role="dialog" aria-label="${esc(title)}"><div class="in"><header><button class="btn sm" data-a="back">Indietro</button><h2>${esc(title)}</h2>${ui.stack.length>1?'<button class="btn sm ghost" data-a="closeall">Chiudi</button>':''}</header><div class="body" id="sb">${body}</div></div></div>`;
 }
 function render(keep){
   const sb=$('#sb'),st=keep&&sb?sb.scrollTop:0,mn=$('#main'),mt=keep?mn.scrollTop:0;
-  mn.innerHTML=ui.tab==='genera'?vGen():ui.tab==='allenatori'?vTrainers():ui.tab==='lotta'?vBattle():ui.tab==='database'?vDb():vGl();
+  mn.innerHTML=ui.tab==='genera'?vGen():ui.tab==='allenatori'?vTrainers():ui.tab==='lotta'?vBattle():ui.tab==='diario'?vDiario():ui.tab==='database'?vDb():vGl();
   document.querySelectorAll('#tabs button').forEach(b=>b.dataset.t===ui.tab?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));
   $('#sheet').innerHTML=sheetH(keep);
   const tc=$('#tc');if(tc)tc.innerHTML=tcH();
@@ -795,14 +924,14 @@ const ACT={
   gn(d){ui.gen.n=+d.i;render(true)},
   gsel(d){const g=ui.gen;g.sel=+d.i;g.cur=g.batch[g.sel];g.mi=g.cur.m;render(true)},
   gmode(d){ui.gen.mode=d.i;render()},
-  gsaveall(){const g=ui.gen,t=S.trainers.find(x=>x.id===g.target);g.batch.forEach(Q=>{const P=JSON.parse(JSON.stringify(Q));P.id=uid();if(t)t.team.push(P);else S.saved.unshift(P)});save();toast(g.batch.length+' Pokémon salvati');render(true)},
+  gsaveall(){const g=ui.gen,t=S.trainers.find(x=>x.id===g.target);g.batch.forEach(Q=>{const P=JSON.parse(JSON.stringify(Q));P.id=uid();if(t)addToTrainer(t,P);else S.saved.unshift(P)});save();toast(g.batch.length+' Pokémon salvati');render(true)},
   gin(d){ui.gi.n=+d.i;render(true)},
   girare(){ui.gi.rare=!ui.gi.rare;render(true)},
   gigen(){const q=ui.gi,mx=parseInt(q.max,10);let c=IT.map((a,i)=>i).filter(i=>{const a=IT[i];if(q.cat&&a.c!==q.cat)return false;if(a.pr==null)return q.rare;if(!isNaN(mx)&&a.pr>mx)return false;return true});
     if(!c.length){q.res=[];toast('Nessun oggetto con questi filtri');render(true);return}const out=[];c=c.slice();while(out.length<q.n&&c.length){out.push(c.splice(rint(c.length),1)[0])}q.res=out;render(true)},
   gicopy(){const q=ui.gi;copy(q.res.map(i=>IT[i].n+' ('+price(IT[i])+')').join('\n'),'Elenco copiato')},
   gfrom(d){ui.stack=[];ui.tab='genera';doGen(+d.i)},
-  gsave(){const g=ui.gen;if(!g.cur)return;const P=JSON.parse(JSON.stringify(g.cur));P.id=uid();if(g.target==='saved')S.saved.unshift(P);else{const t=S.trainers.find(x=>x.id===g.target);if(!t){S.saved.unshift(P)}else t.team.push(P)}save();toast('Salvato');render(true)},
+  gsave(){const g=ui.gen;if(!g.cur)return;const P=JSON.parse(JSON.stringify(g.cur));P.id=uid();if(g.target==='saved')S.saved.unshift(P);else{const t=S.trainers.find(x=>x.id===g.target);if(!t){S.saved.unshift(P)}else if(addToTrainer(t,P)==='box'){save();toast('Squadra piena: messo nel box');render(true);return}}save();toast('Salvato');render(true)},
   gcopy(){if(ui.gen.cur)copy(instText(ui.gen.cur),'Scheda copiata')},
   gan(d){ui.ga.n=+d.i;render(true)},
   tgenarch(){let a=+ui.ga.a,rk=+ui.ga.rk,t;const nn=ui.ga.n||0;if(a>=100)t=genFixed(a-100,nn);else{if(a<0)a=rint(ARCH.length);if(rk<0)rk=Math.min(5,pick([1,2,2,3])+(ARCH[a][9]||0));t=genTrainer(a,rk,nn)}S.trainers.unshift(t);save();ui.stack.push({k:'trainer',i:t.id});render();toast(t.role+' '+t.name+' con '+t.team.length+' Pokémon')},
@@ -866,12 +995,55 @@ const ACT={
         else if(o.support)bLog(bName(f)+' usa '+mv.n+' su '+bName(T));
         else{bLog(bName(f)+' usa '+mv.n+' su '+bName(T)+(o.crit?' (critico)':''));bHurt(T,x.final,mv.n)}})}
     f.acts++;f.used.push(a.mv);ui.act=null;ui.stack.pop();save();render()},
+  tview(d){ui.tv=d.i;render()},
+  tnewpg(){const t=newTrainer();Object.assign(t,{pg:true,rk:0,cash:2000,inv:'',box:[]});S.trainers.unshift(t);save();ui.tv='pg';ui.stack.push({k:'trainer',i:t.id});render()},
+  tpg(d){const t=curTrainer();t.pg=d.i==='1';if(t.pg){if(t.cash==null)t.cash=parseMoney(t.money);t.box=t.box||[]}save();render(true)},
+  ibond(d){const c=curInst();c.P[d.k]=clamp((c.P[d.k]||0)+(+d.d),0,d.k==='tp'?999:5);save();render(true)},
+  ist(d){const c=curInst();const a=c.P.st||(c.P.st=[]),j=a.indexOf(d.k);if(j>=0)a.splice(j,1);else{if(/^b\d/.test(d.k))c.P.st=a.filter(k=>!/^b\d/.test(k));c.P.st.push(d.k)}save();render(true)},
+  ibox(){const c=curInst(),t=c.t;if(!t)return;t.box=t.box||[];const inBox=t.box.includes(c.P);if(inBox){if(t.team.length>=6){toast('Squadra piena: prima sposta un Pokémon nel box');return}t.box.splice(t.box.indexOf(c.P),1);t.team.push(c.P);toast('Ora è in squadra')}else{t.team.splice(t.team.indexOf(c.P),1);t.box.push(c.P);toast('Spostato nel box')}save();render(true)},
+  bcatch(d){ui.cat=Object.assign({ball:'poke',spec:9,s:0,to:(ui.cat&&ui.cat.to)||null},{ball:(ui.cat&&ui.cat.ball)||'poke'});ui.cat.s=0;ui.stack.push({k:'catch',i:d.i});render()},
+  cball(d){ui.cat.ball=d.i;render(true)},
+  cspec(d){ui.cat.spec=clamp(ui.cat.spec+(+d.d),1,9);render(true)},
+  cs(d){ui.cat.s=clamp(ui.cat.s+(+d.d),0,20);render(true)},
+  cto(d){ui.cat.to=d.i;render(true)},
+  cfail(){const top=ui.stack[ui.stack.length-1],f=bF(top.i),x=catchCalc(f);bLog(bName(f)+(x.out==='break'?' si libera e distrugge la '+x.ball[1]:' esce dalla '+x.ball[1]));save();ui.stack.pop();render()},
+  cdo(){const top=ui.stack[ui.stack.length-1],b=B(),f=bF(top.i),x=catchCalc(f),P=x.P,src=findInst(f.i,f.o);
+    P.hap=x.ko?0:2;P.loy=x.ko?0:1;P.ball=x.ball[0];P.st=f.st.filter(k=>PERS.includes(k));P.tp=P.tp||0;
+    src.arr.splice(src.arr.indexOf(P),1);b.f=b.f.filter(y=>y!==f);const t=S.trainers.find(y=>y.id===ui.cat.to&&y.pg);let where='';
+    if(t){where=addToTrainer(t,P)==='box'?' (nel box)':''}else S.saved.unshift(P);
+    const nm=P.nick||MON[P.m].n;bLog(nm+' catturato'+(t?' da '+(t.name||'un giocatore'):'')+where);(b.caught=b.caught||[]).push(nm+(t?' → '+(t.name||'giocatore'):''));
+    save();ui.stack.pop();render();toast(nm+' catturato!'+(where?' Squadra piena: è nel box.':''))},
+  brew(){const b=B();ui.rw={win:true,multi:b.f.filter(f=>!isPg(f.o)).length>1,rows:{},amt:0,to:null,items:'',ito:null,diary:true,keep:false};const npc=rwFoesNpc();ui.rw.amt=npc.reduce((a,t)=>a+Math.floor(parseMoney(t.money)/2),0);ui.stack.push({k:'rew'});render()},
+  rwin(d){ui.rw.win=d.i==='1';if(!ui.rw.win)ui.rw.amt=0;else ui.rw.amt=rwFoesNpc().reduce((a,t)=>a+Math.floor(parseMoney(t.money)/2),0);render(true)},
+  rwadj(d){const r=ui.rw.rows[d.k];r.adj=(r.adj||0)+(+d.d);render(true)},
+  rwsug(){ui.rw.amt=rwFoesNpc().reduce((a,t)=>a+Math.floor(parseMoney(t.money)/2),0);render(true)},
+  rwdo(){const b=B(),r=ui.rw,rows=rwData(),L=pgs(),sum=[];
+    rows.forEach(x=>{if(x.tot){x.P.tp=(x.P.tp||0)+x.tot;sum.push((x.P.nick||MON[x.P.m].n)+' +'+x.tot+' PA')}});
+    b.f.forEach(f=>{if(isPg(f.o)){const P=bP(f);if(P)P.st=f.st.filter(k=>PERS.includes(k))}});
+    const amt=Math.max(0,parseInt(r.amt,10)||0);if(amt&&L.length){const inB=[...new Set(b.f.filter(f=>isPg(f.o)).map(f=>f.o))];const to=r.to==='split'?inB.map(id=>S.trainers.find(t=>t.id===id)).filter(Boolean):[S.trainers.find(t=>t.id===r.to)].filter(Boolean);
+      if(to.length){const each=Math.floor(amt/to.length);to.forEach(t=>{t.cash=(+t.cash||0)+(r.win?each:-each)});sum.push((r.win?'Denaro vinto: ':'Denaro perso: ')+money(amt)+(to.length>1?' (diviso tra '+to.length+')':' ('+(to[0].name||'giocatore')+')'))}}
+    if(r.items.trim()&&L.length){const t=S.trainers.find(y=>y.id===(r.ito||L[0].id));if(t){t.inv=((t.inv||'').trim()+'\n'+r.items.trim()).trim();sum.push('Oggetti a '+(t.name||'giocatore')+': '+r.items.trim())}}
+    if(r.keep)b.wild.forEach(P=>S.saved.unshift(P));
+    if(r.diary){const foes=b.f.filter(f=>!isPg(f.o)).map(bName),mine=b.f.filter(f=>isPg(f.o)).map(bName);
+      S.diary.unshift({id:uid(),t:(r.win?'Vittoria':'Sconfitta')+(foes.length?' contro '+foes.slice(0,3).join(', ')+(foes.length>3?'…':''):''),c:'ses',w:'',pub:false,u:Date.now(),
+        b:['Round giocati: '+b.round,mine.length?'In campo: '+mine.join(', '):'',(b.caught||[]).length?'Catture: '+b.caught.join(', '):''].concat(sum.map(x=>'- '+x)).filter(Boolean).join('\n')})}
+    S.battle=null;ui.rw=null;ui.stack=[];save();render();toast('Ricompense assegnate')},
+  dnew(){const e={id:uid(),t:'',c:ui.di.c||'ses',w:'',b:'',pub:false,u:Date.now()};S.diary.unshift(e);save();ui.stack.push({k:'dent',i:e.id});render()},
+  dfil(d){ui.di.c=d.i;render(true)},
+  dvis(d){const e=curDent();e.pub=d.i==='1';e.u=Date.now();save();render(true)},
+  ddel(){if(ui.arm!=='ddel'){ui.arm='ddel';render(true);return}const e=curDent();S.diary=S.diary.filter(x=>x!==e);save();ui.arm=null;ui.stack.pop();render()},
+  dlink(){copy(playersUrl(),'Link per i giocatori copiato')},
+  async dpub(){if(ui.busy)return;const voci=S.diary.filter(e=>e.pub).map(e=>({id:e.id,t:e.t,c:e.c,w:e.w,b:e.b,u:e.u}));ui.busy=true;render(true);
+    try{await ghPut('diario.json',JSON.stringify({aggiornato:new Date().toISOString(),voci},null,1),'Diario: '+voci.length+' voci');S.pub={at:Date.now(),n:voci.length};save();toast('Pubblicato: i giocatori lo vedono subito')}
+    catch(e){toast('Pubblicazione non riuscita: '+e.message)}ui.busy=false;render(true)},
+  async dimp(){try{const c=ghCfg(),h={Accept:'application/vnd.github.raw+json'};if(c.tok)h.Authorization='Bearer '+c.tok;const r=await fetch('https://api.github.com/repos/'+ghRepo()+'/contents/diario.json',{headers:h,cache:'no-store'});if(!r.ok)throw new Error(ghErr(r.status));const o=await r.json();let n=0;(o.voci||[]).forEach(v=>{if(!S.diary.some(e=>e.id===v.id)){S.diary.push(Object.assign({pub:true},v));n++}});save();render(true);toast(n?n+' voci recuperate':'Nessuna voce nuova')}catch(e){toast('Non riesco a leggere il diario pubblicato: '+e.message)}},
+  async ghtest(){const c=ghCfg();if(!c.tok){toast('Incolla prima la chiave');return}try{const r=await fetch('https://api.github.com/repos/'+ghRepo(),{headers:{Authorization:'Bearer '+c.tok,Accept:'application/vnd.github+json'},cache:'no-store'});if(!r.ok)throw new Error(ghErr(r.status));const o=await r.json();toast(o.permissions&&o.permissions.push?'Chiave OK: puoi pubblicare su '+o.full_name:'La chiave legge il repository ma non può scrivere')}catch(e){toast('Prova fallita: '+e.message)}},
   dkind(d){ui.db={kind:d.i,q:'',type:'',cat:'',lim:50};render()},
   dmore(){ui.db.lim+=50;$('#dbl').innerHTML=dbList()},
   omin(d){S.opt.min1=d.i==='1';save();render(true)},
   odef(d){S.opt.def=+d.i;save();render(true)},
   bcopy(){copy($('#bk').value,'Backup copiato')},
-  bimp(){try{const o=JSON.parse($('#bi').value);if(!Array.isArray(o.trainers)||!Array.isArray(o.saved))throw 0;S.trainers=o.trainers;S.saved=o.saved;S.opt=o.opt||S.opt;S.battle=o.battle||null;save();toast('Backup ripristinato');ui.stack=[];render()}catch(e){toast('Testo non valido: incolla un backup completo')}}
+  bimp(){try{const o=JSON.parse($('#bi').value);if(!Array.isArray(o.trainers)||!Array.isArray(o.saved))throw 0;S.trainers=o.trainers;S.saved=o.saved;S.opt=o.opt||S.opt;S.battle=o.battle||null;if(Array.isArray(o.diary))S.diary=o.diary;if(o.pub)S.pub=o.pub;save();toast('Backup ripristinato');ui.stack=[];render()}catch(e){toast('Testo non valido: incolla un backup completo')}}
 };
 document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;const f=ACT[b.dataset.a];if(f)f(b.dataset)});
 document.addEventListener('input',e=>{const t=e.target,k=t.dataset.i;if(!k)return;
@@ -880,7 +1052,11 @@ document.addEventListener('input',e=>{const t=e.target,k=t.dataset.i;if(!k)retur
   else if(k==='gimax'){ui.gi.max=t.value}
   else if(k==='dq'){ui.db.q=t.value;ui.db.lim=50;$('#dbl').innerHTML=dbList()}
   else if(k==='glq'){ui.gl.q=t.value;$('#gll').innerHTML=glList();const tc=$('#tc');if(tc)tc.innerHTML=tcH()}
-  else if(k.startsWith('tf:')){const tr=curTrainer();if(tr){tr[k.slice(3)]=t.value;save()}}
+  else if(k.startsWith('tf:')){const tr=curTrainer();if(tr){const f=k.slice(3);tr[f]=f==='cash'?(parseInt(t.value,10)||0):t.value;save()}}
+  else if(k.startsWith('de:')){const e=curDent();if(e){e[k.slice(3)]=t.value;e.u=Date.now();save();if(k==='de:t'){const h=document.querySelector('.sheet header h2');if(h)h.textContent=t.value||'Nuova voce'}}}
+  else if(k==='diq'){ui.di.q=t.value;$('#dil').innerHTML=dList()}
+  else if(k.startsWith('ghs:')){ghSet({[k.slice(4)]:t.value.trim()})}
+  else if(k.startsWith('rw:')){ui.rw[k.slice(3)]=t.value}
   else if(k.startsWith('if:')){const c=curInst();if(c&&c.P){c.P[k.slice(3)]=t.value;save()}}
 });
 document.addEventListener('change',e=>{const t=e.target,k=t.dataset.c;if(!k)return;const v=t.value;
@@ -895,6 +1071,10 @@ document.addEventListener('change',e=>{const t=e.target,k=t.dataset.c;if(!k)retu
   else if(k.startsWith('ga:')){ui.ga[k.slice(3)]=+v}
   else if(k==='tspr'){const tr=curTrainer();tr.spr=v;save();render(true)}
   else if(k.startsWith('tsel:')){const tr=curTrainer();tr[k.slice(5)]=+v;save();render(true)}
+  else if(k==='de:c'){const e=curDent();if(e){e.c=v;e.u=Date.now();save()}}
+  else if(k==='rw:to'||k==='rw:ito'){ui.rw[k.slice(3)]=v}
+  else if(k==='rw:multi'||k==='rw:diary'||k==='rw:keep'){ui.rw[k.slice(3)]=t.checked;render(true)}
+  else if(k.startsWith('rwp:')||k.startsWith('rwk:')){const r=ui.rw.rows[k.slice(4)];r[k[2]==='p'?'part':'ko']=t.checked;render(true)}
   else if(k.startsWith('isel:')){const c=curInst(),f=k.slice(5);c.P[f]=f==='rk'?+v:v;save();render(true)}
 });
 function start(){
@@ -906,12 +1086,12 @@ function start(){
     if(gi>=0)t.team.push(generate(gi,2,'def'));if(oi>=0)t.team.push(generate(oi,2,'phy'));
     S.trainers.push(t);save();
   }
-  S.opt=S.opt||{def:2};S.saved=S.saved||[];
-  const h=(location.hash||'').slice(1);if(['genera','allenatori','lotta','database','regole'].includes(h))ui.tab=h;
+  S.opt=S.opt||{def:2};S.saved=S.saved||[];S.diary=S.diary||[];
+  const h=(location.hash||'').slice(1);if(['genera','allenatori','lotta','diario','database','regole'].includes(h))ui.tab=h;
   if(!ui.gen.cur){const pi=MON.findIndex(m=>m.n==='Pikachu');if(pi>=0){ui.gen.mi=pi;ui.gen.cur=generate(pi,MON[pi].rk,'bal');ui.gen.batch=[ui.gen.cur]}}
   render();
 }
-window.addEventListener('hashchange',()=>{const h=(location.hash||'').slice(1);if(['genera','allenatori','lotta','database','regole'].includes(h)&&h!==ui.tab){ui.tab=h;render()}});
+window.addEventListener('hashchange',()=>{const h=(location.hash||'').slice(1);if(['genera','allenatori','lotta','diario','database','regole'].includes(h)&&h!==ui.tab){ui.tab=h;render()}});
 start();
 </script>
 </body>
