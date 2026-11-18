@@ -229,6 +229,16 @@ main>*,.sheet .body>*{flex-shrink:0}
 .wx-snow,.wx-hail{background-image:radial-gradient(circle,#fff 0 2px,transparent 2.5px),radial-gradient(circle,rgba(255,255,255,.8) 0 1.5px,transparent 2px);background-size:60px 60px,90px 90px;animation:wxN 3s linear infinite}
 .wx-hail{animation-duration:1.1s}
 @keyframes wxN{to{background-position:20px 60px,-30px 90px}}
+#arena .order{position:absolute;top:calc(8px + env(safe-area-inset-top));right:calc(70px + env(safe-area-inset-right));display:flex;gap:4px;z-index:5;background:rgba(10,15,20,.6);padding:4px 6px;border-radius:999px;max-width:60vw;overflow:hidden}
+#arena .order i{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#1a232c;border:2px solid #2a5d8f;flex:none}#arena .order i.B{border-color:#a3404d}#arena .order i.on{border-color:#f5c542;box-shadow:0 0 10px #f5c542;transform:scale(1.15)}#arena .order i.ko{opacity:.3;filter:grayscale(1)}
+#arena .order img{width:24px;height:24px;object-fit:contain;image-rendering:pixelated}
+@media (max-aspect-ratio:1/1){#arena .order{top:calc(48px + env(safe-area-inset-top));left:calc(10px + env(safe-area-inset-left));right:auto;max-width:calc(100vw - 20px)}}
+#arena .efx{position:absolute;top:calc(48px + env(safe-area-inset-top));left:calc(10px + env(safe-area-inset-left));display:flex;flex-wrap:wrap;gap:4px;z-index:5;max-width:60vw}
+@media (max-aspect-ratio:1/1){#arena .efx{top:calc(88px + env(safe-area-inset-top))}}
+#arena .efx span{font:700 11px/1 var(--display);padding:4px 8px;border-radius:99px;background:rgba(42,93,143,.85);color:#fff}
+#tav .aud{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:20;background:#18222c;border:2px solid #e9eef3;border-radius:16px;padding:16px 18px;text-align:center;max-width:min(420px,90vw);font:600 15px/1.4 var(--display);box-shadow:0 10px 40px rgba(0,0,0,.6)}
+#tav .aud button,#tav .aud label{display:inline-block;margin-top:10px;background:#c4283c;color:#fff;border:0;border-radius:999px;padding:10px 16px;font:700 15px/1 var(--display);position:relative;overflow:hidden;cursor:pointer}
+#tav .aud label input{position:absolute;inset:0;opacity:0}#tav .aud small{display:block;color:#9fb0c0;font-weight:500;margin-top:8px}
 @media (prefers-reduced-motion:reduce){.wx{animation:none!important}#arena .mon .spr{animation:none}}
 
 .gal{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.gal.one{grid-template-columns:1fr}
@@ -448,8 +458,8 @@ function sugH(){const g=ui.gen;if(!g.q)return '';const r=monMatches(g.q,7);retur
 function targetOpts(){return [['saved','Pokémon salvati (selvatici)']].concat(pgs().map(t=>[t.id,'Giocatore: '+(t.name||'senza nome')]),S.trainers.filter(t=>!t.pg).map(t=>[t.id,'Squadra di '+(t.name||'senza nome')]))}
 function vGen(){
   const g=ui.gen,f=g.f;const regs=[...new Set(MON.map(m=>m.reg))];
-  const modeH=`<div class="seg"><button data-a="gmode" data-i="mon" aria-pressed="${g.mode==='mon'}">Pokémon</button><button data-a="gmode" data-i="item" aria-pressed="${g.mode==='item'}">Oggetti</button></div>`;
-  if(g.mode==='item')return modeH+vGenItems();
+  const modeH=`<div class="seg"><button data-a="gmode" data-i="mon" aria-pressed="${g.mode==='mon'}">Pokémon</button><button data-a="gmode" data-i="item" aria-pressed="${g.mode==='item'}">Oggetti</button><button data-a="gmode" data-i="npc" aria-pressed="${g.mode==='npc'}">PNG</button></div>`;
+  if(g.mode==='item')return modeH+vGenItems();if(g.mode==='npc')return modeH+vGenNpc();
   let h=modeH+`<div class="card"><h2>Generatore di Pokémon</h2>
   <div class="field"><label for="gq">Specie</label><input id="gq" type="search" data-i="gq" placeholder="Scrivi un nome, es. Growlithe" value="${esc(g.q)}" autocomplete="off"></div><div id="sug">${sugH()}</div>
   <div class="field"><label>Rango</label><div class="seg"><button data-a="grk" data-i="" aria-pressed="${g.rk==null}">Suggerito</button>${RK.map((r,i)=>`<button data-a="grk" data-i="${i}" aria-pressed="${g.rk===i}"><i class="pip" style="--pc:${RKCOL[i]}"></i>${r}</button>`).join('')}</div></div>
@@ -957,7 +967,7 @@ function bName(f){const P=bP(f);if(!P)return '?';const n=P.nick||MON[P.m].n;cons
 function bAdd(o,i,side){const b=B();if(b.f.some(x=>x.o===o&&x.i===i))return;const P=findInst(i,o).P;b.f.push({id:uid(),side,o,i,d6:0,acts:0,used:[],st:((P&&P.st)||[]).slice(),mod:[0,0,0,0,0,0,0]})}
 function bEff(f){const P=bP(f),Q=Object.assign({},P,{at:P.at.map((v,k)=>Math.max(0,v+(f.mod[k]||0)))});if(f.st.includes('par'))Q.at[1]=Math.max(0,Q.at[1]-2);return Q}
 function bDer(f){const Q=bEff(f),M=MON[Q.m],d=derive(Q),P=bP(f),w=B().weather;d.hp=derive(P).hp;d.will=derive(P).will;d.def+=f.mod[5]||0;d.sdef+=f.mod[6]||0;if(w==='snow'&&M.ty.includes('Ice'))d.def++;if(w==='sand'&&M.ty.includes('Rock'))d.sdef++;d.hpNow=Math.max(0,d.hp-(P.dmg||0));d.wNow=Math.max(0,d.will-(P.wsp||0));d.pain=d.hpNow<=0?0:d.hpNow<=1&&d.hp>1?2:d.hpNow<=Math.floor(d.hp/2)?1:0;return d}
-function bFx(fx){const b=B();if(!b)return;b.fxn=(b.fxn||0)+1;fx.n=b.fxn;(b.fxl=b.fxl||[]).push(fx);if(b.fxl.length>6)b.fxl.shift()}
+function bFx(fx){const b=B();if(!b)return;b.fxn=(b.fxn||0)+1;fx.n=b.fxn;(b.fxl=b.fxl||[]).push(fx);if(b.fxl.length>6)b.fxl.shift();if((S.opt.audioOut||'off')==='qui'&&AUD.has()){AUD.unlock();fxSound(fx)}}
 function bLog(t){const b=B();b.log.unshift('R'+b.round+' · '+t);b.log.length=Math.min(b.log.length,40)}
 function bHurt(f,n,why){const P=bP(f),d=bDer(f);P.dmg=clamp((P.dmg||0)+n,0,d.hp);if(n)bLog(bName(f)+(n>0?' subisce '+n+' dann'+(n===1?'o':'i'):' recupera '+(-n)+' HP')+(why?' ('+why+')':'')+(d.hp-P.dmg<=0?' ed è KO':''))}
 function bOrder(){const b=B();return b.f.slice().sort((x,y)=>{const a=bDer(x),c=bDer(y);return (c.init+y.d6)-(a.init+x.d6)||c.init-a.init})}
@@ -966,11 +976,11 @@ function bSug(){const q=ui.bt.q;if(!q)return '';const r=monMatches(q,6);return r
 function vBattle(){
   const b=B();if(b){b.f=b.f.filter(f=>bP(f))}
   const tavH=`<div class="card"><div class="row"><h3 class="grow">Schermo per i giocatori</h3>${S.tav&&S.tav.code?'<span class="vis on">Attivo</span>':''}</div><div class="row"><button class="btn grow" data-a="open" data-k="tav">${S.tav&&S.tav.code?'Gestisci':'Attiva'}</button><button class="btn grow" data-a="tavjoin">Usa come schermo per i giocatori</button></div></div>`;
-  if(!b)return tavH+`<div class="card"><h2>Assistente di battaglia</h2><p class="muted">Prepara i due lati, tira l’iniziativa con i dadi veri e segui round, azioni, danni, stati e meteo. Pensato anche per le sfide 3 contro 3.</p><button class="btn pri" data-a="bnew">Nuova battaglia</button></div>`;
+  if(!b)return tavH+musH()+`<div class="card"><h2>Assistente di battaglia</h2><p class="muted">Prepara i due lati, tira l’iniziativa con i dadi veri e segui round, azioni, danni, stati e meteo. Pensato anche per le sfide 3 contro 3.</p><button class="btn pri" data-a="bnew">Nuova battaglia</button></div>`;
   const tb=`<div class="row"><button class="btn sm grow" data-a="open" data-k="tav">${S.tav&&S.tav.code?'Schermo giocatori: attivo · '+TAV.peersOpen()+' collegati':'Schermo per i giocatori'}</button></div>`;
-  if(b.phase==='setup')return tb+bSetup();
+  if(b.phase==='setup')return tb+bSetup()+musH();
   if(b.phase==='init')return tb+bInit();
-  return tb+bFight();
+  return tb+remindH()+bFight()+effH()+musH();
 }
 function bSetup(){
   const b=B(),t=ui.bt;const src=t.src==='saved'?S.saved:((S.trainers.find(x=>x.id===t.src)||{team:[]}).team);
@@ -1079,8 +1089,111 @@ function bEndRound(){
     f.st=f.st.filter(k=>k!=='fln')});
   const items=b.f.map(f=>{const P=bP(f);if(!P)return null;const d=(P.dmg||0)-(hp0[f.id]||0);if(d<=0)return null;const l=b.log.find(x=>x.includes(bName(f)+' subisce'));const m=l&&l.match(/\(([^)]+)\)/);return {id:f.id,d,why:m?m[1]:''}}).filter(Boolean);
   if(items.length)bFx({k:'tick',items});
+  const rem=[];items.forEach(x=>{const f=bF(x.id);if(f)rem.push(`${esc(bName(f))} ha subito ${x.d} dann${x.d===1?'o':'i'} (${esc(x.why||'stato')}).`)});
+  if(b.weather&&b.wt>0){b.wt--;const W=(METEO.find(x=>x[0]===b.weather)||[])[1];if(b.wt<=0){rem.push(`<b>Il meteo ${esc(W)} finisce.</b>`);bLog('Il meteo '+W+' finisce');b.weather=''}else rem.push(`Meteo ${esc(W)}: ancora ${b.wt} round.`)}
+  b.ef=(b.ef||[]).filter(e=>{e.r--;const who=e.f&&bF(e.f)?' su '+bName(bF(e.f)):'';if(e.r<=0){rem.push(`<b>Finisce ${esc(e.n)}${esc(who)}.</b>`);bLog(e.n+' finisce');return false}if(e.r===1)rem.push(`Ultimo round di ${esc(e.n)}${esc(who)}.`);return true});
+  b.f.forEach(f=>{const P=bP(f);if(!P||bDer(f).hpNow<=0)return;const n=esc(bName(f)),ins=bEff(f).at[4];
+    if(f.st.includes('slp'))rem.push(`${n} dorme: a inizio turno tira Insight (${ins} dadi), servono 5 successi per svegliarsi.`);
+    if(f.st.includes('cnf'))rem.push(`${n} è confuso: tira Insight (${ins} dadi), con 2 successi agisce normalmente.`);
+    if(f.st.includes('frz'))rem.push(`${n} è congelato: non agisce finché il ghiaccio non si rompe.`);
+    if(f.st.includes('lov'))rem.push(`${n} è innamorato (manuale p. 87).`);if(f.st.includes('dis'))rem.push(`${n} ha una mossa bloccata da Disable.`);if(f.st.includes('par'))rem.push(`${n} è paralizzato: Dexterity −2.`)});
+  b.remind={r:b.round+1,items:rem};
   b.f.forEach(f=>{f.acts=0;f.used=[]});b.round++;b.ptr=0;bLog('Inizia il round '+b.round);bFx({k:'round',r:b.round});
 }
+/* ---------- audio: effetti, versi e musiche importati dal progetto Essentials (restano solo su questo dispositivo) ---------- */
+const AUD={p:null,ctx:null,cache:{},idx:null,mu:null,muName:'',muCat:'',vol:.8,mvol:.55,
+  open(){return this.p||(this.p=new Promise((res,rej)=>{const r=indexedDB.open('master-pokerole-audio',1);r.onupgradeneeded=()=>r.result.createObjectStore('f');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}))},
+  async put(k,v){const d=await this.open();return new Promise((res,rej)=>{const t=d.transaction('f','readwrite');t.objectStore('f').put(v,k);t.oncomplete=()=>res();t.onerror=()=>rej(t.error)})},
+  async get(k){const d=await this.open();return new Promise(res=>{const q=d.transaction('f').objectStore('f').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>res(null)})},
+  async clear(){const d=await this.open();return new Promise(res=>{const t=d.transaction('f','readwrite');t.objectStore('f').clear();t.oncomplete=()=>res()})},
+  index(){if(!this.idx){try{this.idx=JSON.parse(localStorage.getItem('mp-audio-idx'))}catch(e){}this.idx=this.idx||{se:[],anim:[],cry:[],bgm:[]}}return this.idx},
+  saveIdx(){try{localStorage.setItem('mp-audio-idx',JSON.stringify(this.idx))}catch(e){}},
+  has(){const i=this.index();return i.se.length+i.anim.length+i.cry.length+i.bgm.length>0},
+  async importFiles(files,onp){const i=this.index(),L=[...files];let n=0,k=0;
+    for(const f of L){k++;const p=(f.webkitRelativePath||f.name).replace(/\\/g,'/'),nm=f.name.replace(/\.(ogg|wav|mp3|m4a)$/i,'');if(!/\.(ogg|wav|mp3|m4a)$/i.test(f.name))continue;let kind=null;
+      if(/\/Cries\//i.test(p)||(/^[A-Z0-9_]+$/.test(nm)&&!/\/(BGM|ME|BGS)\//i.test(p)))kind='cry';
+      else if(/\/Anim\//i.test(p)||/^PRSFX- /.test(nm))kind='anim';
+      else if(/\/BGM\//i.test(p)||/^(BW|DPPT) \d/i.test(nm))kind=/^(BW|DPPT) /i.test(nm)?'bgm':null;
+      else if(/\/SE\//i.test(p)||/^(Battle |Pkmn |Vs |Use item|GUI sel|Exclaim)/.test(nm))kind=/^(Battle |Pkmn |Vs |Use item|GUI sel|Exclaim|Mart buy)/.test(nm)?'se':null;
+      if(!kind)continue;await this.put(kind+':'+nm,f);if(!i[kind].includes(nm))i[kind].push(nm);n++;if(onp&&k%25===0)onp(k,L.length,n)}
+    this.saveIdx();this.mvMap=null;return n},
+  unlock(){try{if(!this.ctx)this.ctx=new (window.AudioContext||window.webkitAudioContext)();if(this.ctx.state==='suspended')this.ctx.resume()}catch(e){}},
+  ready(){return this.ctx&&this.ctx.state==='running'},
+  async buf(key){if(this.cache[key])return this.cache[key];const b=await this.get(key);if(!b)return null;try{const ab=await this.ctx.decodeAudioData(await b.arrayBuffer());this.cache[key]=ab;return ab}catch(e){this.cache[key]=null;return null}},
+  async play(key,o){o=o||{};if(!this.ready())return;const ab=await this.buf(key);if(!ab)return;const s=this.ctx.createBufferSource(),g=this.ctx.createGain();s.buffer=ab;s.playbackRate.value=o.rate||1;g.gain.value=(o.vol||1)*this.vol;s.connect(g).connect(this.ctx.destination);s.start(this.ctx.currentTime+(o.delay||0)/1000)},
+  se(nm,o){const i=this.index();if(i.se.includes(nm))return this.play('se:'+nm,o);const a=i.anim.find(x=>x.toLowerCase()===nm.toLowerCase());if(a)return this.play('anim:'+a,o)},
+  cry(m,o){const k=SP.i[m];if(!k)return;const i=this.index(),c=i.cry.includes(k)?k:i.cry.includes(k.replace(/_\d+$/,''))?k.replace(/_\d+$/,''):null;if(c)return this.play('cry:'+c,o)},
+  mvKey(n){return String(n).toLowerCase().replace(/[^a-z0-9]/g,'')},
+  move(mv){const i=this.index();if(!this.mvMap){this.mvMap={};i.anim.forEach(a=>{const m=a.match(/^PRSFX- (.+?)\d*$/);const k=this.mvKey(m?m[1]:a.replace(/\d+$/,''));if(!(k in this.mvMap)||/1$/.test(a))this.mvMap[k]=this.mvMap[k]&&!/1$/.test(a)?this.mvMap[k]:a})}
+    let a=this.mvMap[this.mvKey(mv.n)];if(!a){const fb={Fire:'Ember',Water:'Water Gun',Grass:'Razor Leaf',Electric:'Thunder Shock',Ice:'Ice Beam',Fight:'Karate Chop',Poison:'Poison Sting',Ground:'Mud Slap',Flying:'Gust',Psychic:'Confusion',Bug:'Bug Bite',Rock:'Rock Throw',Ghost:'Shadow Ball',Dragon:'Dragon Breath',Dark:'Bite',Steel:'Metal Claw',Fairy:'Fairy Wind',Normal:'Tackle'}[mv.t];a=fb&&this.mvMap[this.mvKey(fb)]}
+    if(a)return this.play('anim:'+a,{vol:.9})},
+  hit(e,crit){this.se(e==='i'?'Battle damage weak':e>0?'Battle damage super':e<0?'Battle damage weak':'Battle damage normal',{vol:crit?1:.9})},
+  /* musica */
+  cat(nm){const n=nm.replace(/^(BW|DPPT) \d+[a-z]? /i,'');
+    if(/^Victory!|Battle Victory|^Defeated!|Winning/i.test(n))return /Wild/i.test(n)?'v-wild':/Gym|Frontier/i.test(n)?'v-gym':/Plasma|Galactic/i.test(n)?'v-team':/Champion|Elite/i.test(n)?'v-champ':'v-trainer';
+    if(/Battle!.*(Wild|Strong Wild)/i.test(n))return 'wild';
+    if(/Battle!.*(Legendary|Roaming|Dialga|Giratina|Arceus|Lake Trio|Regirock|Reshiram|Zekrom|Kyurem)/i.test(n))return 'legend';
+    if(/Battle!.*(Gym Leader|Frontier Brain)/i.test(n))return 'gym';
+    if(/Battle!.*(Plasma|Galactic|Ghetsis|\(N\))|Decisive Battle! \(N\)|Last Battle/i.test(n))return 'team';
+    if(/Battle!.*(Elite|Champion|Cynthia)|Decisive Battle! Pokemon League/i.test(n))return 'champ';
+    if(/Battle!/i.test(n))return 'trainer';
+    if(/Eyes Meet|Appears|Trouble|Hurry|Tight Spot|Plots|Ambitions|Happening/i.test(n))return 'tension';
+    if(/City|Town|Village|Pokemon Center|Poke Mart|Pokemon Gym|Laboratory|Lab$|Square|Mall|Station|Plaza/i.test(n))return 'town';
+    if(/Route|Bridge|Forest|Cave|Lake|Mt\.|Tower|Road|Marsh|Surf|Ruins|Castle|Mine|Gate|Pillar|Mountain|Dreamyard|Storage|Hideout|Chateau|Underground|Lostlorn|Abyssal|Distortion|Stark|Valor|Spear/i.test(n))return 'route';
+    return 'other'},
+  tracks(cat){return this.index().bgm.filter(x=>this.cat(x)===cat||(cat==='v-any'&&this.cat(x).startsWith('v-'))).sort()},
+  async music(name,o){o=o||{};if(!name){this.stopMusic();return}if(this.muName===name&&this.mu&&!this.mu.paused)return;const b=await this.get('bgm:'+name);if(!b)return;
+    const old=this.mu,a=new Audio(URL.createObjectURL(b));a.loop=!/^v-/.test(this.cat(name))&&!o.once;a.volume=0;this.mu=a;this.muName=name;try{await a.play()}catch(e){return}
+    const fade=(el,from,to,ms,done)=>{const t0=performance.now();const st=()=>{const k=Math.min(1,(performance.now()-t0)/ms);el.volume=Math.max(0,Math.min(1,from+(to-from)*k));if(k<1)requestAnimationFrame(st);else if(done)done()};st()};
+    fade(a,0,this.mvol,900);if(old)fade(old,old.volume,0,700,()=>{old.pause();URL.revokeObjectURL(old.src)})},
+  stopMusic(){const a=this.mu;if(!a)return;const t0=performance.now(),v=a.volume;const st=()=>{const k=Math.min(1,(performance.now()-t0)/700);a.volume=v*(1-k);if(k<1)requestAnimationFrame(st);else{a.pause();URL.revokeObjectURL(a.src)}};st();this.mu=null;this.muName=''},
+  setMVol(v){this.mvol=v;if(this.mu)this.mu.volume=v}};
+const MCATS=[['wild','Lotta: selvatici'],['trainer','Lotta: allenatori'],['gym','Lotta: capopalestra'],['team','Lotta: squadra malvagia'],['champ','Lotta: Superquattro e Campione'],['legend','Lotta: leggendari'],['v-wild','Vittoria: selvatici'],['v-trainer','Vittoria: allenatori'],['v-gym','Vittoria: capopalestra'],['v-team','Vittoria: squadra malvagia'],['v-champ','Vittoria: Campione'],['tension','Tensione e incontri'],['town','Città'],['route','Percorsi e luoghi'],['other','Altro']];
+/* suoni sincronizzati con gli eventi (usati dal master se l'audio esce dal suo dispositivo) */
+async function fxSound(fx){const w=ms=>new Promise(r=>setTimeout(r,ms));
+  if(fx.k==='round'){AUD.se('GUI sel decision');return}
+  if(fx.k==='intro'){AUD.se('Vs sword');for(const it of fx.items){await w(500);if(it.wild)AUD.cry(it.m);else{AUD.se('Battle recall');await w(300);AUD.cry(it.m)}}return}
+  if(fx.k==='tick'){AUD.se('Battle damage normal',{vol:.7});return}
+  if(fx.k==='catch'){AUD.se('Battle throw');await w(700);AUD.se('Battle recall');await w(700);AUD.se('Battle ball drop');for(let i=0;i<(fx.ok?3:1);i++){await w(680);AUD.se('Battle ball shake')}await w(500);AUD.se(fx.ok?'Battle catch click':'Battle recall');return}
+  if(fx.mv){AUD.move(fx.mv);await w(650);const h=fx.tg.filter(x=>x.k==='hit');if(h.length)AUD.hit(h.map(x=>x.e).find(e=>e)||0,fx.crit);if(fx.tg.some(x=>x.k==='eva'))AUD.se('gust');
+    if(fx.mv.c==='Support'&&/up|Dance|Swords|Growth|Agility|Calm|Bulk|Nasty|Iron|Amnesia/i.test(fx.mv.n))AUD.se('increase');
+    for(const x of h)if(x.ko){await w(900);if(x.m!=null)AUD.cry(x.m,{rate:.75});await w(400);AUD.se('Pkmn faint')}}}
+
+/* ---------- generatore di PNG ---------- */
+const NPCD={
+ cog:['Bianchi','Colombo','Brambilla','Ferrari','Galli','Riva','Sala','Fumagalli','Bernasconi','Cattaneo','Pozzi','Mauri','Locatelli','Rossi','Villa','Monti','Corti','Moretti','Ghezzi','Ronchi','Mariani','Longoni','Crippa','Viganò','Sironi','Frigerio','Redaelli','Zanetti','Valsecchi','Arrigoni','Bonfanti','Mazza','Ferrario','Pagani','Lazzaroni','Tagliabue','Castelli','Marelli','Rusconi','Molteni'],
+ nm:['Alberto','Giacomo','Pietro','Enrico','Matteo','Federico','Tommaso','Lorenzo','Gabriele','Emilio','Ugo','Ettore','Carlo','Franco','Dario','Nicola','Ivo','Aldo','Bruno','Rinaldo','Mario','Gino','Teodoro','Ambrogio','Cesare'],
+ nf:['Anna','Lucia','Carla','Beatrice','Sofia','Marta','Nadia','Ornella','Teresa','Agata','Ilaria','Vera','Rita','Bianca','Gemma','Noemi','Silvia','Ada','Elisa','Giovanna','Livia','Pia','Adele','Ambra','Clara'],
+ eta:[['Bambino','Bambina',0],['Ragazzo','Ragazza',1],['Giovane adulto','Giovane adulta',2],['Adulto','Adulta',2],['Anziano','Anziana',3]],
+ job:[['Infermiere del Centro Pokémon','Normal'],['Commesso del Pokémart','Normal'],['Allevatore di Pokémon','Normal'],['Ranger del parco','Grass'],['Pescatore del lago','Water'],['Barcaiolo','Water'],['Guardiano del faro','Electric'],['Minatore','Rock'],['Speleologo','Ground'],['Archeologa dilettante','Rock'],['Ricercatore universitario','Psychic'],['Assistente di laboratorio','Bug'],['Cuoco di trattoria','Fire'],['Pasticcere','Fairy'],['Contadino','Grass'],['Pastore di Mareep','Electric'],['Viticoltore','Grass'],['Giornalista','Normal'],['Fotografo naturalista','Flying'],['Agente di polizia','Fight'],['Musicista di strada','Normal'],['Pittore','Normal'],['Artigiano di Poké Ball','Steel'],['Fabbro','Steel'],['Macchinista del treno','Electric'],['Venditore ambulante','Normal'],['Monaco del santuario','Ghost'],['Maestra della Scuola Allenatori','Normal'],['Ex allenatore in pensione','Fight'],['Collezionista di fossili','Rock'],['Guida alpina','Ice'],['Custode del museo','Psychic'],['Gestore della locanda','Normal'],['Erborista','Grass'],['Veterinaria','Fairy'],['Postino','Flying'],['Sindaco del paese','Normal'],['Operaio della diga','Water'],['Tecnico della centrale','Electric'],['Mercante di dubbia fama','Dark']],
+ fis:['alto e allampanato','basso e robusto','minuto e nervoso','imponente','magro come un chiodo','dalla corporatura atletica','paffuto','curvo per l’età'],
+ cap:['capelli rossi ricci','una lunga treccia','la testa rasata','capelli grigi spettinati','un ciuffo tinto di blu','capelli neri raccolti','una barba folta','baffi a manubrio','capelli biondi corti'],
+ vest:['una giacca di velluto consumata','un grembiule macchiato','una divisa impeccabile','abiti da montagna','un cappotto troppo grande','un gilet pieno di tasche','un cappello di paglia','una sciarpa lunghissima','stivali infangati','occhiali rotondi'],
+ det:['ha una cicatrice sul sopracciglio','porta sempre un Pokéball portafortuna al collo','zoppica leggermente','ha le dita macchiate d’inchiostro','profuma di erbe aromatiche','ha un tatuaggio di un Dragonite','tiene una matita dietro l’orecchio','ha un dente d’oro','parla con il suo Pokémon come con un amico','ha le mani piene di calli'],
+ pos:['generoso','curioso','coraggioso','paziente','spiritoso','leale','ottimista','meticoloso','gentile','intraprendente'],
+ neg:['brontolone','sospettoso','vanitoso','distratto','avido','permaloso','pettegolo','testardo','pauroso','impulsivo'],
+ voce:['ripete l’ultima parola di ogni frase','parla in dialetto stretto','usa paragoni con il cibo','sussurra come se tutti ascoltassero','ride prima di ogni battuta','chiama tutti “campione”','cita proverbi a sproposito','parla velocissimo','fa lunghe pause drammatiche','si scusa continuamente'],
+ obi:['vuole ritrovare un Pokémon scappato','sta mettendo da parte i soldi per una nuova bottega','vuole dimostrare di valere quanto un capopalestra','cerca qualcuno che consegni un pacco in un’altra città','vuole fotografare un Pokémon leggendario','sogna di partecipare alla Lega','deve saldare un debito con persone poco raccomandabili','sta studiando uno strano fenomeno nella zona','vuole proteggere il bosco vicino da chi lo sfrutta','cerca un erede per la sua attività'],
+ seg:['ha lavorato per la Avarice in passato','nasconde un uovo di Pokémon raro','sa dove si trova un passaggio segreto','è il fratello di un capopalestra e non lo dice','ha perso una sfida importante e se ne vergogna','ha trovato un frammento di una tavola antica','scrive anonimamente sul giornale locale','è indebitato fino al collo','ha visto qualcosa di strano al lago di notte','è un ottimo allenatore ma finge di non esserlo'],
+ att:['amichevole','diffidente','indifferente','entusiasta','ostile','timido','interessato a fare affari','protettivo verso i più giovani']};
+const NPCF=[['nome','Nome'],['eta','Età'],['job','Mestiere'],['asp','Aspetto'],['car','Carattere'],['voce','Modo di parlare'],['obi','Obiettivo'],['seg','Segreto'],['att','Con il gruppo'],['pk','Pokémon compagno']];
+function npcField(n,k){const D=NPCD,f=n.f;
+  if(k==='nome'){n.g=Math.random()<.5?'m':'f';n.nome=pick(n.g==='m'?D.nm:D.nf)+' '+pick(D.cog);return}
+  if(k==='eta'){n.ei=rint(D.eta.length);n.eta=D.eta[n.ei][n.g==='m'?0:1];return}
+  if(k==='job'){const j=pick(n.ei===0?[['Figlio del fornaio','Normal'],['Piccolo esploratore','Bug'],['Aspirante allenatore','Normal']]:D.job);n.job=j[0];n.jt=j[1];return}
+  if(k==='asp'){n.asp=`${pick(D.fis)}, ${pick(D.cap)} e ${pick(D.vest)}; ${pick(D.det)}`;return}
+  if(k==='car'){n.car=pick(D.pos)+' ma '+pick(D.neg);return}
+  if(k==='voce'){n.voce=pick(D.voce);return}if(k==='obi'){n.obi=pick(D.obi);return}if(k==='seg'){n.seg=pick(D.seg);return}if(k==='att'){n.att=pick(D.att);return}
+  if(k==='pk'){const T=n.jt||'Normal',L=MON.map((m,i)=>i).filter(i=>{const m=MON[i];return m.ty.includes(T)&&m.rk<=3&&!/Mega|Unknown/.test(m.sg)&&SP.i[i]});n.pk=L.length?pick(L):null;return}}
+function newNpc(){const n={};['nome','eta','job','asp','car','voce','obi','seg','att','pk'].forEach(k=>npcField(n,k));return n}
+function npcText(n){return `${n.nome} — ${n.eta}, ${n.job}\nAspetto: ${n.asp}\nCarattere: ${n.car}\nModo di parlare: ${n.voce}\nObiettivo: ${n.obi}\nSegreto: ${n.seg}\nCon il gruppo: ${n.att}`+(n.pk!=null?`\nPokémon compagno: ${MON[n.pk].n}`:'')}
+function vGenNpc(){const n=ui.npc||(ui.npc=newNpc());
+  return `<div class="card"><div class="row">${n.pk!=null?monAv(n.pk):''}<div class="grow"><h2>${esc(n.nome)}</h2><div class="small muted">${esc(n.eta)} · ${esc(n.job)}</div></div><button class="btn sm" data-a="npcf" data-k="nome">↻</button></div>
+  ${NPCF.slice(1).map(([k,l])=>`<div class="srow" style="align-items:flex-start;padding:6px 0;border-top:1px solid var(--line)"><span><b class="small muted" style="text-transform:uppercase;letter-spacing:.05em">${l}</b><br>${k==='pk'?(n.pk!=null?esc(MON[n.pk].n):'—'):esc(n[k])}</span><button class="btn sm" data-a="npcf" data-k="${k}" aria-label="Rigenera ${l}">↻</button></div>`).join('')}</div>
+  <div class="row"><button class="btn pri grow" data-a="npcnew">Nuovo PNG</button><button class="btn grow" data-a="npcdiary">Salva nel diario</button></div>
+  <div class="row"><button class="btn grow" data-a="npctr">Crea come allenatore</button><button class="btn grow" data-a="npccopy">Copia testo</button></div>
+  <p class="small muted">Ogni voce si può rigenerare da sola con ↻. Nel diario finisce tra i Personaggi, visibile solo a te finché non lo rendi pubblico.</p>`}
+
 /* ---------- schermo per i giocatori in tempo reale ----------
    Stesso dispositivo: BroadcastChannel. Altro dispositivo: WebRTC diretto; ntfy.sh serve solo a presentarsi
    (pochi messaggi), con ripiego sui messaggi di ntfy se la connessione diretta non riesce. */
@@ -1094,9 +1207,9 @@ const ICE={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun.cl
 function iceDone(pc){return new Promise(res=>{if(pc.iceGatheringState==='complete')return res();const t=setTimeout(res,2500);pc.addEventListener('icegatheringstatechange',()=>{if(pc.iceGatheringState==='complete'){clearTimeout(t);res()}})})}
 const TAV={bc:null,code:null,sub:null,peers:{},last:'',t:null,fb:false,fbT:0,fbLast:'',
   chan(){if(!this.bc&&window.BroadcastChannel){this.bc=new BroadcastChannel('master-pokerole-tavolo');this.bc.onmessage=e=>{if(e.data==='hello')this.send(true)}}return this.bc},
-  snap(){const b=S.battle;if(!b||b.phase==='setup')return {idle:1,setup:!!b,ar:(S.opt&&S.opt.arena)||'stadio'};const ord=b.phase==='on'?bOrder():b.f,cur=b.phase==='on'?ord[b.ptr%Math.max(1,ord.length)]:null,hp=!!(S.opt&&S.opt.tavHp);
-    return {ar:(S.opt&&S.opt.arena)||'stadio',fx:(b.fxl||[]).slice(-6),r:b.round,w:b.weather,ph:b.phase,cur:cur?cur.id:null,f:ord.map(f=>{const P=bP(f);if(!P)return null;const d=bDer(f),own=f.side==='A'||hp;const tr=S.trainers.find(t=>t.id===f.o);
-      return {id:f.id,s:f.side,m:P.m,n:bName(f),o:tr?tr.name||'':'',h:d.hpNow,H:d.hp,x:own?1:0,st:f.st.map(k=>(STATI.find(y=>y[0]===k)||[])[1]).filter(Boolean)}}).filter(Boolean),log:b.log.slice(0,3)}},
+  snap(){const b=S.battle;if(!b||b.phase==='setup')return {idle:1,setup:!!b,ar:(S.opt&&S.opt.arena)||'stadio',au:S.opt.audioOut||'off',mu:MUS.state()};const ord=b.phase==='on'?bOrder():b.f,cur=b.phase==='on'?ord[b.ptr%Math.max(1,ord.length)]:null,hp=!!(S.opt&&S.opt.tavHp);
+    return {au:S.opt.audioOut||'off',mu:MUS.state(),wt:b.weather?b.wt||0:0,ef:(b.ef||[]).map(e=>({n:e.n,r:e.r,w:e.f&&bF(e.f)?bName(bF(e.f)):''})),ar:(S.opt&&S.opt.arena)||'stadio',fx:(b.fxl||[]).slice(-6),r:b.round,w:b.weather,ph:b.phase,cur:cur?cur.id:null,f:ord.map(f=>{const P=bP(f);if(!P)return null;const d=bDer(f),own=f.side==='A'||hp;const tr=S.trainers.find(t=>t.id===f.o);
+      return {id:f.id,s:f.side,m:P.m,n:bName(f),wl:f.o==='battle'||f.o==='saved'?1:0,o:tr?tr.name||'':'',h:d.hpNow,H:d.hp,x:own?1:0,st:f.st.map(k=>(STATI.find(y=>y[0]===k)||[])[1]).filter(Boolean)}}).filter(Boolean),log:b.log.slice(0,3)}},
   soon(){clearTimeout(this.t);this.t=setTimeout(()=>this.send(),120)},
   send(force){const st=JSON.stringify(this.snap());if(!force&&st===this.last)return;this.last=st;const bc=this.chan();if(bc)bc.postMessage(st);
     Object.values(this.peers).forEach(p=>{if(p.dc&&p.dc.readyState==='open')try{p.dc.send(st)}catch(e){}});
@@ -1115,6 +1228,40 @@ const TAV={bc:null,code:null,sub:null,peers:{},last:'',t:null,fb:false,fbT:0,fbL
   link(){return appUrl()+'#tavolo='+(S.tav&&S.tav.code||'')},
   peersOpen(){return Object.values(this.peers).filter(p=>p.dc&&p.dc.readyState==='open').length}};
 window.TAV=TAV;
+const MUS={n:0,t:'',state(){return {n:this.n,t:this.t,v:S.opt.mvol!=null?S.opt.mvol:.55}},
+  play(t){this.t=t||'';this.n++;const out=S.opt.audioOut||'off';if(out==='qui'){AUD.unlock();AUD.setMVol(this.state().v);if(t)AUD.music(t);else AUD.stopMusic()}else AUD.stopMusic();TAV.send(true);render(true)},
+  cat(c){const L=AUD.tracks(c);if(!L.length){toast('Nessun brano importato in questa categoria');return}let t=pick(L);if(L.length>1)while(t===this.t)t=pick(L);this.play(t)},
+  auto(c){if(S.opt.musAuto===false||!AUD.has())return;const L=AUD.tracks(c);if(L.length)this.play(pick(L))}};
+function battleCat(){const b=B();const foes=b.f.filter(f=>!isPg(f.o));const tr=[...new Set(foes.map(f=>f.o))].map(o=>S.trainers.find(t=>t.id===o)).filter(Boolean);
+  const R=tr.map(t=>t.role||'').join(' ');if(/Campione|Superquattro|CEO/i.test(R))return 'champ';if(/Avarice|Luogotenente|Sgherr/i.test(R))return 'team';if(/Capopalestra/i.test(R))return 'gym';if(tr.length)return 'trainer';
+  return foes.some(f=>{const P=bP(f);return P&&(P.rk>=5||MON[P.m].sg==='Unknown')})?'legend':'wild'}
+function musH(){const has=AUD.has(),out=S.opt.audioOut||'off';
+  if(!has)return `<div class="card"><div class="row"><h3 class="grow">Suoni e musica</h3><button class="btn sm" data-a="open" data-k="audio">Importa audio</button></div><p class="small muted">Importa effetti, versi e musiche dal progetto Essentials: restano solo su questo dispositivo.</p></div>`;
+  return `<div class="card"><div class="row"><h3 class="grow">Suoni e musica</h3><button class="btn sm" data-a="open" data-k="audio">Impostazioni</button></div>
+  <p class="small">${MUS.t?'In riproduzione: <b>'+esc(MUS.t.replace(/\.(ogg|wav)$/,''))+'</b>':'Nessuna musica'} · audio ${out==='qui'?'da questo dispositivo':out==='schermo'?'dallo schermo dei giocatori':'spento'}</p>
+  <div class="row">${selectH('muc','mucat',ui.muc||'trainer',MCATS.filter(c=>AUD.tracks(c[0]).length),'Categoria')}</div>
+  <div class="row"><button class="btn grow" data-a="mplay">${MUS.t?'Cambia brano':'Suona'}</button><button class="btn grow" data-a="mstop">Ferma</button></div></div>`}
+function sAudio(){const i=AUD.index(),out=S.opt.audioOut||'off';
+  return `<div class="card"><h3>Da dove esce l’audio</h3><div class="seg"><button data-a="aout" data-i="qui" aria-pressed="${out==='qui'}">Da questo dispositivo</button><button data-a="aout" data-i="schermo" aria-pressed="${out==='schermo'}">Dallo schermo dei giocatori</button><button data-a="aout" data-i="off" aria-pressed="${out==='off'}">Spento</button></div>
+  <p class="small muted">Con “schermo dei giocatori” suonano effetti e musica sul dispositivo dello schermo: anche lì vanno importati i file. Su iPhone alcuni file .ogg potrebbero non suonare.</p>
+  <label class="chk"><input type="checkbox" data-c="musauto" ${S.opt.musAuto!==false?'checked':''}> Musica automatica: battaglia adatta all’avversario e vittoria alla fine</label>
+  <div class="srow"><span>Volume musica</span><input type="range" min="0" max="1" step=".05" value="${S.opt.mvol!=null?S.opt.mvol:.55}" data-c="mvol" style="width:50%"></div></div>
+  <div class="card"><h3>Importa dal progetto Essentials</h3><p class="small">Su PC scegli la cartella; su telefono puoi selezionare i file. I file restano solo su questo dispositivo, non vanno su GitHub.</p>
+  <p><b>1.</b> Effetti e versi: cartella <code>Audio/SE</code> (con dentro Anim e Cries).</p><label class="btn filebtn">Scegli la cartella SE<input type="file" multiple webkitdirectory data-c="audimp"></label>
+  <p><b>2.</b> Musiche DPPt e BW: cartella <code>Audio/BGM</code> (vengono presi solo i brani che iniziano con “DPPT” e “BW”, circa 450 MB).</p><label class="btn filebtn">Scegli la cartella BGM<input type="file" multiple webkitdirectory data-c="audimp"></label>
+  <label class="btn filebtn">Oppure seleziona singoli file<input type="file" multiple accept="audio/*,.ogg,.wav" data-c="audimp"></label>
+  <p class="small muted" id="audp">${ui.audp||''}</p>
+  <p class="small">Su questo dispositivo: ${i.se.length} effetti di lotta · ${i.anim.length} effetti delle mosse · ${i.cry.length} versi · ${i.bgm.length} brani</p>
+  ${AUD.has()?`<button class="btn danger" data-a="audclr">${ui.arm==='audclr'?'Tocca ancora per cancellare':'Cancella l’audio da questo dispositivo'}</button>`:''}</div>`}
+/* ---------- promemoria, meteo ed effetti a tempo ---------- */
+const WMOVES={'Sunny Day':'sun','Rain Dance':'rain','Sandstorm':'sand','Hail':'hail','Snowscape':'snow','Chilly Reception':'snow'};
+function remindH(){const b=B(),r=b.remind;if(!r||!r.items.length)return '';return `<div class="card" style="border-left:4px solid var(--accent)"><div class="row"><h3 class="grow">Inizio round ${r.r}: da controllare</h3><button class="btn sm" data-a="remok">Fatto</button></div><ul style="margin:6px 0 0;padding-left:18px">${r.items.map(x=>`<li class="small" style="margin:3px 0">${x}</li>`).join('')}</ul></div>`}
+function effH(){const b=B(),W=(METEO.find(x=>x[0]===b.weather)||['',''])[1];
+  return `<div class="card"><h3>Meteo ed effetti a tempo</h3>${b.weather?`<div class="srow"><span>${esc(W)}: ${b.wt>0?b.wt+' round':'senza limite'}</span>${stepper('bwt','',b.wt||0)}</div>`:'<p class="small muted">Nessun meteo attivo (si sceglie in alto).</p>'}
+  ${(b.ef||[]).map((e,k)=>`<div class="srow"><span>${esc(e.n)}${e.f&&bF(e.f)?' · '+esc(bName(bF(e.f))):' · campo'} · ${e.r} round</span><span class="row" style="gap:4px">${stepper('befr',String(k),'')}<button class="btn sm" data-a="befdel" data-i="${k}">×</button></span></div>`).join('')}
+  <div class="row"><div class="field"><label for="efn">Nuovo effetto</label><input id="efn" type="text" data-i="efn" value="${esc(ui.efn||'')}" placeholder="Es. Reflect, Trick Room"></div>${selectH('eft','eftg',ui.eft||'',[['','Campo']].concat(b.f.map(f=>[f.id,bName(f)])),'Su')}</div>
+  <div class="row"><span class="small grow">Durata: ${ui.efr||4} round</span>${stepper('efr','',ui.efr||4)}<button class="btn sm pri" data-a="befadd">Aggiungi</button></div>
+  <p class="small muted">Le mosse con durata scritta nel manuale (“Duration 4 Rounds”) e le mosse meteo si aggiungono da sole.</p></div>`}
 function sTav(){const c=S.tav&&S.tav.code;return `<div class="card"><h3>Sullo stesso dispositivo</h3><p class="small">Apre una seconda finestra da spostare sull’altro schermo (PC con due monitor o dispositivo con due schermi). Si aggiorna all’istante, anche senza internet.</p><button class="btn pri" data-a="tavwin">Apri la finestra per i giocatori</button></div>
   <div class="card"><h3>Su un altro dispositivo</h3><p class="small">Sul secondo dispositivo apri l’app, vai in Lotta e tocca “Usa come schermo per i giocatori”, poi scrivi questo codice:</p>
   <p style="text-align:center;margin:10px 0"><b style="font:800 34px/1 var(--display);letter-spacing:.18em">${esc((c||'').toUpperCase())}</b></p>
@@ -1272,23 +1419,46 @@ async function playMove(fx,nm){const A=FXE.ctr(fx.a),t=fx.mv.t;VIEW.say(`${nm(fx
   if(fx.crit&&hit.length){VIEW.say('Brutto colpo!');await FXE.wait(700)}
   const eff=hit.map(x=>x.e).find(e=>e!=null&&e!==0);if(eff==='i'){VIEW.say('Non ha effetto…');await FXE.wait(700)}else if(eff>0){VIEW.say('È superefficace!');await FXE.wait(700)}else if(eff<0){VIEW.say('Non è molto efficace…');await FXE.wait(700)}
   for(const x of hit)if(x.ko){await FXE.faint(x.C);VIEW.say(`${nm(x.id)} è esausto!`);await FXE.wait(800)}}
+const SND=()=>VIEW.st&&VIEW.st.au==='schermo'&&AUD.has()&&AUD.ready();
 const VIEW={on:false,code:null,g:null,pc:null,sub:null,st:null,ok:false,fb:null,tries:0,wl:null,seen:null,q:[],busy:false,hpPrev:{},msg:'',
   start(code){this.on=true;this.code=code||null;document.body.style.overflow='hidden';this.paint();
     if(window.BroadcastChannel){const bc=new BroadcastChannel('master-pokerole-tavolo');bc.onmessage=e=>{if(e.data!=='hello')this.set(e.data,'stesso dispositivo')};bc.postMessage('hello')}
     if(code)this.connect();this.lock();document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')this.lock()});addEventListener('resize',()=>{if(!this.busy)this.paint()})},
   async lock(){try{if(navigator.wakeLock)this.wl=await navigator.wakeLock.request('screen')}catch(e){}},
-  set(raw,via){let s;try{s=JSON.parse(raw)}catch(e){return}this.via=via;const L=(s.fx||[]);
+  music(s){const m=s.mu;if(s.au!=='schermo'){if(AUD.mu)AUD.stopMusic();this.muN=null;return}if(!m||!AUD.ready())return;AUD.setMVol(m.v);if(m.n!==this.muN){this.muN=m.n;if(m.t)AUD.music(m.t);else AUD.stopMusic()}},
+  set(raw,via){let s;try{s=JSON.parse(raw)}catch(e){return}this.via=via;this.music(s);const L=(s.fx||[]);
     if(this.seen==null){this.seen=L.length?L[L.length-1].n:0;this.st=s;this.paint();return}
     L.filter(x=>x.n>this.seen).forEach(x=>{this.q.push(x);this.seen=x.n});this.pend=s;if(!this.busy)this.run()},
   async run(){this.busy=true;const nm=id=>{const f=(this.st&&this.st.f||[]).find(y=>y.id===id)||(this.pend&&this.pend.f||[]).find(y=>y.id===id);return f?f.n:'?'};
     while(this.q.length){const fx=this.q.shift();try{
-      if(fx.k==='round'){if(this.pend){this.st=this.pend;this.paint()}this.say('Round '+fx.r);const b=document.createElement('div');b.className='rbanner';b.textContent='Round '+fx.r;FXE.AR().appendChild(b);await FXE.an(b,[{transform:'translate(-50%,-50%) scale(.6)',opacity:0},{transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.2},{opacity:1,offset:.8},{opacity:0}],1100);b.remove()}
+      if(SND())fxSound(fx);
+      if(fx.k==='intro'){if(this.pend){this.st=this.pend;this.pend=null;this.paint()}await this.intro(fx)}
+      else if(fx.k==='round'){if(this.pend){this.st=this.pend;this.paint()}this.say('Round '+fx.r);const b=document.createElement('div');b.className='rbanner';b.textContent='Round '+fx.r;FXE.AR().appendChild(b);await FXE.an(b,[{transform:'translate(-50%,-50%) scale(.6)',opacity:0},{transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.2},{opacity:1,offset:.8},{opacity:0}],1100);b.remove()}
       else if(fx.k==='tick'){for(const it of fx.items){const T=FXE.ctr(it.id);if(!T)continue;const t=/Burn/.test(it.why)?'Fire':/Poison/.test(it.why)?'Poison':/Sand/.test(it.why)?'Ground':/Hail/.test(it.why)?'Ice':'Normal';FXE.burst(T,t,8,50);FXE.dmg(T,it.d);this.say(`${nm(it.id)} subisce danni (${it.why})`);await FXE.wait(650)}}
       else if(fx.k==='catch'){const T=FXE.ctr(fx.id);this.say(`Lancio della ${fx.ball||'Poké Ball'}!`);if(T)await FXE.ball(T,fx.ok,fx.brk);this.say(fx.ok?`${fx.nm} è stato catturato!`:fx.brk?`${fx.nm} si libera e distrugge la Ball!`:`${fx.nm} è uscito dalla Ball!`);await FXE.wait(900)}
       else await playMove(fx,nm)}catch(e){}
       if(!this.q.length&&this.pend){this.st=this.pend;this.pend=null;this.paint()}}
     if(this.pend){this.st=this.pend;this.pend=null;this.paint()}this.busy=false},
+  async intro(fx){const els=fx.items.map(it=>({it,el:document.querySelector(`#arena .mon[data-id="${it.id}"]`)})).filter(x=>x.el);
+    els.forEach(x=>{x.el.querySelectorAll('.spr,.plate').forEach(e=>e.style.opacity=0)});this.say('Inizia la lotta!');await FXE.wait(500);
+    const show=async(x,how)=>{const sp=x.el.querySelector('.spr'),pl=x.el.querySelector('.plate'),T=FXE.ctr(x.it.id);if(!sp)return;
+      if(how==='wild'){if(T)FXE.burst({x:T.x,y:T.y+T.h*.4},'Grass',8,50,'leaf');await FXE.an(sp,[{opacity:0,transform:'translateY(20%) scale(.9)'},{opacity:1,transform:'translateY(0) scale(1)'}],{duration:520});}
+      else{if(T){const A=FXE.AR().getBoundingClientRect(),from=x.it.s==='A'?{x:A.width*.1,y:A.height}:{x:T.x+60,y:-20},bl=FXE.pt(BALLSVG(26),from.x,from.y);
+          await FXE.an(bl,[{left:from.x+'px',top:from.y+'px',transform:'translate(-50%,-50%) rotate(0)'},{left:T.x+'px',top:T.y+'px',transform:'translate(-50%,-50%) rotate(540deg)'}],{duration:480,easing:'ease-out'});bl.remove();
+          const r=FXE.pt(`<div class="ring" style="border-color:#fff;box-shadow:0 0 24px #fff"></div>`,T.x,T.y);FXE.an(r,[{transform:'translate(-50%,-50%) scale(.2)',opacity:1},{transform:'translate(-50%,-50%) scale(2.4)',opacity:0}],420);FXE.rm(r,450);FXE.flash('#fff',220)}
+        await FXE.an(sp,[{opacity:0,transform:'scale(.1)',filter:'brightness(5)'},{opacity:1,transform:'scale(1.08)',filter:'brightness(2)',offset:.7},{opacity:1,transform:'scale(1)',filter:'brightness(1)'}],{duration:380})}
+      sp.style.opacity='';if(pl){pl.style.opacity='';FXE.an(pl,[{opacity:0,transform:'translateY(-8px)'},{opacity:1,transform:'translateY(0)'}],300)}};
+    const B2=els.filter(x=>x.it.s==='B'),A2=els.filter(x=>x.it.s==='A'),wild=B2.filter(x=>x.it.wild),trs=[...new Set(B2.filter(x=>!x.it.wild).map(x=>x.it.tr))];
+    const nmOf=x=>{const f=(this.st.f||[]).find(y=>y.id===x.it.id);return f?f.n:''},list=L=>L.map(nmOf).join(L.length>2?', ':' e ').replace(/, ([^,]*)$/,' e $1');
+    if(wild.length){this.say(wild.length===1?`Appare ${nmOf(wild[0])} selvatico!`:`Appaiono ${list(wild)} selvatici!`);for(const x of wild){show(x,'wild');await FXE.wait(260)}await FXE.wait(700)}
+    for(const t of trs){const L=B2.filter(x=>!x.it.wild&&x.it.tr===t);this.say(`${t||'L’allenatore'} manda in campo ${list(L)}!`);for(const x of L){await show(x,'ball');await FXE.wait(140)}await FXE.wait(500)}
+    if(A2.length){this.say(`Vai, ${list(A2)}!`);for(const x of A2){await show(x,'ball');await FXE.wait(140)}await FXE.wait(600)}
+    els.forEach(x=>x.el.querySelectorAll('.spr,.plate').forEach(e=>e.style.opacity=''))},
   say(t){this.msg=t;const b=document.querySelector('#tav .tbox span');if(b)b.textContent=t},
+  audH(s){if(!s||s.au!=='schermo'||this.audNo)return '';
+    if(!AUD.has())return `<div class="aud">Il master ha scelto di far uscire suoni e musica da questo schermo, ma qui non ci sono file audio.<br><label>Importa la cartella SE<input type="file" multiple webkitdirectory onchange="VIEW.imp(this)"></label> <label>Importa la cartella BGM<input type="file" multiple webkitdirectory onchange="VIEW.imp(this)"></label><small id="vaudp">Vengono salvati solo su questo dispositivo.</small><button onclick="VIEW.audNo=1;VIEW.paint()" style="background:#3a4a59">Continua senza audio</button></div>`;
+    if(!AUD.ready())return `<div class="aud">Suoni e musica pronti.<br><button onclick="AUD.unlock();VIEW.muN=null;setTimeout(()=>{VIEW.music(VIEW.st);VIEW.paint()},150)">Tocca per attivare l’audio</button></div>`;return ''},
+  imp(inp){AUD.unlock();AUD.importFiles(inp.files,(k,n,ok)=>{const p=document.getElementById('vaudp');if(p)p.textContent=`Letti ${k} di ${n} · importati ${ok}`}).then(()=>{this.muN=null;this.music(this.st);this.paint()})},
   connect(){this.g=uid();if(this.sub)this.sub.close();const me='mpr2-'+this.code+'-'+this.g;this.sub=SIG.sub(me,m=>this.onSig(m));setTimeout(()=>this.hi(),700)},
   hi(){if(this.ok)return;this.tries++;SIG.pub('mpr2-'+this.code+'-h',{t:'hi',g:this.g});
     setTimeout(()=>{if(this.ok)return;if(this.tries>=2&&!this.fb){this.fb=SIG.sub('mpr2-'+this.code+'-s',m=>{if(m.st)this.set(m.st,'riserva')},'10m');SIG.pub('mpr2-'+this.code+'-h',{t:'fb'})}if(this.tries<6)this.hi()},9000)},
@@ -1311,10 +1481,12 @@ const VIEW={on:false,code:null,g:null,pc:null,sub:null,st:null,ok:false,fb:null,
           ${src?`<img class="spr${near?' back':''}" src="${src}" alt="" style="height:${hh}px;width:${ww}px">`:''}</div>`}).join('');
       mons=place(B,false)+place(A,true);
       const Wn=(METEO.find(x=>x[0]===wx)||['',''])[1];
-      hud=`<div class="hud"><span class="ball" aria-hidden="true"></span><b>${s.ph==='init'?'Iniziativa':'Round '+s.r}</b>${wx?`<span class="wx-tag">${esc(Wn)}</span>`:''}${conn?`<span class="conn">${esc(conn)}</span>`:''}</div>`;
+      hud=`<div class="hud"><span class="ball" aria-hidden="true"></span><b>${s.ph==='init'?'Iniziativa':'Round '+s.r}</b>${wx?`<span class="wx-tag">${esc(Wn)}${s.wt?' · '+s.wt:''}</span>`:''}${conn?`<span class="conn">${esc(conn)}</span>`:''}</div>`+
+        (s.ph==='on'?`<div class="order">${s.f.map(f=>{const u=monSrc(f.m);return `<i class="${f.s}${f.id===s.cur?' on':''}${f.h<=0?' ko':''}" title="${esc(f.n)}">${u?`<img src="${u}" alt="">`:''}</i>`}).join('')}</div>`:'')+
+        (s.ef&&s.ef.length?`<div class="efx">${s.ef.map(e=>`<span>${esc(e.n)}${e.w?' · '+esc(e.w):''} · ${e.r}</span>`).join('')}</div>`:'');
       tx=this.busy&&this.msg?this.msg:s.ph==='init'?'Si tira l’iniziativa…':cur?`Tocca a ${cur.n}! Che cosa farà?`:(s.log&&s.log[0]||'')}
     r.innerHTML=`<div id="tav"><div id="arena" class="ar-${ar}">${arenaSVG(ar)}<div class="wx wx-${wx}"></div>${s&&!s.idle?'':`<div class="idle"><span class="ball" style="width:72px;height:72px;border-width:5px"></span></div>`}<div class="mons">${mons}</div><div id="fxl"></div>${hud}</div>
-      <div class="tbox"><span>${esc(tx)}</span></div><button class="x" onclick="location.hash='';location.reload()">Esci</button></div>`;
+      <div class="tbox"><span>${esc(tx)}</span></div><button class="x" onclick="location.hash='';location.reload()">Esci</button>${this.audH(s)}</div>`;
     requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll('#tav .hpb i[data-p]').forEach(i=>{const v=+i.dataset.p;i.style.width=100*v+'%';i.style.background=v>.5?'#3fbf6a':v>.2?'#f0b429':'#e5484d'})))}};
 
 /* ---------- schede e render ---------- */
@@ -1342,6 +1514,7 @@ function sheetH(keep){
   else if(top.k==='dex'){const t=S.trainers.find(x=>x.id===top.i);title='Pokédex'+(t?' di '+(t.name||''):'');body=t?sDex(t):''}
   else if(top.k==='mart'){title='Pokémart';body=sMart()}
   else if(top.k==='tav'){title='Schermo per i giocatori';body=sTav()}
+  else if(top.k==='audio'){title='Suoni e musica';body=sAudio()}
   else if(top.k==='catch'){title='Cattura';body=B()?sCatch(top):''}
   else if(top.k==='rew'){title='Fine lotta';body=B()&&ui.rw?sRew():'<p class="muted">Nessuna lotta in corso.</p>'}
   else if(top.k==='dent'){const e=S.diary.find(x=>x.id===top.i);title=e?(e.t||'Nuova voce'):'Diario';body=e?sDent(e):'<p class="muted">Voce non trovata.</p>'}
@@ -1421,7 +1594,9 @@ const ACT={
   binit(){B().phase='init';save();render()},
   bback(){B().phase='setup';save();render()},
   bd6(d){bF(d.i).d6=+d.n;save();render(true)},
-  bstart(){const b=B();b.fxl=[];b.f.forEach(f=>{if(!isPg(f.o))return;const t=S.trainers.find(x=>x.id===f.o);b.f.filter(x=>x.side!==f.side).forEach(x=>{const Q=bP(x);if(Q)dexAdd(t,MON[Q.m].num,'s')})});b.phase='on';b.round=1;b.ptr=0;b.f.forEach(f=>{f.acts=0;f.used=[]});b.log=[];bLog('Inizia la battaglia');save();render()},
+  bstart(){const b=B();b.fxl=[];b.ef=b.ef||[];if(b.weather&&!b.wt)b.wt=4;b.f.forEach(f=>{if(!isPg(f.o))return;const t=S.trainers.find(x=>x.id===f.o);b.f.filter(x=>x.side!==f.side).forEach(x=>{const Q=bP(x);if(Q)dexAdd(t,MON[Q.m].num,'s')})});b.phase='on';b.round=1;b.ptr=0;b.f.forEach(f=>{f.acts=0;f.used=[]});b.log=[];bLog('Inizia la battaglia');
+    const it=f=>{const P=bP(f),t=S.trainers.find(x=>x.id===f.o);return {id:f.id,m:P.m,s:f.side,wild:f.o==='battle'||f.o==='saved',tr:t&&!t.pg?t.name||'':''}};
+    bFx({k:'intro',items:b.f.filter(f=>f.side==='B').map(it).concat(b.f.filter(f=>f.side==='A').map(it))});MUS.auto(battleCat());save();render()},
   bnext(){const b=B(),ord=bOrder();for(let k=0;k<ord.length;k++){b.ptr=(b.ptr+1)%ord.length;if(bDer(ord[b.ptr]).hpNow>0)break}save();render(true)},
   bround(){bEndRound();save();render()},
   bwe_(){},
@@ -1432,7 +1607,7 @@ const ACT={
   bmod(d){const [id,k]=d.k.split(':'),f=bF(id);f.mod[+k]=clamp((f.mod[+k]||0)+(+d.d),-6,6);save();render(true)},
   bfree(d){const f=bF(d.i);if(f.acts<5){f.acts++;bLog(bName(f)+' usa un’azione generica')}save();render(true)},
   bheal(){B().f.forEach(f=>{const P=bP(f);if(P){P.dmg=0;P.wsp=0}f.st=[]});bLog('Tutti curati');save();render(true)},
-  bend(){if(B().phase==='on'&&ui.arm!=='bend'){ui.arm='bend';render(true);return}ui.arm=null;S.battle=null;save();render()},
+  bend(){if(B().phase==='on'&&ui.arm!=='bend'){ui.arm='bend';render(true);return}ui.arm=null;S.battle=null;save();if(MUS.t)MUS.play('');render()},
   bendk(){const b=B();b.wild.forEach(P=>S.saved.unshift(P));S.battle=null;save();toast('Battaglia terminata, selvatici salvati');render()},
   bact(d){ui.act={fid:d.i,mv:null,tg:[],acc:0,r:{}};ui.stack.push({k:'act'});render()},
   amv(d){const a=ui.act;a.mv=/^\d+$/.test(d.i)?+d.i:d.i;a.acc=0;a.r={};if(!a.tg.length){const f=bF(a.fid),foes=B().f.filter(x=>x.side!==f.side&&bDer(x).hpNow>0);if(foes.length===1)a.tg=[foes[0].id]}render(true)},
@@ -1454,12 +1629,30 @@ const ACT={
     {const FX={a:f.id,mv:{n:mv.n,t:mv.t,c:mv.c},miss:!o.hit,crit:!!o.crit,tg:[]};
       if(o.hit)a.tg.forEach(id=>{const T=bF(id),x=o.t[id],r=a.r[id];if(!T||!x)return;
         if(x.rok&&r.re==='eva')FX.tg.push({id,k:'eva'});else if(x.rok&&r.re==='cla')FX.tg.push({id,k:'cla',d:x.cd[0],d2:x.cd[1]});
-        else if(o.support)FX.tg.push({id,k:'sup'});else FX.tg.push({id,k:'hit',d:x.final,e:x.eff===0?0:x.eff,ko:bDer(T).hpNow<=0})});
+        else if(o.support)FX.tg.push({id,k:'sup'});else FX.tg.push({id,k:'hit',d:x.final,e:x.eff===0?0:x.eff,ko:bDer(T).hpNow<=0,m:bP(T).m})});
+      if(o.hit){const b=B(),wm=WMOVES[mv.n],dm=(mv.e||'').match(/Duration (\d+) Rounds?|lasts (\d+) rounds?/i),nr=dm?+(dm[1]||dm[2]):4;
+        if(wm){b.weather=wm;b.wt=nr;bLog('Meteo: '+(METEO.find(x=>x[0]===wm)||[])[1]+' per '+nr+' round')}
+        else if(dm){(b.ef=b.ef||[]).push({n:mv.n,r:nr,f:o.support&&a.tg.length===1?a.tg[0]:f.id});bLog(mv.n+': effetto per '+nr+' round')}}
       else if(a.tg.length)FX.tg.push({id:a.tg[0],k:'miss'});bFx(FX)}
     f.acts++;f.used.push(a.mv);ui.act=null;ui.stack.pop();save();render()},
   tview(d){ui.tv=d.i;render()},
   tavwin(){const w=window.open(appUrl()+'#tavolo','mpr-tavolo','popup,width=1100,height=700');if(!w)toast('Il browser ha bloccato la finestra: consenti i popup');setTimeout(()=>TAV.send(true),1500)},
   tavshare(){const u=TAV.link(),text='Schermo della lotta di Master Pokérole';if(navigator.share){navigator.share({title:text,text,url:u}).catch(()=>{})}else copy(u,'Link copiato')},
+  remok(){B().remind=null;save();render(true)},
+  bwt(d){const b=B();b.wt=clamp((b.wt||0)+(+d.d),0,20);save();render(true)},
+  befr(d){const e=B().ef[+d.k];e.r=clamp(e.r+(+d.d),1,20);save();render(true)},
+  befdel(d){B().ef.splice(+d.i,1);save();render(true)},
+  efr(d){ui.efr=clamp((ui.efr||4)+(+d.d),1,20);render(true)},
+  befadd(){const n=(ui.efn||'').trim();if(!n){toast('Scrivi il nome dell’effetto');return}(B().ef=B().ef||[]).push({n,r:ui.efr||4,f:ui.eft||null});bLog(n+': effetto per '+(ui.efr||4)+' round');ui.efn='';save();render(true)},
+  mplay(){AUD.unlock();MUS.cat(ui.muc||'trainer')},
+  mstop(){MUS.play('')},
+  aout(d){S.opt.audioOut=d.i;save();if(d.i==='qui'){AUD.unlock();if(MUS.t)AUD.music(MUS.t)}else AUD.stopMusic();TAV.send(true);render(true)},
+  audclr(){if(ui.arm!=='audclr'){ui.arm='audclr';render(true);return}ui.arm=null;AUD.clear().then(()=>{AUD.idx={se:[],anim:[],cry:[],bgm:[]};AUD.saveIdx();AUD.cache={};toast('Audio cancellato da questo dispositivo');render(true)})},
+  npcnew(){ui.npc=newNpc();render(true)},
+  npcf(d){npcField(ui.npc,d.k);if(d.k==='nome')npcField(ui.npc,'eta');if(d.k==='job')npcField(ui.npc,'pk');render(true)},
+  npccopy(){copy(npcText(ui.npc),'PNG copiato')},
+  npcdiary(){const n=ui.npc;S.diary.unshift({id:uid(),t:n.nome,c:'png',w:'',b:npcText(n).split('\n').slice(1).map(x=>'- '+x).join('\n')+'\n'+n.eta+', '+n.job,pub:false,u:Date.now()});save();toast('Salvato nel diario tra i Personaggi')},
+  npctr(){const n=ui.npc,t=newTrainer();t.name=n.nome;t.role=n.job;t.age=Math.min(3,[0,1,2,2,3][n.ei]);t.rk=1;t.notes=npcText(n);if(n.pk!=null)t.team.push(generate(n.pk,Math.min(MON[n.pk].rk,2),'bal'));S.trainers.unshift(t);save();ui.tv='npc';ui.stack.push({k:'trainer',i:t.id});render();toast('Allenatore creato')},
   tavar(d){S.opt.arena=d.i;save();TAV.send(true);render(true)},
   tavoff(){TAV.stop();ui.stack.pop();toast('Schermo per i giocatori spento');render()},
   tavjoin(){const c=prompt('Codice mostrato sul dispositivo del master (lascia vuoto se è lo stesso dispositivo):','');if(c===null)return;location.hash='tavolo'+(c.trim()?'='+c.trim().toLowerCase():'');location.reload()},
@@ -1523,7 +1716,8 @@ const ACT={
     if(r.diary){const foes=b.f.filter(f=>!isPg(f.o)).map(bName),mine=b.f.filter(f=>isPg(f.o)).map(bName);
       S.diary.unshift({id:uid(),t:(r.win?'Vittoria':'Sconfitta')+(foes.length?' contro '+foes.slice(0,3).join(', ')+(foes.length>3?'…':''):''),c:'ses',w:'',pub:false,u:Date.now(),
         b:['Round giocati: '+b.round,mine.length?'In campo: '+mine.join(', '):'',(b.caught||[]).length?'Catture: '+b.caught.join(', '):''].concat(sum.map(x=>'- '+x)).filter(Boolean).join('\n')})}
-    S.battle=null;ui.rw=null;ui.stack=[];save();render();toast('Ricompense assegnate')},
+    const vc='v-'+({wild:'wild',legend:'wild',trainer:'trainer',gym:'gym',team:'team',champ:'champ'}[battleCat()]||'trainer');
+    S.battle=null;ui.rw=null;ui.stack=[];save();if(r.win&&S.opt.musAuto!==false&&AUD.has()){const L=AUD.tracks(vc).length?AUD.tracks(vc):AUD.tracks('v-any');if(L.length)MUS.play(pick(L));else MUS.play('')}else MUS.play('');render();toast('Ricompense assegnate')},
   dnew(){const e={id:uid(),t:'',c:ui.di.c||'ses',w:'',b:'',pub:false,u:Date.now()};S.diary.unshift(e);save();ui.stack.push({k:'dent',i:e.id});render()},
   dfil(d){ui.di.c=d.i;render(true)},
   dimgdel(d){const e=curDent(),im=e.img.splice(+d.i,1)[0];if(im&&!im.f)IDB.del(im.id);e.u=Date.now();save();render(true)},
@@ -1557,6 +1751,7 @@ document.addEventListener('input',e=>{const t=e.target,k=t.dataset.i;if(!k)retur
   else if(k.startsWith('de:')){const e=curDent();if(e){e[k.slice(3)]=t.value;e.u=Date.now();save();if(k==='de:t'){const h=document.querySelector('.sheet header h2');if(h)h.textContent=t.value||'Nuova voce'}}}
   else if(k.startsWith('dimgcap:')){const e=curDent();if(e&&e.img){const im=e.img[+k.slice(8)];if(im){im.d=t.value;e.u=Date.now();save()}}}
   else if(k==='impt'){ui.impt=t.value}
+  else if(k==='efn'){ui.efn=t.value}
   else if(k==='gtmq'){ui.gr.q=t.value;const g=growTop();if(g)$('#gtml').innerHTML=tmList(g.P)}
   else if(k==='dxq'){ui.dx.q=t.value;const tr=S.trainers.find(x=>x.id===ui.stack[ui.stack.length-1].i);if(tr){const D=dexOf(tr),q=key(t.value);const L=q?DEXN.filter(i=>key(MON[i].n+' '+MON[i].num).includes(q)).slice(0,40):DEXN.filter(i=>ui.dx.f==='c'?D.c.has(MON[i].num):D.s.has(MON[i].num));$('#dxl').innerHTML=dexList(tr,L,D)}}
   else if(k==='diq'){ui.di.q=t.value;$('#dil').innerHTML=dList()}
@@ -1571,7 +1766,7 @@ document.addEventListener('change',e=>{const t=e.target,k=t.dataset.c;if(!k)retu
   else if(k==='gi:cat'){ui.gi.cat=v}
   else if(k==='bsrc'){ui.bt.src=v;render(true)}
   else if(k==='bwr'){ui.bt.rk=+v}
-  else if(k==='bwe'){B().weather=v;bLog('Meteo: '+(METEO.find(x=>x[0]===v)||[])[1]);save();render(true)}
+  else if(k==='bwe'){B().weather=v;B().wt=v?4:0;bLog('Meteo: '+(METEO.find(x=>x[0]===v)||[])[1]);save();render(true)}
   else if(k.startsWith('df:')){ui.db[k.slice(3)]=v;ui.db.lim=50;$('#dbl').innerHTML=dbList()}
   else if(k.startsWith('gd:')){ui.gl[k.slice(3)]=v;const tc=$('#tc');if(tc)tc.innerHTML=tcH()}
   else if(k.startsWith('ga:')){ui.ga[k.slice(3)]=+v}
@@ -1579,6 +1774,12 @@ document.addEventListener('change',e=>{const t=e.target,k=t.dataset.c;if(!k)retu
   else if(k.startsWith('tsel:')){const tr=curTrainer(),before=martTier();tr[k.slice(5)]=+v;save();render(true);if(k==='tsel:rk'&&tr.pg&&martTier()>before)toast('Il Pokémart ha nuovi articoli!')}
   else if(k==='de:c'){const e=curDent();if(e){e.c=v;e.u=Date.now();save()}}
   else if(k==='rw:to'||k==='rw:ito'){ui.rw[k.slice(3)]=v}
+  else if(k==='mucat'){ui.muc=v}
+  else if(k==='eftg'){ui.eft=v}
+  else if(k==='musauto'){S.opt.musAuto=t.checked;save()}
+  else if(k==='mvol'){S.opt.mvol=+v;AUD.setMVol(+v);save();TAV.send(true)}
+  else if(k==='audimp'){const fs=t.files;if(!fs||!fs.length)return;AUD.unlock();ui.audp='Importo '+fs.length+' file...';render(true);
+    AUD.importFiles(fs,(k2,n2,ok)=>{const p=$('#audp');if(p)p.textContent=`Letti ${k2} di ${n2} file · importati ${ok}`}).then(n=>{ui.audp=n+' file importati.';t.value='';if(!S.opt.audioOut||S.opt.audioOut==='off'){S.opt.audioOut='qui';save()}render(true);toast(n+' file audio importati')}).catch(e=>{ui.audp='Errore: '+e.message;render(true)})}
   else if(k==='tavhp'){S.opt.tavHp=t.checked;save();TAV.send(true)}
   else if(k==='rw:multi'||k==='rw:diary'||k==='rw:keep'){ui.rw[k.slice(3)]=t.checked;render(true)}
   else if(k.startsWith('rwp:')||k.startsWith('rwk:')){const r=ui.rw.rows[k.slice(4)];r[k[2]==='p'?'part':'ko']=t.checked;render(true)}
