@@ -170,6 +170,7 @@ nav.tabs button[aria-current="page"] svg{color:var(--accent)}
 .rwrow{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
 .rwrow:first-of-type{border-top:0}
 textarea.tall{min-height:260px}
+main>*,.sheet .body>*{flex-shrink:0}
 .gal{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.gal.one{grid-template-columns:1fr}
 .gal figure{margin:0;position:relative}.gal img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;background:var(--sunk);cursor:zoom-in}
 .gal.one img{aspect-ratio:auto;max-height:420px;object-fit:contain}
@@ -508,7 +509,7 @@ function vTrainers(){
   const tv=ui.tv||'pg';
   const seg=`<div class="seg"><button data-a="tview" data-i="pg" aria-pressed="${tv==='pg'}">Giocatori (${pgs().length})</button><button data-a="tview" data-i="npc" aria-pressed="${tv==='npc'}">Allenatori PNG (${S.trainers.length-pgs().length})</button></div>`;
   if(tv==='pg'){const L=pgs();
-    return seg+`<div class="row"><h2 class="grow">Squadre dei giocatori</h2><button class="btn sm pri" data-a="tnewpg">Nuovo personaggio</button></div>`+
+    return seg+`<div class="row"><h2 class="grow">Squadre dei giocatori</h2><button class="btn sm" data-a="open" data-k="imp">Importa</button><button class="btn sm pri" data-a="tnewpg">Nuovo personaggio</button></div>`+
     (L.length?`<div class="list">${L.map(t=>`<button class="item" data-a="open" data-k="trainer" data-i="${t.id}">${trAv(t)}<span class="grow"><span class="t">${esc(t.name||'Senza nome')}</span><br><span class="small muted">${t.player?esc(t.player)+' · ':''}${RK[t.rk]} · <span class="money">${money(t.cash)}</span>${(t.box||[]).length?' · box '+t.box.length:''}</span></span>${strip(t.team)}</button>`).join('')}</div>`
     :'<div class="card"><p class="muted">Nessun personaggio giocante. Creane uno per ogni giocatore: la squadra, i soldi, lo zaino e lo stato dei Pokémon restano salvati tra una sessione e l’altra.</p></div>')+
     '<p class="small muted">In lotta li trovi in cima all’elenco del catalogo. Le catture e le ricompense di fine lotta finiscono direttamente qui.</p>';
@@ -522,6 +523,26 @@ function vTrainers(){
   else h+=`<div class="list">${NPC.map(t=>`<button class="item" data-a="open" data-k="trainer" data-i="${t.id}">${trAv(t)}<span class="grow"><span class="t">${esc(t.name||'Senza nome')}</span><br><span class="small muted"><i class="pip" style="--pc:${RKCOL[t.rk]}"></i> ${esc(t.role||AGES[t.age][1])} · ${RK[t.rk]} · ${t.team.length} Pokémon</span></span>${strip(t.team)}</button>`).join('')}</div>`;
   return h;
 }
+/* condivisione di una scheda allenatore: link o codice compresso */
+const appUrl=()=>location.protocol.startsWith('http')?location.origin+location.pathname.replace(/index\.html$/,''):'https://ciampaxxo.github.io/Pokerole-Companion-app/';
+const b64url=u=>{let bin='';for(let i=0;i<u.length;i+=0x8000)bin+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
+const unb64url=s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')+'==='.slice((s.length+3)%4)),c=>c.charCodeAt(0));
+async function packTrainer(t){const raw=new TextEncoder().encode(JSON.stringify({v:1,t,at:Date.now()}));
+  if(window.CompressionStream){try{const z=new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer());return 'z'+b64url(z)}catch(e){}}
+  return 'u'+b64url(raw)}
+async function unpackTrainer(text){const m=String(text||'').match(/imp=([A-Za-z0-9_-]+)/)||String(text||'').trim().match(/^([zu][A-Za-z0-9_-]{20,})$/);if(!m)throw new Error('nessun codice trovato');
+  const code=m[1],bytes=unb64url(code.slice(1));let raw=bytes;
+  if(code[0]==='z'){if(!window.DecompressionStream)throw new Error('browser troppo vecchio per questo codice');raw=new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer())}
+  const o=JSON.parse(new TextDecoder().decode(raw));if(!o||!o.t||!Array.isArray(o.t.team))throw new Error('codice non valido');return o}
+function sImp(){const d=ui.impd;
+  let h=`<div class="card"><p class="small">Incolla il messaggio o il link ricevuto. Funziona in entrambe le direzioni: i giocatori mandano a te la loro scheda, tu puoi rimandarla aggiornata dopo una sessione.</p>
+  <div class="field"><label for="impt">Messaggio o codice</label><textarea id="impt" data-i="impt" placeholder="Incolla qui...">${esc(ui.impt||'')}</textarea></div>
+  <div class="row">${navigator.clipboard&&navigator.clipboard.readText?'<button class="btn grow" data-a="impclip">Incolla dagli appunti</button>':''}<button class="btn pri grow" data-a="impread">Leggi</button></div></div>`;
+  if(d){const t=d.t,ex=S.trainers.find(x=>x.id===t.id);
+    h+=`<div class="card"><div class="row">${trAv(t)}<div class="grow"><span class="t">${esc(t.name||'Senza nome')}</span><div class="small muted">${t.player?esc(t.player)+' · ':''}${RK[t.rk]}${t.pg?' · '+money(t.cash):''} · ${t.team.length} Pokémon${(t.box||[]).length?' + '+t.box.length+' nel box':''}</div></div>${strip(t.team)}</div>
+    <p class="small muted">Scheda del ${new Date(d.at).toLocaleString('it-IT',{dateStyle:'short',timeStyle:'short'})}.${ex?' Hai già questa scheda: aggiornandola, la tua versione viene sostituita.':''}</p>
+    <div class="row">${ex?'<button class="btn pri grow" data-a="impdo" data-i="upd">Aggiorna la scheda</button><button class="btn grow" data-a="impdo" data-i="new">Aggiungi come copia</button>':'<button class="btn pri grow" data-a="impdo" data-i="new">Aggiungi</button>'}</div></div>`}
+  return h}
 function sTrainer(t){
   const d=tDer(t),R=RKPTS[t.rk],A=AGES[t.age];
   const spentA=t.at.reduce((a,b)=>a+b,0)-4,spentS=t.so.reduce((a,b)=>a+b,0)-5,spentK=Object.values(t.sk).reduce((a,b)=>a+b,0);
@@ -538,6 +559,7 @@ function sTrainer(t){
   ${t.team.length?`<div class="list">${t.team.map(P=>instItem(P,t.id)).join('')}</div>`:'<p class="small muted">Squadra vuota. Genera un Pokémon e salvalo qui.</p>'}
   ${t.pg?`<h3>Box (${(t.box||[]).length})</h3>${(t.box||[]).length?`<div class="list">${t.box.map(P=>instItem(P,t.id)).join('')}</div>`:'<p class="small muted">Vuoto. Oltre il sesto Pokémon le catture finiscono qui.</p>'}`:''}</div>
   <div class="card">${t.pg?`<div class="field"><label for="tinv">Zaino</label><textarea id="tinv" data-i="tf:inv" placeholder="Pokéball, pozioni, oggetti chiave...">${esc(t.inv||'')}</textarea></div>`:`<div class="field"><label for="tm">Denaro e oggetti</label><input id="tm" type="text" data-i="tf:money" value="${esc(t.money)}" placeholder="Es. 3000 ₽, Pozione"></div>`}<div class="field"><label for="tno">Note</label><textarea id="tno" data-i="tf:notes" placeholder="Personalità, obiettivi, tattiche...">${esc(t.notes)}</textarea></div></div>
+  <button class="btn pri" data-a="tshare">Condividi scheda</button><p class="small muted">Manda la scheda (squadra, box, soldi e zaino) con un link: chi la riceve la aggiunge o la aggiorna con un tocco.</p>
   <div class="row"><button class="btn grow" data-a="tdup">Duplica</button><button class="btn danger grow" data-a="tdel">${ui.arm==='tdel'?'Tocca ancora per eliminare':'Elimina allenatore'}</button></div>`;
 }
 function findInst(id,owner){
@@ -930,6 +952,7 @@ function sheetH(keep){
   else if(top.k==='inst'){const f=findInst(top.i,top.o);title=f.P?(f.P.nick||MON[f.P.m].n):'Pokémon';body=sInst(top)}
   else if(top.k==='backup'){title='Opzioni e backup';body=sBackup()}
   else if(top.k==='act'){title='Azione';body=ui.act&&B()?sAct():''}
+  else if(top.k==='imp'){title='Importa scheda';body=sImp()}
   else if(top.k==='catch'){title='Cattura';body=B()?sCatch(top):''}
   else if(top.k==='rew'){title='Fine lotta';body=B()&&ui.rw?sRew():'<p class="muted">Nessuna lotta in corso.</p>'}
   else if(top.k==='dent'){const e=S.diary.find(x=>x.id===top.i);title=e?(e.t||'Nuova voce'):'Diario';body=e?sDent(e):'<p class="muted">Voce non trovata.</p>'}
@@ -1041,6 +1064,16 @@ const ACT={
         else{bLog(bName(f)+' usa '+mv.n+' su '+bName(T)+(o.crit?' (critico)':''));bHurt(T,x.final,mv.n)}})}
     f.acts++;f.used.push(a.mv);ui.act=null;ui.stack.pop();save();render()},
   tview(d){ui.tv=d.i;render()},
+  async tshare(){const t=curTrainer();if(!t)return;try{const code=await packTrainer(t),url=appUrl()+'#imp='+code,nm=t.name||'allenatore';
+    const text='Scheda di '+nm+' per Master Pokérole. Apri il link, oppure copia questo messaggio e incollalo nell’app in Allenatori → Giocatori → Importa.';
+    if(navigator.share){try{await navigator.share({title:'Scheda di '+nm,text,url});return}catch(e){if(e&&e.name==='AbortError')return}}
+    copy(text+'\n'+url,'Link copiato: incollalo in chat')}catch(e){toast('Non riesco a preparare la scheda: '+e.message)}},
+  async impclip(){try{ui.impt=await navigator.clipboard.readText();ui.impd=null;await ACT.impread()}catch(e){toast('Non posso leggere gli appunti: incolla a mano nel riquadro')}},
+  async impread(d){const el=$('#impt');if(d&&el)ui.impt=el.value;try{ui.impd=await unpackTrainer(ui.impt);render(true)}catch(e){ui.impd=null;toast('Codice non valido: '+e.message);render(true)}},
+  impdo(d){const o=ui.impd;if(!o)return;const t=JSON.parse(JSON.stringify(o.t));t.box=t.box||[];
+    if(d.i==='upd'){const j=S.trainers.findIndex(x=>x.id===t.id);if(j>=0)S.trainers[j]=t;else S.trainers.unshift(t)}
+    else{const ex=S.trainers.some(x=>x.id===t.id);if(ex){t.id=uid();t.name=(t.name||'Allenatore')+' (copia)';t.team.concat(t.box).forEach(P=>P.id=uid())}S.trainers.unshift(t)}
+    ui.impd=null;ui.impt='';ui.tv=t.pg?'pg':'npc';ui.tab='allenatori';save();ui.stack=[{k:'trainer',i:t.id}];render();toast(d.i==='upd'?'Scheda aggiornata':'Scheda aggiunta')},
   tnewpg(){const t=newTrainer();Object.assign(t,{pg:true,rk:0,cash:2000,inv:'',box:[]});S.trainers.unshift(t);save();ui.tv='pg';ui.stack.push({k:'trainer',i:t.id});render()},
   tpg(d){const t=curTrainer();t.pg=d.i==='1';if(t.pg){if(t.cash==null)t.cash=parseMoney(t.money);t.box=t.box||[]}save();render(true)},
   ibond(d){const c=curInst();c.P[d.k]=clamp((c.P[d.k]||0)+(+d.d),0,d.k==='tp'?999:5);save();render(true)},
@@ -1105,6 +1138,7 @@ document.addEventListener('input',e=>{const t=e.target,k=t.dataset.i;if(!k)retur
   else if(k.startsWith('tf:')){const tr=curTrainer();if(tr){const f=k.slice(3);tr[f]=f==='cash'?(parseInt(t.value,10)||0):t.value;save()}}
   else if(k.startsWith('de:')){const e=curDent();if(e){e[k.slice(3)]=t.value;e.u=Date.now();save();if(k==='de:t'){const h=document.querySelector('.sheet header h2');if(h)h.textContent=t.value||'Nuova voce'}}}
   else if(k.startsWith('dimgcap:')){const e=curDent();if(e&&e.img){const im=e.img[+k.slice(8)];if(im){im.d=t.value;e.u=Date.now();save()}}}
+  else if(k==='impt'){ui.impt=t.value}
   else if(k==='diq'){ui.di.q=t.value;$('#dil').innerHTML=dList()}
   else if(k==='dpq'){ui.dp.q=t.value;const V=(ui.pubd&&ui.pubd.voci)||[],f=ui.dp,kk=key(f.q);$('#dpl').innerHTML=dpList(V.filter(v=>(!f.c||v.c===f.c)&&(!kk||key((v.t||'')+' '+(v.b||'')+' '+(v.w||'')).includes(kk))),V.length)}
   else if(k.startsWith('ghs:')){ghSet({[k.slice(4)]:t.value.trim(),ok:false});clearTimeout(vkT);vkT=setTimeout(()=>verifyKey(true),900)}
@@ -1146,8 +1180,9 @@ function start(){
   if(!ui.gen.cur){const pi=MON.findIndex(m=>m.n==='Pikachu');if(pi>=0){ui.gen.mi=pi;ui.gen.cur=generate(pi,MON[pi].rk,'bal');ui.gen.batch=[ui.gen.cur]}}
   render();
   if(ghCfg().tok&&!ghCfg().ok)verifyKey(true);
+  if(/^#imp=/.test(location.hash)){ui.impt=location.hash;try{history.replaceState(null,'',location.pathname)}catch(e){}ui.tab='allenatori';ui.tv='pg';ui.stack=[{k:'imp'}];render();ACT.impread()}
 }
-window.addEventListener('hashchange',()=>{const h=(location.hash||'').slice(1);if(['genera','allenatori','lotta','diario','database','regole'].includes(h)&&h!==ui.tab){ui.tab=h;render()}});
+window.addEventListener('hashchange',()=>{if(/^#imp=/.test(location.hash)){ui.impt=location.hash;try{history.replaceState(null,'',location.pathname)}catch(e){}ui.tab='allenatori';ui.tv='pg';ui.stack=[{k:'imp'}];render();ACT.impread();return}const h=(location.hash||'').slice(1);if(['genera','allenatori','lotta','diario','database','regole'].includes(h)&&h!==ui.tab){ui.tab=h;render()}});
 start();
 </script>
 </body>
