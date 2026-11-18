@@ -169,7 +169,16 @@ nav.tabs button[aria-current="page"] svg{color:var(--accent)}
 .vis.on{background:color-mix(in srgb,var(--accent) 14%,var(--surface));color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
 .rwrow{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
 .rwrow:first-of-type{border-top:0}
-textarea.big{min-height:260px}
+textarea.tall{min-height:260px}
+.gal{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.gal.one{grid-template-columns:1fr}
+.gal figure{margin:0;position:relative}.gal img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;background:var(--sunk);cursor:zoom-in}
+.gal.one img{aspect-ratio:auto;max-height:420px;object-fit:contain}
+.gal figcaption{font-size:12px;color:var(--muted);margin-top:3px}
+.gal .rm{position:absolute;top:6px;right:6px;width:30px;height:30px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:18px;line-height:1}
+.gal input{margin-top:4px;min-height:34px;padding:6px 8px;font-size:13px}
+.zoom{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.zoom img{max-width:100%;max-height:100%;object-fit:contain}
+.filebtn{position:relative;overflow:hidden}.filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .chk{display:flex;gap:8px;align-items:flex-start;line-height:1.35}.chk input,.rwrow input[type=checkbox]{accent-color:var(--accent);width:18px;height:18px;flex:none;margin:1px 0 0}
 .rwrow label{display:flex;gap:6px;align-items:flex-start}
 /* margini sicuri per notch e barra home (iPhone, Android a tutto schermo) */
@@ -628,9 +637,26 @@ async function ghPut(path,text,msg){const c=ghCfg();if(!c.tok)throw new Error('m
   const url='https://api.github.com/repos/'+ghRepo()+'/contents/'+path,h={Authorization:'Bearer '+c.tok,Accept:'application/vnd.github+json'};
   let sha;const g=await fetch(url,{headers:h,cache:'no-store'});if(g.ok)sha=(await g.json()).sha;else if(g.status!==404)throw new Error(ghErr(g.status));
   const r=await fetch(url,{method:'PUT',headers:h,body:JSON.stringify({message:msg,content:b64u(text),sha})});if(!r.ok)throw new Error(ghErr(r.status));return r.json()}
+/* immagini del diario: originali ridotte in IndexedDB, pubblicate in diario-img/ sul repository */
+const IDB={p:null,open(){return this.p||(this.p=new Promise((res,rej)=>{const r=indexedDB.open('master-pokerole-img',1);r.onupgradeneeded=()=>r.result.createObjectStore('img');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}))},
+  async put(k,v){const d=await this.open();return new Promise((res,rej)=>{const t=d.transaction('img','readwrite');t.objectStore('img').put(v,k);t.oncomplete=()=>res();t.onerror=()=>rej(t.error)})},
+  async get(k){const d=await this.open();return new Promise((res,rej)=>{const q=d.transaction('img').objectStore('img').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})},
+  async del(k){const d=await this.open();return new Promise(res=>{const t=d.transaction('img','readwrite');t.objectStore('img').delete(k);t.oncomplete=()=>res();t.onerror=()=>res()})}};
+const IMU={},IMW={};
+const rawUrl=f=>'https://raw.githubusercontent.com/'+ghRepo()+'/main/'+f;
+function imgSrc(im){if(IMU[im.id])return IMU[im.id];if(!IMW[im.id]){IMW[im.id]=1;IDB.get(im.id).then(b=>{if(b){IMU[im.id]=URL.createObjectURL(b);render(true)}}).catch(()=>{})}return im.f?rawUrl(im.f):''}
+function galH(imgs,edit){if(!imgs||!imgs.length)return '';return `<div class="gal${imgs.length===1&&!edit?' one':''}">${imgs.map((im,k)=>{const u=imgSrc(im);return `<figure>${u?`<img src="${esc(u)}" alt="${esc(im.d||'')}" loading="lazy" data-zoom="1">`:'<div class="small muted" style="aspect-ratio:4/3;display:grid;place-items:center;background:var(--sunk);border-radius:10px">Immagine</div>'}${edit?`<button class="rm" data-a="dimgdel" data-i="${k}" aria-label="Togli immagine">×</button><input type="text" data-i="dimgcap:${k}" value="${esc(im.d||'')}" placeholder="Didascalia">`:im.d?`<figcaption>${esc(im.d)}</figcaption>`:''}</figure>`}).join('')}</div>`}
+async function shrink(file){const url=URL.createObjectURL(file);try{const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error('formato non supportato'));i.src=url});
+  const M=1600,sc=Math.min(1,M/Math.max(img.naturalWidth,img.naturalHeight)),w=Math.round(img.naturalWidth*sc),h=Math.round(img.naturalHeight*sc);
+  const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(img,0,0,w,h);
+  const blob=await new Promise(res=>c.toBlob(res,'image/jpeg',.82));return {blob,w,h}}finally{URL.revokeObjectURL(url)}}
+async function blob64(b){const u=new Uint8Array(await b.arrayBuffer());let bin='';for(let i=0;i<u.length;i+=0x8000)bin+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(bin)}
+async function ghPutB64(path,b64,msg){const c=ghCfg();const url='https://api.github.com/repos/'+ghRepo()+'/contents/'+path,h={Authorization:'Bearer '+c.tok,Accept:'application/vnd.github+json'};
+  const r=await fetch(url,{method:'PUT',headers:h,body:JSON.stringify({message:msg,content:b64})});if(!r.ok&&r.status!==422)throw new Error(ghErr(r.status))}
+document.addEventListener('click',e=>{const z=e.target.closest('[data-zoom]');if(z){const o=document.createElement('div');o.className='zoom';o.innerHTML=`<img src="${esc(z.src)}" alt="">`;o.addEventListener('click',()=>o.remove());document.body.appendChild(o);return}});
 function dList(){const q=key(ui.di.q),c=ui.di.c;const L=S.diary.filter(e=>(!c||e.c===c)&&(!q||key(e.t+' '+e.b+' '+e.w).includes(q)));
   if(!L.length)return '<p class="small muted">Nessuna voce.</p>';
-  return `<div class="list">${L.map(e=>`<button class="item ent" data-a="open" data-k="dent" data-i="${e.id}"><span class="grow"><span class="t">${esc(e.t||'Senza titolo')}</span><br><span class="small muted">${dcat(e.c)}${e.w?' · '+esc(e.w):''}</span><span class="snip">${esc((e.b||'').replace(/\*\*/g,'').replace(/\s+/g,' ').slice(0,90))}</span></span><span class="vis${e.pub?' on':''}">${e.pub?'Giocatori':'Master'}</span></button>`).join('')}</div>`}
+  return `<div class="list">${L.map(e=>`<button class="item ent" data-a="open" data-k="dent" data-i="${e.id}"><span class="grow"><span class="t">${esc(e.t||'Senza titolo')}</span><br><span class="small muted">${dcat(e.c)}${e.w?' · '+esc(e.w):''}</span><span class="snip">${(e.img||[]).length?'▣ '+e.img.length+' · ':''}${esc((e.b||'').replace(/\*\*/g,'').replace(/\s+/g,' ').slice(0,90))}</span></span><span class="vis${e.pub?' on':''}">${e.pub?'Giocatori':'Master'}</span></button>`).join('')}</div>`}
 const PCK='diario-pokerole-cache';
 async function loadPub(){if(ui.pubLoading)return;ui.pubLoading=true;let o=null;
   try{const c=ghCfg(),h={Accept:'application/vnd.github.raw+json'};if(c.tok&&c.ok)h.Authorization='Bearer '+c.tok;const r=await fetch('https://api.github.com/repos/'+ghRepo()+'/contents/diario.json',{headers:h,cache:'no-store'});if(r.ok)o=await r.json()}catch(e){}
@@ -647,7 +673,7 @@ function vDiarioPub(player){
   ${V.length>3?`<div class="field"><label for="dpq">Cerca</label><input id="dpq" type="search" data-i="dpq" value="${esc(f.q)}" placeholder="Nome, luogo, parola..."></div>`:''}
   <div id="dpl">${dpList(L,V.length)}</div>
   ${player?'<p class="small muted">Sei il master? Inserisci la tua chiave in <button class="btn sm" data-a="open" data-k="backup">Opzioni</button> per scrivere il diario.</p>':''}`}
-function dpList(L,n){return L.length?L.map(v=>`<div class="card"><div class="row small"><span class="vis on">${dcat(v.c)}</span>${v.w?`<span class="muted">${esc(v.w)}</span>`:''}</div><h3 style="text-transform:none;letter-spacing:0;font-size:17px;color:var(--ink);margin:6px 0">${esc(v.t||'')}</h3><div class="md">${md(v.b||'')}</div></div>`).join('')
+function dpList(L,n){return L.length?L.map(v=>`<div class="card"><div class="row small"><span class="vis on">${dcat(v.c)}</span>${v.w?`<span class="muted">${esc(v.w)}</span>`:''}</div><h3 style="text-transform:none;letter-spacing:0;font-size:17px;color:var(--ink);margin:6px 0">${esc(v.t||'')}</h3><div class="md">${md(v.b||'')}</div>${galH(v.img)}</div>`).join('')
   :`<div class="card"><p class="muted">${n?'Nessuna voce corrisponde.':ui.pubLoading?'Caricamento del diario...':'Non è ancora stato pubblicato nulla.'}</p></div>`}
 function vDiario(){
   if(!isMaster())return vDiarioPub(true);
@@ -666,7 +692,10 @@ function curDent(){const t=ui.stack[ui.stack.length-1];return t&&t.k==='dent'?S.
 function sDent(e){return `<div class="card"><div class="field"><label for="det">Titolo</label><input id="det" type="text" data-i="de:t" value="${esc(e.t)}" placeholder="Es. Arrivo a Varese"></div>
   <div class="row">${selectH('dec','de:c',e.c,DCAT,'Categoria')}<div class="field"><label for="dew">Quando</label><input id="dew" type="text" data-i="de:w" value="${esc(e.w||'')}" placeholder="Es. Sessione 4"></div></div>
   <div class="seg"><button data-a="dvis" data-i="0" aria-pressed="${!e.pub}">Solo master</button><button data-a="dvis" data-i="1" aria-pressed="${!!e.pub}">Per i giocatori</button></div>
-  <div class="field"><label for="deb">Testo</label><textarea id="deb" class="big" data-i="de:b" placeholder="Cosa è successo, chi hanno incontrato, cosa sanno...">${esc(e.b||'')}</textarea></div>
+  <div class="field"><label for="deb">Testo</label><textarea id="deb" class="tall" data-i="de:b" placeholder="Cosa è successo, chi hanno incontrato, cosa sanno...">${esc(e.b||'')}</textarea></div>
+  <h3>Immagini (${(e.img||[]).length})</h3>${galH(e.img,true)}
+  <label class="btn filebtn"${ui.imbusy?' style="opacity:.6"':''}>${ui.imbusy?'Preparo le immagini...':'Aggiungi immagini'}<input type="file" accept="image/*" multiple data-c="deimg"></label>
+  <p class="small muted">Vengono ridotte e salvate su questo dispositivo. Nelle voci “Per i giocatori” si caricano su GitHub quando pubblichi.</p>
   <p class="small muted">Puoi usare **grassetto** e righe che iniziano con - per gli elenchi.${e.pub&&S.pub&&e.u>S.pub.at?' Modificata dopo l’ultima pubblicazione: ricordati di pubblicare.':''}</p></div>
   <button class="btn danger" data-a="ddel">${ui.arm==='ddel'?'Tocca ancora per eliminare':'Elimina voce'}</button>`}
 
@@ -1046,13 +1075,16 @@ const ACT={
     S.battle=null;ui.rw=null;ui.stack=[];save();render();toast('Ricompense assegnate')},
   dnew(){const e={id:uid(),t:'',c:ui.di.c||'ses',w:'',b:'',pub:false,u:Date.now()};S.diary.unshift(e);save();ui.stack.push({k:'dent',i:e.id});render()},
   dfil(d){ui.di.c=d.i;render(true)},
+  dimgdel(d){const e=curDent(),im=e.img.splice(+d.i,1)[0];if(im&&!im.f)IDB.del(im.id);e.u=Date.now();save();render(true)},
   dmode(d){ui.dmode=d.i;if(d.i==='view')ui.pubAt=0;render(true)},
   dpfil(d){ui.dp.c=d.i;render(true)},
   dvis(d){const e=curDent();e.pub=d.i==='1';e.u=Date.now();save();render(true)},
   ddel(){if(ui.arm!=='ddel'){ui.arm='ddel';render(true);return}const e=curDent();S.diary=S.diary.filter(x=>x!==e);save();ui.arm=null;ui.stack.pop();render()},
   dlink(){copy(playersUrl(),'Link per i giocatori copiato')},
-  async dpub(){if(ui.busy)return;const voci=S.diary.filter(e=>e.pub).map(e=>({id:e.id,t:e.t,c:e.c,w:e.w,b:e.b,u:e.u}));ui.busy=true;render(true);
-    try{await ghPut('diario.json',JSON.stringify({aggiornato:new Date().toISOString(),voci},null,1),'Diario: '+voci.length+' voci');S.pub={at:Date.now(),n:voci.length};ui.pubd={aggiornato:new Date().toISOString(),voci};try{localStorage.setItem(PCK,JSON.stringify(ui.pubd))}catch(e){}save();toast('Pubblicato: i giocatori lo vedono subito')}
+  async dpub(){if(ui.busy)return;if(!ghCfg().tok){toast('Pubblicazione non riuscita: manca la chiave GitHub (Opzioni → Chiave del master)');return}ui.busy=true;render(true);
+    try{const todo=[];S.diary.filter(e=>e.pub).forEach(e=>(e.img||[]).forEach(im=>{if(!im.f)todo.push(im)}));
+      for(let k=0;k<todo.length;k++){const im=todo[k],b=await IDB.get(im.id);if(!b)continue;toast('Carico immagine '+(k+1)+' di '+todo.length+'...');const f='diario-img/'+im.id+'.jpg';await ghPutB64(f,await blob64(b),'Diario: immagine');im.f=f;save()}
+      const voci=S.diary.filter(e=>e.pub).map(e=>({id:e.id,t:e.t,c:e.c,w:e.w,b:e.b,u:e.u,img:(e.img||[]).filter(im=>im.f).map(im=>({id:im.id,f:im.f,d:im.d||'',w:im.w,h:im.h}))}));await ghPut('diario.json',JSON.stringify({aggiornato:new Date().toISOString(),voci},null,1),'Diario: '+voci.length+' voci');S.pub={at:Date.now(),n:voci.length};ui.pubd={aggiornato:new Date().toISOString(),voci};try{localStorage.setItem(PCK,JSON.stringify(ui.pubd))}catch(e){}save();toast('Pubblicato: i giocatori lo vedono subito')}
     catch(e){toast('Pubblicazione non riuscita: '+e.message)}ui.busy=false;render(true)},
   async dimp(){try{const c=ghCfg(),h={Accept:'application/vnd.github.raw+json'};if(c.tok)h.Authorization='Bearer '+c.tok;const r=await fetch('https://api.github.com/repos/'+ghRepo()+'/contents/diario.json',{headers:h,cache:'no-store'});if(!r.ok)throw new Error(ghErr(r.status));const o=await r.json();let n=0;(o.voci||[]).forEach(v=>{if(!S.diary.some(e=>e.id===v.id)){S.diary.push(Object.assign({pub:true},v));n++}});save();render(true);toast(n?n+' voci recuperate':'Nessuna voce nuova')}catch(e){toast('Non riesco a leggere il diario pubblicato: '+e.message)}},
   ghtest(){if(!ghCfg().tok){toast('Incolla prima la chiave');return}verifyKey(false)},
@@ -1072,6 +1104,7 @@ document.addEventListener('input',e=>{const t=e.target,k=t.dataset.i;if(!k)retur
   else if(k==='glq'){ui.gl.q=t.value;$('#gll').innerHTML=glList();const tc=$('#tc');if(tc)tc.innerHTML=tcH()}
   else if(k.startsWith('tf:')){const tr=curTrainer();if(tr){const f=k.slice(3);tr[f]=f==='cash'?(parseInt(t.value,10)||0):t.value;save()}}
   else if(k.startsWith('de:')){const e=curDent();if(e){e[k.slice(3)]=t.value;e.u=Date.now();save();if(k==='de:t'){const h=document.querySelector('.sheet header h2');if(h)h.textContent=t.value||'Nuova voce'}}}
+  else if(k.startsWith('dimgcap:')){const e=curDent();if(e&&e.img){const im=e.img[+k.slice(8)];if(im){im.d=t.value;e.u=Date.now();save()}}}
   else if(k==='diq'){ui.di.q=t.value;$('#dil').innerHTML=dList()}
   else if(k==='dpq'){ui.dp.q=t.value;const V=(ui.pubd&&ui.pubd.voci)||[],f=ui.dp,kk=key(f.q);$('#dpl').innerHTML=dpList(V.filter(v=>(!f.c||v.c===f.c)&&(!kk||key((v.t||'')+' '+(v.b||'')+' '+(v.w||'')).includes(kk))),V.length)}
   else if(k.startsWith('ghs:')){ghSet({[k.slice(4)]:t.value.trim(),ok:false});clearTimeout(vkT);vkT=setTimeout(()=>verifyKey(true),900)}
@@ -1094,6 +1127,9 @@ document.addEventListener('change',e=>{const t=e.target,k=t.dataset.c;if(!k)retu
   else if(k==='rw:to'||k==='rw:ito'){ui.rw[k.slice(3)]=v}
   else if(k==='rw:multi'||k==='rw:diary'||k==='rw:keep'){ui.rw[k.slice(3)]=t.checked;render(true)}
   else if(k.startsWith('rwp:')||k.startsWith('rwk:')){const r=ui.rw.rows[k.slice(4)];r[k[2]==='p'?'part':'ko']=t.checked;render(true)}
+  else if(k==='deimg'){const e=curDent(),fs=[...t.files];t.value='';if(!e||!fs.length)return;ui.imbusy=true;render(true);
+    (async()=>{let n=0;for(const f of fs){try{const r=await shrink(f),id=uid();await IDB.put(id,r.blob);(e.img=e.img||[]).push({id,d:'',w:r.w,h:r.h});n++}catch(err){toast('Immagine non letta: '+err.message)}}
+      e.u=Date.now();save();ui.imbusy=false;render(true);if(n)toast(n===1?'Immagine aggiunta':n+' immagini aggiunte')})()}
   else if(k.startsWith('isel:')){const c=curInst(),f=k.slice(5);c.P[f]=f==='rk'?+v:v;save();render(true)}
 });
 function start(){
