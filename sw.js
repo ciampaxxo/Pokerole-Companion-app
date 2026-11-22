@@ -1,6 +1,6 @@
 // Master Pokérole — funzionamento offline e aggiornamenti automatici
 const CACHE='master-pokerole';
-const FILES=['./','index.html','diario.html','manifest.webmanifest','diario.webmanifest','icon-192.png','icon-512.png','icon-maskable.png','apple-touch-icon.png'];
+const FILES=['./','index.html','dati.json','sprite.json','diario.html','manifest.webmanifest','diario.webmanifest','icon-192.png','icon-512.png','icon-maskable.png','apple-touch-icon.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES.map(f=>new Request(f,{cache:'reload'})))).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim())});
 const sig=r=>r&&(r.headers.get('etag')||r.headers.get('last-modified')||r.headers.get('content-length'));
@@ -21,4 +21,4 @@ self.addEventListener('fetch',e=>{
     return (await net)||new Response('Offline',{status:503});
   }));
 });
-// versione c28a6acc06
+// versione d824cd1c8e

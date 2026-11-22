@@ -13,3 +13,9 @@ I dati salvati (allenatori, Pokémon, lotta) restano sul dispositivo; per sposta
 **Diario per i giocatori:** https://ciampaxxo.github.io/Pokerole-Companion-app/diario.html
 
 Qui compaiono le voci del diario che il master pubblica dall'app. Si installa allo stesso modo (Safari → Condividi → Aggiungi alla schermata Home).
+
+## Sviluppo
+
+- `index.html` contiene interfaccia e logica; i dati di gioco stanno in `dati.json` e gli sprite in `sprite.json` (caricati all'avvio e salvati offline dal service worker). L'app va aperta da un indirizzo web, non da un file locale.
+- Test: `npm i -g playwright` (o usa quello già installato), poi `node tests/smoke.js`. Controlla caricamento, ricerca, backup su file, annulla in lotta, avviso di salvataggio, generatore su tutte le specie e funzionamento offline.
+- A ogni rilascio aggiorna `APPV`/`APPD` in `index.html` e la riga `// versione …` in `sw.js`, così i dispositivi scaricano la nuova versione.

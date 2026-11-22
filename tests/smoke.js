@@ -54,6 +54,15 @@ let fails=0;const ok=(c,m)=>{console.log((c?'OK   ':'FAIL ')+m);if(!c)fails++};
       const n=await pg.evaluate(()=>UNDO.length);ok(n>=1,'azione registrata per annullare ('+n+')');
       await pg.click('[data-a=bundo]');const n2=await pg.evaluate(()=>UNDO.length);ok(n2===n-1,'annulla consuma un passo');ok(await hp()===h0,'annulla ripristina i PV');}
   }
+  // regole: tabella dei tipi e generatore su tutte le specie
+  ok(await pg.evaluate(()=>CH.Fire.s.includes('Grass')&&CH.Water.s.includes('Fire')&&CH.Normal.i.includes('Ghost')&&CH.Electric.i.includes('Ground')),'tabella dei tipi: casi noti');
+  const gen=await pg.evaluate(()=>{const bad=[];MON.forEach((m,i)=>{try{const P=generate(i,m.rk,'bal');if(!P||P.m!==i||!(P.at||[]).length||P.at.some(v=>!(v>=0)))bad.push(m.n)}catch(e){bad.push(m.n+': '+e.message)}});return bad});
+  ok(gen.length===0,'il generatore funziona su tutte le specie '+gen.slice(0,5).join(', '));
+  // offline: dopo la prima apertura i file separati arrivano dalla cache del service worker
+  await pg.evaluate(()=>navigator.serviceWorker.ready);await pg.reload();await pg.waitForSelector('#main *');
+  await pg.waitForTimeout(500);await ctx.setOffline(true);await pg.reload();
+  ok(await pg.waitForSelector('#main *',{timeout:8000}).then(()=>true,()=>false),'funziona offline dopo la prima apertura');
+  await ctx.setOffline(false);
   ok(!errs.length,'nessun errore JS '+errs.join('|'));
   await br.close();srv.close();console.log(fails?fails+' test falliti':'Tutti i test superati');process.exit(fails?1:0);
 })().catch(e=>{console.error(e);process.exit(1)});
