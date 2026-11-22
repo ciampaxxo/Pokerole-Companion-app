@@ -321,7 +321,7 @@ const CH={Normal:{n:['Rock','Steel'],i:['Ghost']},Fire:{s:['Grass','Ice','Bug','
 const FIX={dextrity:'Dexterity',dexerity:'Dexterity',inisight:'Insight',inisght:'Insight',stength:'Strength',strangth:'Strength',etiqutte:'Etiquette',ettiquete:'Etiquette'};
 const key=s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,'');
 const ABI={};AB.forEach((a,i)=>ABI[key(a.n)]=i);
-const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const $=s=>document.querySelector(s);
 const rint=n=>Math.floor(Math.random()*n);
 const pick=a=>a[rint(a.length)];
@@ -332,7 +332,7 @@ function wpick(items,wf){let tot=0;const ws=items.map(x=>{const w=Math.max(0,wf(
 const SKEY='master-pokerole-v1';
 let mem=null;
 function load(){try{const t=localStorage.getItem(SKEY);if(t)return JSON.parse(t)}catch(e){}return mem}
-function save(){mem=S;try{localStorage.setItem(SKEY,JSON.stringify(S))}catch(e){}if(window.TAV)TAV.soon()}
+function save(){mem=S;try{localStorage.setItem(SKEY,JSON.stringify(S));if(save.err){save.err=0;try{render(true)}catch(_){}}}catch(e){if(!save.err){save.err=1;try{toast('Salvataggio non riuscito: spazio esaurito. Fai subito un backup!');render(true)}catch(_){}}}if(window.TAV)TAV.soon()}
 let S=load()||null;
 const ui={bt:{side:'A',src:'saved',q:'',rk:-1,open:null},act:null,ga:{a:-1,rk:-1,n:0},di:{q:'',c:''},dp:{q:'',c:''},gr:{fg:null,q:''},dx:{f:'s',q:''},mart:{to:null,q:{}},dmode:'edit',tv:'pg',tab:'genera',gen:{mode:'mon',n:1,batch:[],sel:0,q:'',mi:null,rk:null,style:'bal',f:{type:'',reg:'',stage:'',hab:'',rare:false,low:false},cur:null,target:'saved'},gi:{cat:'',max:'',n:3,rare:false,res:[]},db:{kind:'mon',q:'',type:'',cat:'',lim:50},gl:{q:'',d1:'',d2:''},stack:[],arm:null};
 
@@ -897,8 +897,14 @@ async function ghPut(path,text,msg){const c=ghCfg();if(!c.tok)throw new Error('m
 const IDB={p:null,open(){return this.p||(this.p=new Promise((res,rej)=>{const r=indexedDB.open('master-pokerole-img',1);r.onupgradeneeded=()=>r.result.createObjectStore('img');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}))},
   async put(k,v){const d=await this.open();return new Promise((res,rej)=>{const t=d.transaction('img','readwrite');t.objectStore('img').put(v,k);t.oncomplete=()=>res();t.onerror=()=>rej(t.error)})},
   async get(k){const d=await this.open();return new Promise((res,rej)=>{const q=d.transaction('img').objectStore('img').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})},
+  async all(){const d=await this.open();return new Promise((res,rej)=>{const st=d.transaction('img').objectStore('img'),o={},q=st.openCursor();q.onsuccess=()=>{const c=q.result;if(c){o[c.key]=c.value;c.continue()}else res(o)};q.onerror=()=>rej(q.error)})},
   async del(k){const d=await this.open();return new Promise(res=>{const t=d.transaction('img','readwrite');t.objectStore('img').delete(k);t.oncomplete=()=>res();t.onerror=()=>res()})}};
 const IMU={},IMW={};
+function bkObj(){return {trainers:S.trainers,saved:S.saved,opt:S.opt,battle:S.battle,diary:S.diary,pub:S.pub}}
+function blobUrl(b){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error);r.readAsDataURL(b)})}
+async function restore(o){if(!o||!Array.isArray(o.trainers)||!Array.isArray(o.saved))throw 0;
+  if(o.imgs)for(const k of Object.keys(o.imgs)){const b=await (await fetch(o.imgs[k])).blob();await IDB.put(k,b);delete IMU[k];delete IMW[k]}
+  S.trainers=o.trainers;S.saved=o.saved;S.opt=o.opt||S.opt;S.battle=o.battle||null;if(Array.isArray(o.diary))S.diary=o.diary;if(o.pub)S.pub=o.pub;UNDO.length=0;save();toast('Backup ripristinato');ui.stack=[];render()}
 const rawUrl=f=>'https://raw.githubusercontent.com/'+ghRepo()+'/main/'+f;
 function imgSrc(im){if(IMU[im.id])return IMU[im.id];if(!IMW[im.id]){IMW[im.id]=1;IDB.get(im.id).then(b=>{if(b){IMU[im.id]=URL.createObjectURL(b);render(true)}}).catch(()=>{})}return im.f?rawUrl(im.f):''}
 function galH(imgs,edit){if(!imgs||!imgs.length)return '';return `<div class="gal${imgs.length===1&&!edit?' one':''}">${imgs.map((im,k)=>{const u=imgSrc(im);return `<figure>${u?`<img src="${esc(u)}" alt="${esc(im.d||'')}" loading="lazy" data-zoom="1">`:'<div class="small muted" style="aspect-ratio:4/3;display:grid;place-items:center;background:var(--sunk);border-radius:10px">Immagine</div>'}${edit?`<button class="rm" data-a="dimgdel" data-i="${k}" aria-label="Togli immagine">×</button><input type="text" data-i="dimgcap:${k}" value="${esc(im.d||'')}" placeholder="Didascalia">`:im.d?`<figcaption>${esc(im.d)}</figcaption>`:''}</figure>`}).join('')}</div>`}
@@ -964,15 +970,17 @@ function dbList(){
     rows=r.slice(0,b.lim).map(i=>{const m=MV[i];return `<button class="item" data-a="open" data-k="move" data-i="${i}"><span class="grow"><span class="t">${esc(m.n)}</span><br><span class="small muted">${esc(m.c)}${m.p!=='-'?' · Power '+esc(m.p):''} · ${esc(m.a)}</span></span>${tchip(m.t)}</button>`})}
   else if(b.kind==='item'){const r=[];IT.forEach((a,i)=>{if(b.cat&&a.c!==b.cat)return;if(k&&!key(a.n).includes(k)&&!key(a.d).includes(k))return;r.push(i)});tot=r.length;
     rows=r.slice(0,b.lim).map(i=>itemRow(i))}
+  else if(b.kind==='all'){if(!k)return '<p class="small muted">Scrivi per cercare in Pokémon, mosse, abilità e oggetti insieme.</p>';const o=b;let h='';
+    [['mon','Pokémon'],['move','Mosse'],['abil','Abilità'],['item','Oggetti']].forEach(x=>{ui.db=Object.assign({},o,{kind:x[0],lim:5,type:'',cat:''});const r=dbList();if(!/^<p class="small muted">0 risultati/.test(r))h+='<h3>'+x[1]+'</h3>'+r.replace(/<button class="btn" data-a="dmore">.*?<\/button>/,'<button class="btn" data-a="dgo" data-i="'+x[0]+'">Vedi tutti in '+x[1]+'</button>')});ui.db=o;return h||'<p class="muted">Nessun risultato.</p>'}
   else{const r=[];AB.forEach((a,i)=>{if(k&&!key(a.n).includes(k)&&!key(a.e).includes(k))return;r.push(i)});tot=r.length;
     rows=r.slice(0,b.lim).map(i=>`<button class="item" data-a="open" data-k="abil" data-i="${esc(AB[i].n)}"><span class="grow"><span class="t">${esc(AB[i].n)}</span><br><span class="small muted">${esc(AB[i].e.slice(0,90))}${AB[i].e.length>90?'…':''}</span></span></button>`)}
   return `<p class="small muted">${tot} risultati</p>${rows.length?`<div class="list">${rows.join('')}</div>`:''}${tot>b.lim?`<button class="btn" data-a="dmore">Mostra altri ${Math.min(50,tot-b.lim)}</button>`:''}`;
 }
 function vDb(){
   const b=ui.db;const regs=[...new Set(MON.map(m=>m.reg))];
-  return `<div class="seg">${[['mon','Pokémon ('+MON.length+')'],['move','Mosse ('+MV.length+')'],['abil','Abilità ('+AB.length+')'],['item','Oggetti ('+IT.length+')']].map(x=>`<button data-a="dkind" data-i="${x[0]}" aria-pressed="${b.kind===x[0]}">${x[1]}</button>`).join('')}</div>
+  return `<div class="seg">${[['all','Tutto'],['mon','Pokémon ('+MON.length+')'],['move','Mosse ('+MV.length+')'],['abil','Abilità ('+AB.length+')'],['item','Oggetti ('+IT.length+')']].map(x=>`<button data-a="dkind" data-i="${x[0]}" aria-pressed="${b.kind===x[0]}">${x[1]}</button>`).join('')}</div>
   <div class="row"><div class="field"><label for="dq">Cerca</label><input id="dq" type="search" data-i="dq" value="${esc(b.q)}" placeholder="${b.kind==='mon'?'Nome o numero':b.kind==='move'?'Nome o parola nell’effetto':'Nome o parola nell’effetto'}" autocomplete="off"></div></div>
-  ${b.kind==='item'?`<div class="row">${selectH('dc','df:cat',b.cat,[['','Tutte le categorie']].concat([...new Set(IT.map(x=>x.c))].map(c=>[c,c])),'Categoria')}</div>`:b.kind!=='abil'?`<div class="row">${selectH('dt','df:type',b.type,[['','Tutti i tipi']].concat((b.kind==='move'?TY.concat(['None']):TY).map(t=>[t,TYIT[t]])),'Tipo')}${b.kind==='mon'?selectH('dc','df:cat',b.cat,[['','Tutte']].concat(regs.map(r=>[r,r])),'Regione'):selectH('dc','df:cat',b.cat,[['','Tutte'],['Physical','Physical'],['Special','Special'],['Support','Support']],'Categoria')}</div>`:''}
+  ${b.kind==='all'?'':b.kind==='item'?`<div class="row">${selectH('dc','df:cat',b.cat,[['','Tutte le categorie']].concat([...new Set(IT.map(x=>x.c))].map(c=>[c,c])),'Categoria')}</div>`:b.kind!=='abil'?`<div class="row">${selectH('dt','df:type',b.type,[['','Tutti i tipi']].concat((b.kind==='move'?TY.concat(['None']):TY).map(t=>[t,TYIT[t]])),'Tipo')}${b.kind==='mon'?selectH('dc','df:cat',b.cat,[['','Tutte']].concat(regs.map(r=>[r,r])),'Regione'):selectH('dc','df:cat',b.cat,[['','Tutte'],['Physical','Physical'],['Special','Special'],['Support','Support']],'Categoria')}</div>`:''}
   <div id="dbl" style="display:flex;flex-direction:column;gap:10px">${dbList()}</div>`;
 }
 function sMon(i){
@@ -1095,7 +1103,7 @@ function bCard(f,cur){
 function bFight(){
   const b=B(),ord=bOrder(),cur=ord[b.ptr%Math.max(1,ord.length)];
   return `<div class="card"><div class="row"><span class="big grow">Round ${b.round}</span>${selectH('bwe','bwe',b.weather,METEO,'Meteo')}</div>
-  <div class="row"><button class="btn grow" data-a="bnext">Passa il turno</button><button class="btn pri grow" data-a="bround">Fine round</button></div>
+  <div class="row"><button class="btn grow" data-a="bnext">Passa il turno</button><button class="btn" data-a="bundo" aria-label="Annulla l’ultima azione"${UNDO.length?'':' disabled'}>↶ Annulla</button><button class="btn pri grow" data-a="bround">Fine round</button></div>
   ${cur?`<p class="small">Tocca a <b>${esc(bName(cur))}</b>. Chi ha ancora azioni può agire di nuovo dopo il giro.</p>`:''}</div>
   ${ord.map(f=>bCard(f,f===cur)).join('')}
   ${b.log.length?`<div class="card"><h3>Registro</h3><div class="small" style="display:flex;flex-direction:column;gap:3px">${b.log.slice(0,14).map(l=>`<span>${esc(l)}</span>`).join('')}</div></div>`:''}
@@ -1294,7 +1302,7 @@ const TAV={bc:null,code:null,sub:null,peers:{},last:'',t:null,fb:false,fbT:0,fbL
   send(force){const st=JSON.stringify(this.snap());if(!force&&st===this.last)return;this.last=st;const bc=this.chan();if(bc)bc.postMessage(st);
     Object.values(this.peers).forEach(p=>{if(p.dc&&p.dc.readyState==='open')try{p.dc.send(st)}catch(e){}});
     if(this.code&&this.fb){const now=Date.now();if(now-this.fbT>3000){this.fbT=now;this.fbLast=st;SIG.pub('mpr2-'+this.code+'-s',{st})}else{clearTimeout(this.fbTimer);this.fbTimer=setTimeout(()=>{if(this.last!==this.fbLast)this.send(true)},3100-(now-this.fbT))}}},
-  host(){this.chan();if(!S.tav||!S.tav.code){S.tav={code:Array.from(crypto.getRandomValues(new Uint8Array(6)),x=>'abcdefghjkmnpqrstuvwxyz23456789'[x%31]).join('')};save()}
+  host(){this.chan();if(!S.tav||!S.tav.code){S.tav={code:Array.from(crypto.getRandomValues(new Uint8Array(12)),x=>'abcdefghjkmnpqrstuvwxyz23456789'[x%31]).join('')};save()}
     if(this.code===S.tav.code&&this.sub)return;this.code=S.tav.code;if(this.sub)this.sub.close();
     this.sub=SIG.sub('mpr2-'+this.code+'-h',m=>this.onSig(m));this.send(true)},
   stop(){if(this.sub)this.sub.close();this.sub=null;Object.values(this.peers).forEach(p=>{try{p.pc.close()}catch(e){}});this.peers={};this.code=null;this.fb=false;S.tav=null;save()},
@@ -1578,8 +1586,9 @@ function sBackup0(){return `<div class="card"><h3>Danno minimo</h3><div class="s
 <div class="field"><label for="ghr">Repository</label><input id="ghr" type="text" data-i="ghs:repo" value="${esc(ghCfg().repo||'')}" placeholder="${esc(ghRepo())}" autocapitalize="off" autocomplete="off"></div>
 <div class="field"><label for="ght">Chiave GitHub</label><input id="ght" type="password" data-i="ghs:tok" value="${esc(ghCfg().tok||'')}" placeholder="github_pat_..." autocapitalize="off" autocomplete="off"></div>
 <button class="btn" data-a="ghtest">Prova la chiave</button><p class="small"><b>${isMaster()?'Modalità master attiva':'Modalità giocatore'}</b>: ${isMaster()?'vedi allenatori speciali e scrivi il diario.':'allenatori speciali nascosti, il diario è in sola lettura.'}</p><p class="small muted">Pagina dei giocatori: ${esc(playersUrl())}</p></div>
-<div class="card"><h3>Backup di allenatori e Pokémon</h3><p class="small muted">I dati restano su questo dispositivo. Copia il testo qui sotto e conservalo per avere una copia di sicurezza.</p><textarea id="bk" readonly style="min-height:120px">${esc(JSON.stringify({trainers:S.trainers,saved:S.saved,opt:S.opt,battle:S.battle,diary:S.diary,pub:S.pub}))}</textarea><button class="btn" data-a="bcopy">Copia backup</button></div>
-<div class="card"><h3>Ripristina</h3><textarea id="bi" placeholder="Incolla qui un backup"></textarea><button class="btn" data-a="bimp">Ripristina dal testo incollato</button><p class="small muted">Sostituisce allenatori, Pokémon salvati e diario.</p></div>`}
+<div class="card"><h3>Backup di allenatori e Pokémon</h3><p class="small muted">I dati restano su questo dispositivo. Copia il testo qui sotto e conservalo per avere una copia di sicurezza.</p><textarea id="bk" readonly style="min-height:120px">${esc(JSON.stringify({trainers:S.trainers,saved:S.saved,opt:S.opt,battle:S.battle,diary:S.diary,pub:S.pub}))}</textarea><button class="btn" data-a="bcopy">Copia backup</button>
+<div class="row" style="margin-top:8px"><button class="btn pri grow" data-a="bdl">Scarica file di backup</button></div><p class="small muted">Il file include anche le immagini del diario. I suoni e le musiche importati restano da reimportare.${S.lastBk?' Ultimo backup: '+new Date(S.lastBk).toLocaleString('it-IT',{dateStyle:'short',timeStyle:'short'})+'.':''}</p></div>
+<div class="card"><h3>Ripristina</h3><textarea id="bi" placeholder="Incolla qui un backup"></textarea><button class="btn" data-a="bimp">Ripristina dal testo incollato</button><div class="field" style="margin-top:8px"><label for="bf">Oppure scegli un file di backup</label><input id="bf" type="file" accept=".json,application/json"></div><button class="btn" data-a="bfile">Ripristina dal file</button><p class="small muted">Sostituisce allenatori, Pokémon salvati e diario.</p></div>`}
 function sheetH(keep){
   const top=ui.stack[ui.stack.length-1];if(!top)return '';
   let title='',body='';
@@ -1603,9 +1612,15 @@ function sheetH(keep){
   else if(top.k==='dent'){const e=S.diary.find(x=>x.id===top.i);title=e?(e.t||'Nuova voce'):'Diario';body=e?sDent(e):'<p class="muted">Voce non trovata.</p>'}
   return `<div class="sheet${keep?'':' anim'}" role="dialog" aria-label="${esc(title)}"><div class="in"><header><button class="btn sm" data-a="back">Indietro</button><h2>${esc(title)}</h2>${ui.stack.length>1?'<button class="btn sm ghost" data-a="closeall">Chiudi</button>':''}</header><div class="body" id="sb">${body}</div></div></div>`;
 }
+const DAY=864e5;
+function bkDue(){if(!S||!Array.isArray(S.trainers))return false;if(!S.trainers.length&&!(S.saved||[]).length&&!(S.diary||[]).length)return false;const n=Date.now();if(S.bkSnz&&n<S.bkSnz)return false;if(!S.lastBk){if(!S.bkSince)S.bkSince=n;return n-S.bkSince>3*DAY}return n-S.lastBk>30*DAY}
+function banH(){if(window.VIEW&&VIEW.on)return '';
+  if(save.err)return '<div class="card" style="border-color:#d9343f"><h3>Salvataggio non riuscito</h3><p class="small">Lo spazio del dispositivo è esaurito: le ultime modifiche non sono state salvate. Scarica subito un backup.</p><button class="btn pri" data-a="bdl">Scarica backup</button></div>';
+  if(bkDue())return '<div class="card"><p class="small">'+(S.lastBk?'Ultimo backup: '+Math.floor((Date.now()-S.lastBk)/DAY)+' giorni fa.':'Non hai ancora fatto un backup.')+' I dati stanno solo su questo dispositivo.</p><div class="row"><button class="btn pri sm grow" data-a="bdl">Scarica backup</button><button class="btn sm" data-a="bksnz">Più tardi</button></div></div>';
+  return ''}
 function render(keep){
   const sb=$('#sb'),st=keep&&sb?sb.scrollTop:0,mn=$('#main'),mt=keep?mn.scrollTop:0;
-  mn.innerHTML=ui.tab==='genera'?vGen():ui.tab==='allenatori'?vTrainers():ui.tab==='lotta'?vBattle():ui.tab==='diario'?vDiario():ui.tab==='database'?vDb():vGl();
+  mn.innerHTML=banH()+(ui.tab==='genera'?vGen():ui.tab==='allenatori'?vTrainers():ui.tab==='lotta'?vBattle():ui.tab==='diario'?vDiario():ui.tab==='database'?vDb():vGl());
   document.querySelectorAll('#tabs button').forEach(b=>b.dataset.t===ui.tab?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));
   $('#sheet').innerHTML=sheetH(keep);
   const tc=$('#tc');if(tc)tc.innerHTML=tcH();
@@ -1836,13 +1851,27 @@ const ACT={
   async dimp(){try{const c=ghCfg(),h={Accept:'application/vnd.github.raw+json'};if(c.tok)h.Authorization='Bearer '+c.tok;const r=await fetch('https://api.github.com/repos/'+ghRepo()+'/contents/diario.json',{headers:h,cache:'no-store'});if(!r.ok)throw new Error(ghErr(r.status));const o=await r.json();let n=0;(o.voci||[]).forEach(v=>{if(!S.diary.some(e=>e.id===v.id)){S.diary.push(Object.assign({pub:true},v));n++}});save();render(true);toast(n?n+' voci recuperate':'Nessuna voce nuova')}catch(e){toast('Non riesco a leggere il diario pubblicato: '+e.message)}},
   ghtest(){if(!ghCfg().tok){toast('Incolla prima la chiave');return}verifyKey(false)},
   dkind(d){ui.db={kind:d.i,q:'',type:'',cat:'',lim:50};render()},
+  dgo(d){ui.db={kind:d.i,q:ui.db.q,type:'',cat:'',lim:50};render()},
   dmore(){ui.db.lim+=50;$('#dbl').innerHTML=dbList()},
   omin(d){S.opt.min1=d.i==='1';save();render(true)},
   odef(d){S.opt.def=+d.i;save();render(true)},
-  bcopy(){copy($('#bk').value,'Backup copiato')},
-  bimp(){try{const o=JSON.parse($('#bi').value);if(!Array.isArray(o.trainers)||!Array.isArray(o.saved))throw 0;S.trainers=o.trainers;S.saved=o.saved;S.opt=o.opt||S.opt;S.battle=o.battle||null;if(Array.isArray(o.diary))S.diary=o.diary;if(o.pub)S.pub=o.pub;save();toast('Backup ripristinato');ui.stack=[];render()}catch(e){toast('Testo non valido: incolla un backup completo')}}
+  bcopy(){copy($('#bk').value,'Backup copiato');S.lastBk=Date.now();save()},
+  bksnz(){S.bkSnz=Date.now()+7*DAY;save();render(true)},
+  async bdl(){try{const o=bkObj(),im=await IDB.all(),ks=Object.keys(im);if(ks.length){o.imgs={};for(const k of ks)o.imgs[k]=await blobUrl(im[k])}
+    const txt=JSON.stringify(o),nm='master-pokerole-backup-'+new Date().toISOString().slice(0,10)+'.json',f=new File([txt],nm,{type:'application/json'});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f]})}catch(e){if(e&&e.name==='AbortError')return}}
+    else{const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=nm;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}
+    S.lastBk=Date.now();save();toast('Backup creato'+(ks.length?' con '+ks.length+' immagini':''));render(true)}catch(e){toast('Impossibile creare il backup')}},
+  async bfile(){const f=$('#bf')&&$('#bf').files[0];if(!f){toast('Scegli prima un file');return}try{await restore(JSON.parse(await f.text()))}catch(e){toast('File non valido: serve un backup completo')}},
+  bimp(){try{restore(JSON.parse($('#bi').value))}catch(e){toast('Testo non valido: incolla un backup completo')}}
 };
-document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;const f=ACT[b.dataset.a];if(f)f(b.dataset)});
+const UNDO=[];
+const snap=()=>JSON.stringify({b:S.battle,t:S.trainers,s:S.saved});
+ACT.bundo=()=>{const x=UNDO.pop();if(!x){toast('Niente da annullare');return}const o=JSON.parse(x);S.battle=o.b;S.trainers=o.t;S.saved=o.s;ui.act=null;ui.arm=null;if(ui.stack&&ui.stack.length&&ui.stack[ui.stack.length-1].k==='act')ui.stack.pop();save();toast('Ultima azione annullata');render(true)};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,f=ACT[a];if(!f)return;
+  const on=a!=='bundo'&&S&&S.battle&&S.battle.phase==='on';const pre=on?snap():null;f(b.dataset);
+  if(!S||!S.battle||S.battle.phase!=='on'){UNDO.length=0;return}
+  if(pre){const post=snap();if(post!==pre){UNDO.push(pre);if(UNDO.length>15)UNDO.shift();const u=document.querySelector('[data-a=bundo]');if(u)u.disabled=false}}});
 document.addEventListener('input',e=>{const t=e.target,k=t.dataset.i;if(!k)return;
   if(k==='gq'){ui.gen.q=t.value;$('#sug').innerHTML=sugH()}
   else if(k==='bq'){ui.bt.q=t.value;$('#bsug').innerHTML=bSug()}
@@ -1915,6 +1944,7 @@ function start(){
   render();
   if(ghCfg().tok&&!ghCfg().ok)verifyKey(true);
   if(S.tav&&S.tav.code)TAV.host();
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
   if(/^#imp=/.test(location.hash)){ui.impt=location.hash;try{history.replaceState(null,'',location.pathname)}catch(e){}ui.tab='allenatori';ui.tv='pg';ui.stack=[{k:'imp'}];render();ACT.impread()}
 }
 window.addEventListener('hashchange',()=>{if(/^#imp=/.test(location.hash)){ui.impt=location.hash;try{history.replaceState(null,'',location.pathname)}catch(e){}ui.tab='allenatori';ui.tv='pg';ui.stack=[{k:'imp'}];render();ACT.impread();return}const h=(location.hash||'').slice(1);if(['genera','allenatori','lotta','diario','database','regole'].includes(h)&&h!==ui.tab){ui.tab=h;render()}});
