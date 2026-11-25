@@ -54,6 +54,19 @@ let fails=0;const ok=(c,m)=>{console.log((c?'OK   ':'FAIL ')+m);if(!c)fails++};
       const n=await pg.evaluate(()=>UNDO.length);ok(n>=1,'azione registrata per annullare ('+n+')');
       await pg.click('[data-a=bundo]');const n2=await pg.evaluate(()=>UNDO.length);ok(n2===n-1,'annulla consuma un passo');ok(await hp()===h0,'annulla ripristina i PV');}
   }
+  // condivisione scheda: l'immagine non entra nel link, import completo e messaggio chiaro se tagliato
+  const sh=await pg.evaluate(async()=>{const t=S.trainers[0];t.img='data:image/jpeg;base64,'+btoa('x'.repeat(40000));
+    const code=await packTrainer(t),o=await unpackTrainer('#imp='+code);let err='';try{await unpackTrainer('#imp='+code.slice(0,Math.floor(code.length/2)))}catch(e){err=e.message}
+    ui.impd=o;ACT.impdo({i:'upd'});const t2=S.trainers.find(x=>x.id===t.id);
+    return {len:code.length,noimg:!('img' in o.t),team:o.t.team.length===t.team.length,keep:!!t2.img,err}});
+  ok(sh.len<5000,'link di condivisione corto anche con immagine ('+sh.len+' caratteri)');
+  ok(sh.noimg&&sh.team,'scheda importata senza immagine ma con la squadra');
+  ok(sh.keep,'aggiornando la scheda resta la propria immagine');
+  ok(/incompleto/.test(sh.err),'codice tagliato: messaggio chiaro');
+  // salvataggio ritardato mentre si scrive
+  const sv=await pg.evaluate(async()=>{const t=S.trainers[0];ui.stack=[{k:'trainer',i:t.id}];render();const el=document.getElementById('tno');el.value='prova note';el.dispatchEvent(new Event('input',{bubbles:true}));
+    const before=JSON.parse(localStorage.getItem(SKEY)).trainers[0].notes;await new Promise(r=>setTimeout(r,600));const after=JSON.parse(localStorage.getItem(SKEY)).trainers[0].notes;ui.stack=[];render();return {before,after}});
+  ok(sv.before!=='prova note'&&sv.after==='prova note','note salvate dopo una breve pausa');
   // regole: tabella dei tipi e generatore su tutte le specie
   ok(await pg.evaluate(()=>CH.Fire.s.includes('Grass')&&CH.Water.s.includes('Fire')&&CH.Normal.i.includes('Ghost')&&CH.Electric.i.includes('Ground')),'tabella dei tipi: casi noti');
   const gen=await pg.evaluate(()=>{const bad=[];MON.forEach((m,i)=>{try{const P=generate(i,m.rk,'bal');if(!P||P.m!==i||!(P.at||[]).length||P.at.some(v=>!(v>=0)))bad.push(m.n)}catch(e){bad.push(m.n+': '+e.message)}});return bad});

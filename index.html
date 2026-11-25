@@ -281,7 +281,7 @@ nav.tabs{padding-bottom:env(safe-area-inset-bottom)}
 <body>
 <div class="app">
   <header class="top">
-    <span class="ball" aria-hidden="true"></span><div class="brand">Master <b>Pokérole</b><small>Compagno del master · regole 3.0 · <span class="appv">v1.22</span></small></div>
+    <span class="ball" aria-hidden="true"></span><div class="brand">Master <b>Pokérole</b><small>Compagno del master · regole 3.0 · <span class="appv">v1.23</span></small></div>
     <button class="btn sm ghost" data-a="open" data-k="backup" aria-label="Impostazioni e backup">Opzioni</button>
   </header>
   <main id="main"></main>
@@ -330,7 +330,9 @@ function wpick(items,wf){let tot=0;const ws=items.map(x=>{const w=Math.max(0,wf(
 const SKEY='master-pokerole-v1';
 let mem=null;
 function load(){try{const t=localStorage.getItem(SKEY);if(t)return JSON.parse(t)}catch(e){}return mem}
-function save(){mem=S;try{localStorage.setItem(SKEY,JSON.stringify(S));if(save.err){save.err=0;try{render(true)}catch(_){}}}catch(e){if(!save.err){save.err=1;try{toast('Salvataggio non riuscito: spazio esaurito. Fai subito un backup!');render(true)}catch(_){}}}if(window.TAV)TAV.soon()}
+let svT=0;function saveSoon(){clearTimeout(svT);svT=setTimeout(save,400)}
+addEventListener('pagehide',()=>{if(svT)save()});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&svT)save()});
+function save(){clearTimeout(svT);svT=0;mem=S;try{localStorage.setItem(SKEY,JSON.stringify(S));if(save.err){save.err=0;try{render(true)}catch(_){}}}catch(e){if(!save.err){save.err=1;try{toast('Salvataggio non riuscito: spazio esaurito. Fai subito un backup!');render(true)}catch(_){}}}if(window.TAV)TAV.soon()}
 let S=load()||null;
 const ui={bt:{side:'A',src:'saved',q:'',rk:-1,open:null},act:null,ga:{a:-1,rk:-1,n:0},di:{q:'',c:''},dp:{q:'',c:''},gr:{fg:null,q:''},dx:{f:'s',q:''},mart:{to:null,q:{}},dmode:'edit',tv:'pg',tab:'genera',gen:{mode:'mon',n:1,batch:[],sel:0,q:'',mi:null,rk:null,style:'bal',f:{type:'',reg:'',stage:'',hab:'',rare:false,low:false},cur:null,target:'saved'},gi:{cat:'',max:'',n:3,rare:false,res:[]},db:{kind:'mon',q:'',type:'',cat:'',lim:50},gl:{q:'',d1:'',d2:''},stack:[],arm:null};
 
@@ -416,7 +418,7 @@ const SP=JSON.parse(document.getElementById('sp').textContent);
 const W64='data:image/webp;base64,';
 function monSrc(mi){const k=SP.i[mi];return k&&SP.s[k]?W64+SP.s[k]:null}
 const tcol=M=>TYCOL[M.ty[0]]||'#8a96a3',tcol2=M=>TYCOL[M.ty[1]||M.ty[0]]||'#8a96a3';
-function monAv(mi,cls){const M=MON[mi],u=monSrc(mi);return `<span class="av ${cls||''}" style="--tc:${tcol(M)}">${u?`<img class="spr" src="${u}" alt="" loading="lazy">`:`<b>${esc(M.n[0])}</b>`}</span>`}
+function monAv(mi,cls){const M=MON[mi],u=monSrc(mi);return `<span class="av ${cls||''}" style="--tc:${tcol(M)}">${u?`<img class="spr" src="${u}" alt="" loading="lazy" decoding="async">`:`<b>${esc(M.n[0])}</b>`}</span>`}
 function heroSz(k,maxH){const d=SP.d[k];if(!d)return '';const z=Math.max(1,Math.min(3,Math.floor(maxH/d[1]),Math.floor(300/d[0])));return ` style="width:${d[0]*z}px;height:${d[1]*z}px"`}
 function monHero(mi,badge){const M=MON[mi],u=monSrc(mi);return `<div class="hero" style="--tc:${tcol(M)};--tc2:${tcol2(M)}"><i class="floor"></i>${u?`<img class="spr" src="${u}" alt="${esc(M.n)}"${heroSz(SP.i[mi],132)}>`:`<span class="ph">${esc(M.n[0])}</span>`}${badge?`<span class="badge">${badge}</span>`:''}</div>`}
 // ritratti di default: [maschile, femminile] per archetipo, poi per personaggio fisso
@@ -426,10 +428,13 @@ const [FIXSPR,FIXED]=new Function(unveil('GwsHABAcSTpWPwIOFx1VSyksLzcwMC0qE0wDBw
 const TRNAMES=Object.keys(SP.t).sort();
 function trSprKey(t){if(t.spr!=null)return t.spr;const f=FIXSPR[(t.name||'').replace(/ \(rivincita\)$/,'')];if(f)return f;
   for(let i=0;i<ARCH.length;i++){if(t.role===ARCH[i][0])return ARCHSPR[i][0];if(t.role===ARCH[i][1])return ARCHSPR[i][1]}return ''}
-function trSrc(t){if(t.img)return t.img;const k=trSprKey(t);return k&&SP.t[k]?W64+SP.t[k]:null}
-function trAv(t){const u=trSrc(t),c=RKCOL[t.rk]||'#8a96a3';return `<span class="av tr" style="--tc:${c}">${u?`<img class="${t.img?'pic':'spr'}" src="${u}" alt="" loading="lazy">`:`<b>${esc((t.name||'?')[0])}</b>`}</span>`}
+const DUC=new Map();
+function duUrl(u){if(typeof u!=='string'||u.length<4000||!u.startsWith('data:'))return u;let b=DUC.get(u);if(b)return b;
+  try{const i=u.indexOf(','),bin=atob(u.slice(i+1)),a=new Uint8Array(bin.length);for(let k=0;k<bin.length;k++)a[k]=bin.charCodeAt(k);b=URL.createObjectURL(new Blob([a],{type:u.slice(5,i).split(';')[0]}));if(DUC.size>60){URL.revokeObjectURL(DUC.values().next().value);DUC.delete(DUC.keys().next().value)}DUC.set(u,b);return b}catch(e){return u}}
+function trSrc(t){if(t.img)return duUrl(t.img);const k=trSprKey(t);return k&&SP.t[k]?W64+SP.t[k]:null}
+function trAv(t){const u=trSrc(t),c=RKCOL[t.rk]||'#8a96a3';return `<span class="av tr" style="--tc:${c}">${u?`<img class="${t.img?'pic':'spr'}" src="${u}" alt="" loading="lazy" decoding="async">`:`<b>${esc((t.name||'?')[0])}</b>`}</span>`}
 function trHero(t){const u=trSrc(t),c=RKCOL[t.rk]||'#8a96a3';return `<div class="hero tr" style="--tc:${c};--tc2:#56636f"><i class="floor"></i>${u?(t.img?`<img class="pic" src="${u}" alt="" data-zoom="1">`:`<img class="spr" src="${u}" alt=""${heroSz(trSprKey(t),150)}>`):`<span class="ph">${esc((t.name||'?')[0])}</span>`}<span class="badge">${rtag(t.rk)}</span></div>`}
-const strip=team=>`<span class="strip">${team.slice(0,6).map(P=>{const u=monSrc(P.m);return u?`<img class="spr" src="${u}" alt="" loading="lazy">`:''}).join('')}</span>`;
+const strip=team=>`<span class="strip">${team.slice(0,6).map(P=>{const u=monSrc(P.m);return u?`<img class="spr" src="${u}" alt="" loading="lazy" decoding="async">`:''}).join('')}</span>`;
 
 /* ---------- pezzi di interfaccia ---------- */
 const tchip=t=>`<span class="chip${TYDARK[t]?' dark':''}" style="background:${TYCOL[t]||'#6b7783'}">${esc(TYIT[t]||t)}</span>`;
@@ -487,7 +492,7 @@ function vGen(){
   <div class="row"><button class="btn pri grow" data-a="grand">Pokémon casuale</button>${g.mi!=null?`<button class="btn grow" data-a="gagain">Rigenera ${esc(MON[g.mi].n)}</button>`:''}</div></div>`;
   if(g.cur){if(g.batch.length>1)h+=`<div class="card"><h3>Generati (${g.batch.length})</h3><div class="seg">${g.batch.map((P,k)=>`<button data-a="gsel" data-i="${k}" aria-pressed="${g.sel===k}"><i class="pip" style="--pc:${RKCOL[P.rk]}"></i>${esc(MON[P.m].n)}</button>`).join('')}</div></div>`;
   h+=instCard(g.cur)+`<div class="card"><div class="row">${nickF('gnick',g.cur.nick,g.cur.m)}${selectH('gt','gtarget',g.target,targetOpts(),'Salva in')}</div><div class="row"><button class="btn pri grow" data-a="gsave">Salva</button>${g.batch.length>1?'<button class="btn pri" data-a="gsaveall">Salva tutti</button>':''}<button class="btn" data-a="gcopy">Copia testo</button><button class="btn" data-a="open" data-k="mon" data-i="${g.cur.m}">Scheda specie</button></div></div>`}
-  if(S.saved.length)h+=`<h3>Pokémon salvati</h3><div class="list">${S.saved.map(P=>instItem(P,'saved')).join('')}</div>`;
+  if(S.saved.length){const L=ui.svlim||30;h+=`<h3>Pokémon salvati (${S.saved.length})</h3><div class="list">${S.saved.slice(0,L).map(P=>instItem(P,'saved')).join('')}</div>${S.saved.length>L?`<button class="btn" data-a="svmore">Mostra altri ${Math.min(30,S.saved.length-L)}</button>`:''}`}
   return h;
 }
 function vGenItems(){
@@ -615,13 +620,17 @@ function vTrainers(){
 const appUrl=()=>location.protocol.startsWith('http')?location.origin+location.pathname.replace(/index\.html$/,''):'https://ciampaxxo.github.io/Pokerole-Companion-app/';
 const b64url=u=>{let bin='';for(let i=0;i<u.length;i+=0x8000)bin+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
 const unb64url=s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')+'==='.slice((s.length+3)%4)),c=>c.charCodeAt(0));
-async function packTrainer(t){const raw=new TextEncoder().encode(JSON.stringify({v:1,t,at:Date.now()}));
+const shareObj=t=>{const o=Object.assign({},t);delete o.img;return o};
+const SHC={};
+function prepShare(t){const sig=JSON.stringify(shareObj(t)),c=SHC[t.id];if(c&&c.sig===sig)return;SHC[t.id]={sig,code:null};packTrainer(t).then(code=>{if(SHC[t.id]&&SHC[t.id].sig===sig)SHC[t.id].code=code}).catch(()=>{})}
+async function packTrainer(t){const raw=new TextEncoder().encode(JSON.stringify({v:1,t:shareObj(t),at:Date.now()}));
   if(window.CompressionStream){try{const z=new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer());return 'z'+b64url(z)}catch(e){}}
   return 'u'+b64url(raw)}
 async function unpackTrainer(text){const m=String(text||'').match(/imp=([A-Za-z0-9_-]+)/)||String(text||'').trim().match(/^([zu][A-Za-z0-9_-]{20,})$/);if(!m)throw new Error('nessun codice trovato');
   const code=m[1],bytes=unb64url(code.slice(1));let raw=bytes;
-  if(code[0]==='z'){if(!window.DecompressionStream)throw new Error('browser troppo vecchio per questo codice');raw=new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer())}
-  const o=JSON.parse(new TextDecoder().decode(raw));if(!o||!o.t||!Array.isArray(o.t.team))throw new Error('codice non valido');return o}
+  const cut=new Error('il codice è incompleto: forse il messaggio è stato tagliato. Fatti rimandare il link intero');
+  if(code[0]==='z'){if(!window.DecompressionStream)throw new Error('browser troppo vecchio per questo codice');try{raw=new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer())}catch(e){throw cut}}
+  let o;try{o=JSON.parse(new TextDecoder().decode(raw))}catch(e){throw cut}if(!o||!o.t||!Array.isArray(o.t.team))throw new Error('codice non valido');return o}
 function sImp(){const d=ui.impd;
   let h=`<div class="card"><p class="small">Incolla il messaggio o il link ricevuto. Funziona in entrambe le direzioni: i giocatori mandano a te la loro scheda, tu puoi rimandarla aggiornata dopo una sessione.</p>
   <div class="field"><label for="impt">Messaggio o codice</label><textarea id="impt" data-i="impt" placeholder="Incolla qui...">${esc(ui.impt||'')}</textarea></div>
@@ -631,7 +640,7 @@ function sImp(){const d=ui.impd;
     <p class="small muted">Scheda del ${new Date(d.at).toLocaleString('it-IT',{dateStyle:'short',timeStyle:'short'})}.${ex?' Hai già questa scheda: aggiornandola, la tua versione viene sostituita.':''}</p>
     <div class="row">${ex?'<button class="btn pri grow" data-a="impdo" data-i="upd">Aggiorna la scheda</button><button class="btn grow" data-a="impdo" data-i="new">Aggiungi come copia</button>':'<button class="btn pri grow" data-a="impdo" data-i="new">Aggiungi</button>'}</div></div>`}
   return h}
-function sTrainer(t){
+function sTrainer(t){prepShare(t);
   const d=tDer(t),R=RKPTS[t.rk],A=AGES[t.age];
   const spentA=t.at.reduce((a,b)=>a+b,0)-4,spentS=t.so.reduce((a,b)=>a+b,0)-5,spentK=Object.values(t.sk).reduce((a,b)=>a+b,0);
   const hpNow=Math.max(0,d.hp-(t.dmg||0));
@@ -650,7 +659,7 @@ function sTrainer(t){
   ${t.team.length?`<div class="list">${t.team.map(P=>instItem(P,t.id)).join('')}</div>`:'<p class="small muted">Squadra vuota. Genera un Pokémon e salvalo qui.</p>'}
   ${t.pg?`<h3>Box (${(t.box||[]).length})</h3>${(t.box||[]).length?`<div class="list">${t.box.map(P=>instItem(P,t.id)).join('')}</div>`:'<p class="small muted">Vuoto. Oltre il sesto Pokémon le catture finiscono qui.</p>'}`:''}</div>
   <div class="card">${t.pg?`<div class="field"><label for="tinv">Zaino</label><textarea id="tinv" data-i="tf:inv" placeholder="Pokéball, pozioni, oggetti chiave...">${esc(t.inv||'')}</textarea></div>`:`<div class="field"><label for="tm">Denaro e oggetti</label><input id="tm" type="text" data-i="tf:money" value="${esc(t.money)}" placeholder="Es. 3000 ₽, Pozione"></div>`}<div class="field"><label for="tno">Note</label><textarea id="tno" data-i="tf:notes" placeholder="Personalità, obiettivi, tattiche...">${esc(t.notes)}</textarea></div></div>
-  <button class="btn pri" data-a="tshare">Condividi scheda</button><p class="small muted">Manda la scheda (squadra, box, soldi e zaino) con un link: chi la riceve la aggiunge o la aggiorna con un tocco.</p>
+  <button class="btn pri" data-a="tshare">Condividi scheda</button>${t.img?'<p class="small muted">L’immagine del personaggio non viaggia nel link: chi riceve la scheda tiene la propria.</p>':''}<p class="small muted">Manda la scheda (squadra, box, soldi e zaino) con un link: chi la riceve la aggiunge o la aggiorna con un tocco.</p>
   <div class="row"><button class="btn grow" data-a="tdup">Duplica</button><button class="btn danger grow" data-a="tdel">${ui.arm==='tdel'?'Tocca ancora per eliminare':'Elimina allenatore'}</button></div>`;
 }
 /* ---------- creazione guidata del personaggio (manuale p. 40–46) ---------- */
@@ -1576,7 +1585,7 @@ const VIEW={on:false,code:null,g:null,pc:null,sub:null,st:null,ok:false,fb:null,
     requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll('#tav .hpb i[data-p]').forEach(i=>{const v=+i.dataset.p;i.style.width=100*v+'%';i.style.background=v>.5?'#3fbf6a':v>.2?'#f0b429':'#e5484d'})))}};
 
 /* ---------- schede e render ---------- */
-const APPV='1.22',APPD='22 novembre 2026';
+const APPV='1.23',APPD='25 novembre 2026';
 function sBackup(){return sBackup0()+`<div class="card"><h3>Versione</h3><p>Master Pokérole <b>v${APPV}</b> · pubblicata il ${APPD}</p><p class="small muted">Quando esce una versione nuova l’app la scarica da sola e lo segnala con un avviso: basta riaprirla.</p></div>`}
 function sBackup0(){return `<div class="card"><h3>Danno minimo</h3><div class="seg"><button data-a="omin" data-i="1" aria-pressed="${S.opt.min1!==false}">Sempre almeno 1</button><button data-a="omin" data-i="0" aria-pressed="${S.opt.min1===false}">Le resistenze possono azzerarlo</button></div><p class="small muted">Vale per l’assistente di battaglia. Le immunità danno sempre 0.</p></div>
 <div class="card"><h3>Difese</h3><div class="seg"><button data-a="odef" data-i="2" aria-pressed="${S.opt.def===2}">Sp. Def = Insight</button><button data-a="odef" data-i="1" aria-pressed="${S.opt.def===1}">Sp. Def = Vitality</button></div><p class="small muted">Il manuale chiede di scegliere un metodo per tutta la campagna (p. 27).</p></div>
@@ -1771,14 +1780,14 @@ const ACT={
   mto(d){ui.mart.to=d.i;render(true)},
   mq(d){ui.mart.q[d.k]=clamp((ui.mart.q[d.k]||1)+(+d.d),1,99);render(true)},
   mbuy(d){const m=ui.mart,t=S.trainers.find(x=>x.id===m.to),a=IT[+d.i],q=m.q[d.i]||1,cost=a.pr*q;if((+t.cash||0)<cost){toast('Denaro insufficiente');return}t.cash=(+t.cash||0)-cost;invAdd(t,a.n,q);m.q[d.i]=1;save();toast(q+'× '+a.n+' nello zaino di '+(t.name||''));render(true)},
-  async tshare(){const t=curTrainer();if(!t)return;try{const code=await packTrainer(t),url=appUrl()+'#imp='+code,nm=t.name||'allenatore';
+  async tshare(){const t=curTrainer();if(!t)return;try{const c=SHC[t.id],code=c&&c.code&&c.sig===JSON.stringify(shareObj(t))?c.code:await packTrainer(t),url=appUrl()+'#imp='+code,nm=t.name||'allenatore';
     const text='Scheda di '+nm+' per Master Pokérole. Apri il link, oppure copia questo messaggio e incollalo nell’app in Allenatori → Giocatori → Importa.';
     if(navigator.share){try{await navigator.share({title:'Scheda di '+nm,text,url});return}catch(e){if(e&&e.name==='AbortError')return}}
-    copy(text+'\n'+url,'Link copiato: incollalo in chat')}catch(e){toast('Non riesco a preparare la scheda: '+e.message)}},
+    copy(text+'\n'+url,'Link copiato: incollalo in chat')}catch(e){toast('Non riesco a preparare la scheda: '+(e&&e.message||'errore sconosciuto'))}},
   async impclip(){try{ui.impt=await navigator.clipboard.readText();ui.impd=null;await ACT.impread()}catch(e){toast('Non posso leggere gli appunti: incolla a mano nel riquadro')}},
   async impread(d){const el=$('#impt');if(d&&el)ui.impt=el.value;try{ui.impd=await unpackTrainer(ui.impt);render(true)}catch(e){ui.impd=null;toast('Codice non valido: '+e.message);render(true)}},
   impdo(d){const o=ui.impd;if(!o)return;const t=JSON.parse(JSON.stringify(o.t));t.box=t.box||[];
-    if(d.i==='upd'){const j=S.trainers.findIndex(x=>x.id===t.id);if(j>=0)S.trainers[j]=t;else S.trainers.unshift(t)}
+    if(d.i==='upd'){const j=S.trainers.findIndex(x=>x.id===t.id);if(j>=0){if(!t.img&&S.trainers[j].img)t.img=S.trainers[j].img;S.trainers[j]=t}else S.trainers.unshift(t)}
     else{const ex=S.trainers.some(x=>x.id===t.id);if(ex){t.id=uid();t.name=(t.name||'Allenatore')+' (copia)';t.team.concat(t.box).forEach(P=>P.id=uid())}S.trainers.unshift(t)}
     ui.impd=null;ui.impt='';ui.tv=t.pg?'pg':'npc';ui.tab='allenatori';save();ui.stack=[{k:'trainer',i:t.id}];render();toast(d.i==='upd'?'Scheda aggiornata':'Scheda aggiunta')},
   pwstart(){if(!ui.pw)ui.pw=pwNew();ui.stack.push({k:'pgw'});render()},
@@ -1851,6 +1860,7 @@ const ACT={
   dkind(d){ui.db={kind:d.i,q:'',type:'',cat:'',lim:50};render()},
   dgo(d){ui.db={kind:d.i,q:ui.db.q,type:'',cat:'',lim:50};render()},
   dmore(){ui.db.lim+=50;$('#dbl').innerHTML=dbList()},
+  svmore(){ui.svlim=(ui.svlim||30)+30;render(true)},
   omin(d){S.opt.min1=d.i==='1';save();render(true)},
   odef(d){S.opt.def=+d.i;save();render(true)},
   bcopy(){copy($('#bk').value,'Backup copiato');S.lastBk=Date.now();save()},
@@ -1876,9 +1886,9 @@ document.addEventListener('input',e=>{const t=e.target,k=t.dataset.i;if(!k)retur
   else if(k==='gimax'){ui.gi.max=t.value}
   else if(k==='dq'){ui.db.q=t.value;ui.db.lim=50;$('#dbl').innerHTML=dbList()}
   else if(k==='glq'){ui.gl.q=t.value;$('#gll').innerHTML=glList();const tc=$('#tc');if(tc)tc.innerHTML=tcH()}
-  else if(k.startsWith('tf:')){const tr=curTrainer();if(tr){const f=k.slice(3);tr[f]=f==='cash'?(parseInt(t.value,10)||0):t.value;save()}}
-  else if(k.startsWith('de:')){const e=curDent();if(e){e[k.slice(3)]=t.value;e.u=Date.now();save();if(k==='de:t'){const h=document.querySelector('.sheet header h2');if(h)h.textContent=t.value||'Nuova voce'}}}
-  else if(k.startsWith('dimgcap:')){const e=curDent();if(e&&e.img){const im=e.img[+k.slice(8)];if(im){im.d=t.value;e.u=Date.now();save()}}}
+  else if(k.startsWith('tf:')){const tr=curTrainer();if(tr){const f=k.slice(3);tr[f]=f==='cash'?(parseInt(t.value,10)||0):t.value;saveSoon()}}
+  else if(k.startsWith('de:')){const e=curDent();if(e){e[k.slice(3)]=t.value;e.u=Date.now();saveSoon();if(k==='de:t'){const h=document.querySelector('.sheet header h2');if(h)h.textContent=t.value||'Nuova voce'}}}
+  else if(k.startsWith('dimgcap:')){const e=curDent();if(e&&e.img){const im=e.img[+k.slice(8)];if(im){im.d=t.value;e.u=Date.now();saveSoon()}}}
   else if(k==='impt'){ui.impt=t.value}
   else if(k==='efn'){ui.efn=t.value}
   else if(k==='gtmq'){ui.gr.q=t.value;const g=growTop();if(g)$('#gtml').innerHTML=tmList(g.P)}
@@ -1887,7 +1897,7 @@ document.addEventListener('input',e=>{const t=e.target,k=t.dataset.i;if(!k)retur
   else if(k==='dpq'){ui.dp.q=t.value;const V=(ui.pubd&&ui.pubd.voci)||[],f=ui.dp,kk=key(f.q);$('#dpl').innerHTML=dpList(V.filter(v=>(!f.c||v.c===f.c)&&(!kk||key((v.t||'')+' '+(v.b||'')+' '+(v.w||'')).includes(kk))),V.length)}
   else if(k.startsWith('ghs:')){ghSet({[k.slice(4)]:t.value.trim(),ok:false});clearTimeout(vkT);vkT=setTimeout(()=>verifyKey(true),900)}
   else if(k.startsWith('rw:')){ui.rw[k.slice(3)]=t.value}
-  else if(k.startsWith('if:')){const c=curInst();if(c&&c.P){const f=k.slice(3);c.P[f]=f==='nick'?t.value.trimStart():t.value;save();if(f==='nick'){const h=document.querySelector('.sheet header h2');if(h)h.textContent=c.P.nick||MON[c.P.m].n}}}
+  else if(k.startsWith('if:')){const c=curInst();if(c&&c.P){const f=k.slice(3);c.P[f]=f==='nick'?t.value.trimStart():t.value;saveSoon();if(f==='nick'){const h=document.querySelector('.sheet header h2');if(h)h.textContent=c.P.nick||MON[c.P.m].n}}}
   else if(k==='cnick'){ui.cat.nick=t.value}
   else if(k.startsWith('pw:')&&ui.pw){const f=k.slice(3);if(f.startsWith('q:'))ui.pw.q[f.slice(2)]=t.value;else ui.pw[f]=t.value;if(f==='name'){const ph=document.querySelector('.pwimg .ph');if(ph&&!ui.pw.img)ph.textContent=(t.value||'?')[0]}}
   else if(k==='pwmq'&&ui.pw){ui.pw.mq=t.value;$('#pwsug').innerHTML=pwSug()}
