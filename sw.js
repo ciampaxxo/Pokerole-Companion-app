@@ -21,4 +21,4 @@ self.addEventListener('fetch',e=>{
     return (await net)||new Response('Offline',{status:503});
   }));
 });
-// versione fab5475b28
+// versione 8f682b7a74

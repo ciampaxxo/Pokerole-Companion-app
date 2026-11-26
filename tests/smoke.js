@@ -9,7 +9,9 @@ let fails=0;const ok=(c,m)=>{console.log((c?'OK   ':'FAIL ')+m);if(!c)fails++};
 (async()=>{
   await new Promise(r=>srv.listen(0,r));const url='http://127.0.0.1:'+srv.address().port+'/';
   const br=await chromium.launch(),ctx=await br.newContext({viewport:{width:420,height:860},acceptDownloads:true}),pg=await ctx.newPage();
-  const errs=[];pg.on('pageerror',e=>errs.push(e.message));pg.on('console',m=>{if(m.type()==='error')errs.push(m.text())});
+  // niente rete esterna nei test (GitHub, ntfy...): solo il server locale
+  await ctx.route(r=>!r.href.startsWith(url),r=>r.abort());
+  const errs=[];pg.on('pageerror',e=>errs.push(e.message));pg.on('console',m=>{if(m.type()==='error'&&!/Failed to load resource/.test(m.text()))errs.push(m.text())});
   await pg.goto(url);await pg.waitForSelector('#main *');
   ok(errs.length===0,'nessun errore al caricamento '+errs.join('|'));
   // esc con apostrofo
@@ -56,7 +58,7 @@ let fails=0;const ok=(c,m)=>{console.log((c?'OK   ':'FAIL ')+m);if(!c)fails++};
   }
   // condivisione scheda: l'immagine non entra nel link, import completo e messaggio chiaro se tagliato
   const sh=await pg.evaluate(async()=>{const t=S.trainers[0];t.img='data:image/jpeg;base64,'+btoa('x'.repeat(40000));
-    const code=await packTrainer(t),o=await unpackTrainer('#imp='+code);let err='';try{await unpackTrainer('#imp='+code.slice(0,Math.floor(code.length/2)))}catch(e){err=e.message}
+    const code=await packTrainer(t),o=await unpackTrainer('#imp='+code);let err='';for(let k=0;k<4;k++){try{await unpackTrainer('#imp='+code.slice(0,Math.floor(code.length/2)+k));err+='|nessun errore'}catch(e){if(!/incompleto/.test(e.message))err+='|'+e.message}}err=err||'incompleto';
     ui.impd=o;ACT.impdo({i:'upd'});const t2=S.trainers.find(x=>x.id===t.id);
     return {len:code.length,noimg:!('img' in o.t),team:o.t.team.length===t.team.length,keep:!!t2.img,err}});
   ok(sh.len<5000,'link di condivisione corto anche con immagine ('+sh.len+' caratteri)');

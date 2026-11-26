@@ -632,8 +632,8 @@ async function packObj(obj){const raw=new TextEncoder().encode(JSON.stringify(ob
   if(window.CompressionStream){try{const z=new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer());return 'z'+b64url(z)}catch(e){}}
   return 'u'+b64url(raw)}
 async function unpackTrainer(text){const m=String(text||'').match(/imp=([A-Za-z0-9_-]+)/)||String(text||'').trim().match(/^([zu][A-Za-z0-9_-]{20,})$/);if(!m)throw new Error('nessun codice trovato');
-  const code=m[1],bytes=unb64url(code.slice(1));let raw=bytes;
-  const cut=new Error('il codice è incompleto: forse il messaggio è stato tagliato. Fatti rimandare il link intero');
+  const code=m[1],cut=new Error('il codice è incompleto: forse il messaggio è stato tagliato. Fatti rimandare il link intero');
+  let bytes;try{bytes=unb64url(code.slice(1))}catch(e){throw cut}let raw=bytes;
   if(code[0]==='z'){if(!window.DecompressionStream)throw new Error('browser troppo vecchio per questo codice');try{raw=new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer())}catch(e){throw cut}}
   let o;try{o=JSON.parse(new TextDecoder().decode(raw))}catch(e){throw cut}if(o&&o.p){if(typeof o.p.m!=='number'||!MON[o.p.m])throw new Error('Pokémon non riconosciuto');return o}if(!o||!o.t||!Array.isArray(o.t.team))throw new Error('codice non valido');return o}
 function sImp(){const d=ui.impd;
