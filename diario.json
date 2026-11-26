@@ -1,1 +1,22 @@
-{"aggiornato":null,"voci":[]}
+{
+ "aggiornato": "2026-11-26T11:43:48.000Z",
+ "voci": [
+  {
+   "id": "poplerp63a96",
+   "t": "Professor Popler",
+   "c": "png",
+   "w": "",
+   "b": "Popler è il Professore Pokémon della regione e studia i Pokémon insieme agli ecosistemi in cui vivono.\nAll'inizio dà lo starter e il Pokédex.\nÈ preoccupato che la rapida crescita industriale della regione possa avere un impatto troppo grande sugli habitat della regione.",
+   "u": 1795693428851,
+   "img": [
+    {
+     "id": "1a217ab4pop63a96",
+     "f": "diario-img/1a217ab4pop63a96.jpg",
+     "d": "Il Professor Popler",
+     "w": 512,
+     "h": 512
+    }
+   ]
+  }
+ ]
+}
