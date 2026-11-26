@@ -1,20 +1,20 @@
 {
- "aggiornato": "2026-11-26T11:43:48.000Z",
+ "aggiornato": "2026-11-26T11:49:20.664Z",
  "voci": [
   {
-   "id": "poplerp63a96",
-   "t": "Professor Popler",
-   "c": "png",
+   "id": "mwxhla9ij8iz",
+   "t": "Mappa della regione",
+   "c": "luo",
    "w": "",
-   "b": "Popler è il Professore Pokémon della regione e studia i Pokémon insieme agli ecosistemi in cui vivono.\nAll'inizio dà lo starter e il Pokédex.\nÈ preoccupato che la rapida crescita industriale della regione possa avere un impatto troppo grande sugli habitat della regione.",
-   "u": 1795693428851,
+   "b": "La regione di Insubria era famosa per la presenza di grandi biomi incontaminati ed ecosistemi diversi ma interconnessi tra di loro.\nUltimamente però, la rapida crescita della Caveari Holding S.p.A., che ha contribuito ad una improvvisa prosperità economica, sta causando direttamente o indirettamente un peggioramento delle condizioni degli habitat della regione\n",
+   "u": 1795693748469,
    "img": [
     {
-     "id": "1a217ab4pop63a96",
-     "f": "diario-img/1a217ab4pop63a96.jpg",
-     "d": "Il Professor Popler",
-     "w": 512,
-     "h": 512
+     "id": "mwxhlh0ycajd",
+     "f": "diario-img/mwxhlh0ycajd.jpg",
+     "d": "",
+     "w": 960,
+     "h": 640
     }
    ]
   }
