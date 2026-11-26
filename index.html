@@ -258,9 +258,9 @@ main>*,.sheet .body>*{flex-shrink:0}
 #tav .aud label input{position:absolute;inset:0;opacity:0}#tav .aud small{display:block;color:#9fb0c0;font-weight:500;margin-top:8px}
 @media (prefers-reduced-motion:reduce){.wx{animation:none!important}#arena .mon .spr{animation:none}}
 
-.gal{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.gal.one{grid-template-columns:1fr}
-.gal figure{margin:0;position:relative}.gal img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;background:var(--sunk);cursor:zoom-in}
-.gal.one img{aspect-ratio:auto;max-height:420px;object-fit:contain}
+.gal{display:grid;grid-template-columns:1fr;gap:10px;margin-top:8px}.gal.ed{grid-template-columns:1fr 1fr;gap:6px}.gal.one{grid-template-columns:1fr}
+.gal figure{margin:0;position:relative}.gal img{width:100%;height:auto;max-height:80vh;object-fit:contain;border-radius:10px;display:block;background:var(--sunk);cursor:zoom-in}.gal.ed img{aspect-ratio:4/3;height:auto}
+
 .gal figcaption{font-size:12px;color:var(--muted);margin-top:3px}
 .gal .rm{position:absolute;top:6px;right:6px;width:30px;height:30px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:18px;line-height:1}
 .gal input{margin-top:4px;min-height:34px;padding:6px 8px;font-size:13px}
@@ -281,7 +281,7 @@ nav.tabs{padding-bottom:env(safe-area-inset-bottom)}
 <body>
 <div class="app">
   <header class="top">
-    <span class="ball" aria-hidden="true"></span><div class="brand">Master <b>Pokérole</b><small>Compagno del master · regole 3.0 · <span class="appv">v1.29</span></small></div>
+    <span class="ball" aria-hidden="true"></span><div class="brand">Master <b>Pokérole</b><small>Compagno del master · regole 3.0 · <span class="appv">v1.30</span></small></div>
     <button class="btn sm ghost" data-a="open" data-k="backup" aria-label="Impostazioni e backup">Opzioni</button>
   </header>
   <main id="main"></main>
@@ -1004,7 +1004,7 @@ async function restore(o){if(!o||!Array.isArray(o.trainers)||!Array.isArray(o.sa
   S.trainers=o.trainers;S.saved=o.saved;S.opt=o.opt||S.opt;S.battle=o.battle||null;if(Array.isArray(o.diary))S.diary=o.diary;if(o.pub)S.pub=o.pub;if(Array.isArray(o.prop))S.prop=o.prop;UNDO.length=0;save();toast('Backup ripristinato');ui.stack=[];render()}
 const rawUrl=f=>'https://raw.githubusercontent.com/'+ghRepo()+'/main/'+f;
 function imgSrc(im){if(IMU[im.id])return IMU[im.id];if(!IMW[im.id]){IMW[im.id]=1;IDB.get(im.id).then(b=>{if(b){IMU[im.id]=URL.createObjectURL(b);render(true)}}).catch(()=>{})}return im.f?rawUrl(im.f):''}
-function galH(imgs,edit){if(!imgs||!imgs.length)return '';return `<div class="gal${imgs.length===1&&!edit?' one':''}">${imgs.map((im,k)=>{const u=imgSrc(im);return `<figure>${u?`<img src="${esc(u)}" alt="${esc(im.d||'')}" loading="lazy" data-zoom="1">`:'<div class="small muted" style="aspect-ratio:4/3;display:grid;place-items:center;background:var(--sunk);border-radius:10px">Immagine</div>'}${edit?`<button class="rm" data-a="dimgdel" data-i="${k}" aria-label="Togli immagine">×</button><input type="text" data-i="dimgcap:${k}" value="${esc(im.d||'')}" placeholder="Didascalia">`:im.d?`<figcaption>${esc(im.d)}</figcaption>`:''}</figure>`}).join('')}</div>`}
+function galH(imgs,edit){if(!imgs||!imgs.length)return '';return `<div class="gal${edit?' ed':''}">${imgs.map((im,k)=>{const u=imgSrc(im);return `<figure>${u?`<img src="${esc(u)}" alt="${esc(im.d||'')}"${im.w&&im.h?` width="${+im.w}" height="${+im.h}"`:''} loading="lazy" data-zoom="1">`:'<div class="small muted" style="aspect-ratio:4/3;display:grid;place-items:center;background:var(--sunk);border-radius:10px">Immagine</div>'}${edit?`<button class="rm" data-a="dimgdel" data-i="${k}" aria-label="Togli immagine">×</button><input type="text" data-i="dimgcap:${k}" value="${esc(im.d||'')}" placeholder="Didascalia">`:im.d?`<figcaption>${esc(im.d)}</figcaption>`:''}</figure>`}).join('')}</div>`}
 async function shrink(file){const url=URL.createObjectURL(file);try{const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error('formato non supportato'));i.src=url});
   const M=1600,sc=Math.min(1,M/Math.max(img.naturalWidth,img.naturalHeight)),w=Math.round(img.naturalWidth*sc),h=Math.round(img.naturalHeight*sc);
   const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(img,0,0,w,h);
@@ -1732,7 +1732,7 @@ const VIEW={on:false,code:null,g:null,pc:null,sub:null,st:null,ok:false,fb:null,
     requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll('#tav .hpb i[data-p]').forEach(i=>{const v=+i.dataset.p;i.style.width=100*v+'%';i.style.background=v>.5?'#3fbf6a':v>.2?'#f0b429':'#e5484d'})))}};
 
 /* ---------- schede e render ---------- */
-const APPV='1.29',APPD='26 novembre 2026';
+const APPV='1.30',APPD='26 novembre 2026';
 function sBackup(){return sBackup0()+`<div class="card"><h3>Versione</h3><p>Master Pokérole <b>v${APPV}</b> · pubblicata il ${APPD}</p><p class="small muted">Quando esce una versione nuova l’app la scarica da sola e lo segnala con un avviso: basta riaprirla.</p></div>`}
 function sBackup0(){return `<div class="card"><h3>Danno minimo</h3><div class="seg"><button data-a="omin" data-i="1" aria-pressed="${S.opt.min1!==false}">Sempre almeno 1</button><button data-a="omin" data-i="0" aria-pressed="${S.opt.min1===false}">Le resistenze possono azzerarlo</button></div><p class="small muted">Vale per l’assistente di battaglia. Le immunità danno sempre 0.</p></div>
 <div class="card"><h3>Difese</h3><div class="seg"><button data-a="odef" data-i="2" aria-pressed="${S.opt.def===2}">Sp. Def = Insight</button><button data-a="odef" data-i="1" aria-pressed="${S.opt.def===1}">Sp. Def = Vitality</button></div><p class="small muted">Il manuale chiede di scegliere un metodo per tutta la campagna (p. 27).</p></div>

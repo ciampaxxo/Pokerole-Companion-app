@@ -21,4 +21,4 @@ self.addEventListener('fetch',e=>{
     return (await net)||new Response('Offline',{status:503});
   }));
 });
-// versione f291328fed
+// versione becc01a92a

@@ -33,7 +33,7 @@ textarea{min-height:160px;resize:vertical}label{display:block;font:700 11px/1.2 
 .btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:10px 14px;font:700 15px/1 var(--display);cursor:pointer}
 .btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.grow{flex:1}
 .st{font:700 11px/1 var(--display);text-transform:uppercase;letter-spacing:.04em;padding:3px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}.st.on{color:var(--accent);border-color:var(--accent)}
-.thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}.thumbs figure{margin:0;position:relative}.thumbs img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;display:block}
+.thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}.thumbs figure{margin:0;position:relative}.thumbs img{width:100%;aspect-ratio:1;object-fit:contain;background:var(--sunk);border-radius:8px;display:block}
 .thumbs button{position:absolute;top:3px;right:3px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:15px;line-height:1;cursor:pointer}
 .filebtn{display:block;text-align:center;margin-top:6px}.filebtn input{display:none}
 .sent{display:flex;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
@@ -45,9 +45,8 @@ textarea{min-height:160px;resize:vertical}label{display:block;font:700 11px/1.2 
 .md p{margin:0 0 8px}.md ul{margin:0 0 8px;padding-left:20px}.md :last-child{margin-bottom:0}
 .muted{color:var(--muted)}.small{font-size:13px}
 .empty{text-align:center;padding:30px 10px}
-.gal{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}.gal.one{grid-template-columns:1fr}
-.gal figure{margin:0}.gal img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;background:var(--sunk);cursor:zoom-in}
-.gal.one img{aspect-ratio:auto;max-height:440px;object-fit:contain}.gal figcaption{font-size:12px;color:var(--muted);margin-top:3px}
+.gal{display:grid;grid-template-columns:1fr;gap:10px;margin-top:10px}
+.gal figure{margin:0}.gal img{width:100%;height:auto;max-height:80vh;object-fit:contain;border-radius:10px;display:block;background:var(--sunk);cursor:zoom-in}.gal figcaption{font-size:12px;color:var(--muted);margin-top:3px}
 .zoom{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center}.zoom img{max-width:100%;max-height:100%;object-fit:contain}
 </style>
 </head>
@@ -69,7 +68,7 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;',
 const key=s=>String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
 function md(s){const L=esc(s).split(/\n/);let h='',ul=false;L.forEach(l=>{const b=l.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');if(/^\s*[-•]\s+/.test(l)){if(!ul){h+='<ul>';ul=true}h+='<li>'+b.replace(/^\s*[-•]\s+/,'')+'</li>'}else{if(ul){h+='</ul>';ul=false}if(b.trim())h+='<p>'+b+'</p>'}});if(ul)h+='</ul>';return h}
 function repo(){const h=location.hostname;if(/\.github\.io$/.test(h)){const seg=location.pathname.split('/').filter(Boolean)[0];if(seg&&!/\.html$/.test(seg))return h.split('.')[0]+'/'+seg}return REPO}
-function gal(a){if(!a||!a.length)return '';return `<div class="gal${a.length===1?' one':''}">${a.map(im=>`<figure><img src="${esc('https://raw.githubusercontent.com/'+repo()+'/main/'+im.f)}" alt="${esc(im.d||'')}" loading="lazy" data-zoom="1">${im.d?`<figcaption>${esc(im.d)}</figcaption>`:''}</figure>`).join('')}</div>`}
+function gal(a){if(!a||!a.length)return '';return `<div class="gal">${a.map(im=>`<figure><img src="${esc('https://raw.githubusercontent.com/'+repo()+'/main/'+im.f)}" alt="${esc(im.d||'')}"${im.w&&im.h?` width="${+im.w}" height="${+im.h}"`:''} loading="lazy" data-zoom="1">${im.d?`<figcaption>${esc(im.d)}</figcaption>`:''}</figure>`).join('')}</div>`}
 document.addEventListener('click',e=>{const z=e.target.closest('[data-zoom]');if(z){const o=document.createElement('div');o.className='zoom';o.innerHTML=`<img src="${esc(z.src)}" alt="">`;o.addEventListener('click',()=>o.remove());document.body.appendChild(o)}});
 function render(){
   const V=(data&&data.voci)||[];const used=[...new Set(V.map(v=>v.c))];
