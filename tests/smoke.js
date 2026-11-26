@@ -10,7 +10,8 @@ let fails=0;const ok=(c,m)=>{console.log((c?'OK   ':'FAIL ')+m);if(!c)fails++};
   await new Promise(r=>srv.listen(0,r));const url='http://127.0.0.1:'+srv.address().port+'/';
   const br=await chromium.launch(),ctx=await br.newContext({viewport:{width:420,height:860},acceptDownloads:true}),pg=await ctx.newPage();
   // niente rete esterna nei test (GitHub, ntfy...): solo il server locale
-  await ctx.route(r=>!r.href.startsWith(url),r=>r.abort());
+const puts=[];
+  await ctx.route(r=>!r.href.startsWith(url),r=>{const q=r.request();if(/api\.github\.com/.test(q.url())){if(q.method()==='PUT'){puts.push(JSON.parse(q.postData()));return r.fulfill({status:200,contentType:'application/json',body:'{}'})}return r.fulfill({status:404,contentType:'application/json',body:'{}'})}return r.abort()});
   const errs=[];pg.on('pageerror',e=>errs.push(e.message));pg.on('console',m=>{if(m.type()==='error'&&!/Failed to load resource/.test(m.text()))errs.push(m.text())});
   await pg.goto(url);await pg.waitForSelector('#main *');
   ok(errs.length===0,'nessun errore al caricamento '+errs.join('|'));
@@ -99,6 +100,25 @@ let fails=0;const ok=(c,m)=>{console.log((c?'OK   ':'FAIL ')+m);if(!c)fails++};
   await pg.click('[data-a=mwgo][data-d="1"]');await pg.click('[data-a=mwdone]');
   const made=await pg.evaluate(id=>{const t=S.trainers.find(x=>x.id===id),P=t.team.concat(t.box||[]).find(x=>x.nick==='Pelo');return P?{sp:MON[P.m].n,ev:P.sk.Evasion,mv:P.mv.length,sheet:ui.stack.length&&ui.stack[ui.stack.length-1].k}:null},dest);
   ok(made&&made.sp==='Eevee'&&made.ev===1&&made.mv===nmv.n&&made.sheet==='inst','Pokémon creato e aggiunto all’allenatore');
+  // diario: pubblicare e programmare dalla pagina della voce
+  await pg.evaluate(()=>{localStorage.setItem('master-pokerole-gh',JSON.stringify({tok:'x',ok:true,repo:'a/b'}));S.diary=[];ACT.dnew();const e=S.diary[0];e.t='Prova';e.b='testo';render()});
+  const dj=()=>puts.filter(x=>Buffer.from(x.content,'base64').toString().includes('"voci"')).map(x=>JSON.parse(Buffer.from(x.content,'base64').toString()));
+  ok(await pg.$('#sheet [data-a=dpubone]').then(b=>!!b)&&await pg.$('#sheet [data-a=dsched]').then(b=>!!b),'la pagina della voce ha Pubblica ora e Programma');
+  ok(!(await pg.innerHTML('#sheet')).includes('data-a="dvis"'),'selettore Solo master/Giocatori rimosso');
+  await pg.click('#sheet [data-a=dpubone]');await pg.waitForTimeout(400);
+  ok(dj().length>=1&&dj().pop().voci.some(v=>v.t==='Prova'),'Pubblica ora scrive la voce nel diario');
+  ok((await pg.innerHTML('#sheet')).includes('Visibile ai giocatori'),'la voce risulta pubblicata');
+  await pg.click('#sheet [data-a=dunpub]');await pg.click('#sheet [data-a=dunpub]');await pg.waitForTimeout(400);
+  ok(dj().pop().voci.length===0,'Ritira toglie la voce dal diario');
+  // programmazione: nel futuro non parte, poi scaduta parte da sola
+  const fut=await pg.evaluate(()=>{const d=new Date(Date.now()+36e5-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,16);document.getElementById('dsch').value=d;ACT.dsched();const e=S.diary[0];return {sch:!!e.sched&&e.sched>Date.now(),pub:e.pub}});
+  ok(fut.sch&&!fut.pub,'programmazione salvata, la voce resta privata');
+  ok((await pg.innerHTML('#sheet')).includes('Programmata'),'la pagina mostra la programmazione');
+  const n0=dj().length;await pg.evaluate(async()=>{await diaSched()});ok(dj().length===n0,'prima dell\'orario non pubblica');
+  await pg.evaluate(async()=>{S.diary[0].sched=Date.now()-1000;await diaSched()});
+  ok(dj().length>n0&&dj().pop().voci.some(v=>v.t==='Prova')&&await pg.evaluate(()=>S.diary[0].pub&&!S.diary[0].sched),'all\'orario la voce parte da sola');
+  ok(!(await pg.innerHTML('#main')).includes('Pubblica per i giocatori ('),'niente numero nel pulsante di pubblicazione');
+  await pg.evaluate(()=>{localStorage.removeItem('master-pokerole-gh');S.diary=[];ui.stack=[];render()});
   // salvataggio ritardato mentre si scrive
   const sv=await pg.evaluate(async()=>{const t=S.trainers[0];ui.stack=[{k:'trainer',i:t.id}];render();const el=document.getElementById('tno');el.value='prova note';el.dispatchEvent(new Event('input',{bubbles:true}));
     const before=JSON.parse(localStorage.getItem(SKEY)).trainers[0].notes;await new Promise(r=>setTimeout(r,600));const after=JSON.parse(localStorage.getItem(SKEY)).trainers[0].notes;ui.stack=[];render();return {before,after}});
