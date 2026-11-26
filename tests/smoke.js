@@ -11,7 +11,7 @@ let fails=0;const ok=(c,m)=>{console.log((c?'OK   ':'FAIL ')+m);if(!c)fails++};
   const br=await chromium.launch(),ctx=await br.newContext({viewport:{width:420,height:860},acceptDownloads:true}),pg=await ctx.newPage();
   // niente rete esterna nei test (GitHub, ntfy...): solo il server locale
 const puts=[],dcs=[];let dcStatus=200,dcNoCors=false;
-  await ctx.route(r=>!r.href.startsWith(url),r=>{const q=r.request();if(/discord\.com\/api\/webhooks/.test(q.url())){const H={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'content-type','Access-Control-Allow-Methods':'POST'};if(q.method()==='OPTIONS')return dcNoCors?r.fulfill({status:404,body:''}):r.fulfill({status:204,headers:H});if(q.method()==='POST'){const raw=q.postData()||'';if(dcNoCors){const buf=q.postDataBuffer(),txt=buf?buf.toString('utf8'):raw,m=txt.match(/name="payload_json"\r?\n\r?\n([\s\S]*?)\r?\n--/);dcs.push(m?JSON.parse(m[1]):{raw:txt.slice(0,200)});return r.fulfill({status:200,contentType:'application/json',body:'{}'})}dcs.push(JSON.parse(raw));return r.fulfill({status:dcStatus,headers:H,contentType:'application/json',body:'{}'})}}
+  await ctx.route(r=>!r.href.startsWith(url),r=>{const q=r.request();if(/discord\.com\/api\/webhooks/.test(q.url())){const H={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'content-type','Access-Control-Allow-Methods':'POST'};if(q.method()==='OPTIONS')return dcNoCors?r.fulfill({status:404,body:''}):r.fulfill({status:204,headers:H});if(q.method()==='POST'){const ct=(q.headers()['content-type']||'');if(/multipart/.test(ct)){const txt=(q.postDataBuffer()||Buffer.from('')).toString('latin1'),m=txt.match(/name="payload_json"\r?\n\r?\n([\s\S]*?)\r?\n--/),o=m?JSON.parse(Buffer.from(m[1],'latin1').toString('utf8')):{};o.__files=(txt.match(/name="files\[\d+\]"; filename=/g)||[]).length;dcs.push(o);return r.fulfill({status:200,body:'{}'})}const raw=q.postData()||'';if(dcNoCors){const buf=q.postDataBuffer(),txt=buf?buf.toString('utf8'):raw,m=txt.match(/name="payload_json"\r?\n\r?\n([\s\S]*?)\r?\n--/);dcs.push(m?JSON.parse(m[1]):{raw:txt.slice(0,200)});return r.fulfill({status:200,contentType:'application/json',body:'{}'})}dcs.push(JSON.parse(raw));return r.fulfill({status:dcStatus,headers:H,contentType:'application/json',body:'{}'})}}
     if(/api\.github\.com/.test(q.url())){if(q.method()==='PUT'){puts.push(JSON.parse(q.postData()));return r.fulfill({status:200,contentType:'application/json',body:'{}'})}return r.fulfill({status:404,contentType:'application/json',body:'{}'})}return r.abort()});
   const errs=[];pg.on('pageerror',e=>errs.push(e.message));pg.on('console',m=>{if(m.type()==='error'&&!/Failed to load resource/.test(m.text()))errs.push(m.text())});
   await pg.goto(url);await pg.waitForSelector('#main *');
@@ -184,9 +184,22 @@ const puts=[],dcs=[];let dcStatus=200,dcNoCors=false;
   ok(await p3.evaluate(h=>localStorage.getItem('mp-discord')===h,HOOK),'diario.html: il link attiva Discord');
   await p3.click('#nota [data-n=open]');ok((await p3.innerHTML('#nota')).includes('Invia al master su Discord'),'diario.html: il pulsante dice Discord');
   await p3.fill('#na','Giulia');await p3.fill('#nt','Il bosco');await p3.fill('#nb','testo');const n3=dcs.length;await p3.click('#nota [data-n=send]');await p3.waitForTimeout(300);
-  ok(dcs.length===n3+1&&/Giulia/.test(dcs[n3].content),'diario.html: la nota arriva su Discord');
+  ok(dcs.length===n3+1&&/Giulia/.test(dcs[n3].username)&&/\n\*\*Il bosco\*\*/.test(dcs[n3].content),'diario.html: la nota arriva su Discord, mittente il giocatore e titolo a parte');
+  await p3.click('#nota [data-n=open]');await p3.fill('#na','Giulia');await p3.fill('#nt','Con foto');await p3.setInputFiles('#nimg',[__dirname+'/../icon-192.png',__dirname+'/../icon-512.png']);await p3.waitForSelector('#nota .thumbs img');await p3.waitForTimeout(300);
+  ok((await p3.$$('#nota .thumbs figure')).length===2,'diario.html: si possono aggiungere immagini alla nota');
+  const n5=dcs.length;await p3.click('#nota [data-n=send]');await p3.waitForTimeout(500);
+  ok(dcs.length===n5+1&&dcs[n5].__files===2&&/Con foto/.test(dcs[n5].content),'diario.html: le immagini arrivano su Discord come allegati');
+  const im5=await pg.evaluate(async c=>(await unpackTrainer(c)).n.im,dcs[n5].content);ok(im5===2,'il link dice al master quante immagini ci sono');
   ok(!e3.length,'diario.html senza errori '+e3.join('|'));await p3.close();
-  await pg.evaluate(()=>{localStorage.removeItem('mp-discord');delete navigator.share;ui.stack=[];render()});
+  dcNoCors=false;await pg.evaluate(()=>{ui.dcFail=0;ui.pn={a:'Marco',t:'Foto dal faro',c:'luo',b:'eccola'};ui.pnImg=[];ui.stack=[{k:'pnote'}];render()});
+  await pg.setInputFiles('#sheet [data-c=pnimg]',[__dirname+'/../icon-192.png']);await pg.waitForFunction(()=>(ui.pnImg||[]).length===1);
+  const n6=dcs.length;await pg.evaluate(async()=>{await ACT.pnsend()});await pg.waitForTimeout(300);
+  ok(dcs.length===n6+1&&dcs[n6].__files===1&&dcs[n6].username==='Marco · Diario Pokérole','app: nota con immagine su Discord, mittente il giocatore');
+  const pv=await pg.evaluate(async c=>{localStorage.setItem('master-pokerole-gh',JSON.stringify({tok:'x',ok:true,repo:'a/b'}));ui.impd=await unpackTrainer(c);ACT.impdo({i:'nota'});const h=document.getElementById('sheet').innerHTML;localStorage.removeItem('master-pokerole-gh');return h},dcs[n6].content);
+  ok(/📷/.test(pv)&&/Aggiungi immagini/.test(pv),'il master vede che la nota ha immagini e come aggiungerle');
+  const sh7=await pg.evaluate(async()=>{localStorage.removeItem('mp-discord');let got=null;Object.defineProperty(navigator,'canShare',{value:()=>true,configurable:true});Object.defineProperty(navigator,'share',{value:async o=>{got=o},configurable:true});const b=await (await fetch('icon-192.png')).blob();ui.pnImg=[{blob:b,u:''}];ui.pn={a:'Marco',t:'Chat',c:'ses',b:'x'};await ACT.pnsend();return got&&got.files&&got.files.length});
+  ok(sh7===1,'senza Discord le immagini partono nella condivisione in chat');
+  await pg.evaluate(()=>{localStorage.removeItem('mp-discord');delete navigator.share;delete navigator.canShare;S.prop=[];ui.stack=[];render()});
   // salvataggio ritardato mentre si scrive
   const sv=await pg.evaluate(async()=>{const t=S.trainers[0];ui.stack=[{k:'trainer',i:t.id}];render();const el=document.getElementById('tno');el.value='prova note';el.dispatchEvent(new Event('input',{bubbles:true}));
     const before=JSON.parse(localStorage.getItem(SKEY)).trainers[0].notes;await new Promise(r=>setTimeout(r,600));const after=JSON.parse(localStorage.getItem(SKEY)).trainers[0].notes;ui.stack=[];render();return {before,after}});

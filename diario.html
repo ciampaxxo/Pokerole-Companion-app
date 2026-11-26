@@ -33,6 +33,9 @@ textarea{min-height:160px;resize:vertical}label{display:block;font:700 11px/1.2 
 .btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:10px 14px;font:700 15px/1 var(--display);cursor:pointer}
 .btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.grow{flex:1}
 .st{font:700 11px/1 var(--display);text-transform:uppercase;letter-spacing:.04em;padding:3px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}.st.on{color:var(--accent);border-color:var(--accent)}
+.thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}.thumbs figure{margin:0;position:relative}.thumbs img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;display:block}
+.thumbs button{position:absolute;top:3px;right:3px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:15px;line-height:1;cursor:pointer}
+.filebtn{display:block;text-align:center;margin-top:6px}.filebtn input{display:none}
 .sent{display:flex;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:10px;font-size:14px;z-index:60;display:none;max-width:90vw}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:0 1px 2px rgba(0,0,0,.05),0 4px 14px -8px rgba(0,0,0,.18)}
@@ -98,19 +101,28 @@ const DCK='mp-discord';let dcFail=0;
 const dcUrl=()=>{try{return localStorage.getItem(DCK)||''}catch(e){return ''}};
 const dcOk=u=>/^https:\/\/(?:(?:canary|ptb)\.)?discord(?:app)?\.com\/api\/webhooks\/\d+\/[\w-]+$/.test(String(u||''));
 const dcE=s=>String(s||'').replace(/([\\*_~`|>])/g,'\\$1');
-function dcMsg(head,prev,url){const b={username:'Master Pokérole',allowed_mentions:{parse:[]}},q=prev?'\n> '+dcE(String(prev).replace(/\s+/g,' ').slice(0,280)):'';
+const dcWho=w=>{const v=String(w||'').replace(/discord|clyde|[@#:`]/gi,'').replace(/\s+/g,' ').trim().slice(0,60);return v?v+' · Diario Pokérole':'Master Pokérole'};
+function dcMsg(head,prev,url,who){const b={username:dcWho(who),allowed_mentions:{parse:[]}},q=prev?'\n> '+dcE(String(prev).replace(/\s+/g,' ').slice(0,280)):'';
   let c=head+q+'\n'+url;if(c.length>2000)c=head+'\n'+url;if(c.length<=2000)return Object.assign(b,{content:c});
   if(url.length>3900)return null;return Object.assign(b,{content:head+q,embeds:[{description:'[Apri nell’app del master]('+url+')\nSu iPhone: tieni premuto il link → Copia, poi incollalo nell’app.',color:0xc4283c}]})}
-async function dcPost(payload){const u=dcUrl();if(!dcOk(u))return false;
+async function dcPost(payload,files){const u=dcUrl();if(!dcOk(u))return false;
+  if(files&&files.length){const f=new FormData();f.append('payload_json',JSON.stringify(Object.assign({},payload,{attachments:files.map((x,i)=>({id:i,filename:x.name}))})));files.forEach((x,i)=>f.append('files['+i+']',x,x.name));
+    try{await fetch(u,{method:'POST',mode:'no-cors',body:f});return true}catch(e){return false}}
   try{const r=await fetch(u+'?wait=true',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});return r.ok}
   catch(e){try{const f=new FormData();f.append('payload_json',JSON.stringify(payload));await fetch(u,{method:'POST',mode:'no-cors',body:f});return true}catch(e2){return false}}}
 function dcHash(){const m=(location.hash||'').match(/^#dc=([A-Za-z0-9_-]+)$/);if(!m)return;try{history.replaceState(null,'',location.pathname)}catch(e){}
   let u='';try{u=new TextDecoder().decode(Uint8Array.from(atob(m[1].replace(/-/g,'+').replace(/_/g,'/')+'==='.slice((m[1].length+3)%4)),c=>c.charCodeAt(0)))}catch(e){}
   if(!dcOk(u)){toast('Link di Discord non valido');return}if(dcUrl()===u){toast('Invio al master su Discord già attivo');return}
   if(confirm('Attivare l’invio automatico al master su Discord? Le note che scrivi arriveranno nel suo canale.')){try{localStorage.setItem(DCK,u)}catch(e){}toast('Invio al master su Discord attivato')}}
+let imgs=[],busy=false;
+async function shrink(file){const url=URL.createObjectURL(file);try{const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error('formato non supportato'));i.src=url});
+  const M=1600,sc=Math.min(1,M/Math.max(img.naturalWidth,img.naturalHeight)),w=Math.round(img.naturalWidth*sc),h=Math.round(img.naturalHeight*sc);
+  const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(img,0,0,w,h);
+  return await new Promise(res=>c.toBlob(res,'image/jpeg',.82))}finally{URL.revokeObjectURL(url)}}
+const files=()=>imgs.map((x,i)=>new File([x.b],'immagine-'+(i+1)+'.jpg',{type:'image/jpeg'}));
 function draft(){return Object.assign({a:'',t:'',c:'ses',b:''},ls(PNK,{}))}
-function obj(){const n=draft();if(!n.id){n.id=uid();lset(PNK,n)}return {v:1,n:{id:n.id,t:n.t.trim(),c:n.c,b:n.b.trim(),a:n.a.trim(),at:Date.now()}}}
-function prep(){const o=obj(),sg=JSON.stringify([o.n.id,o.n.t,o.n.c,o.n.b,o.n.a]);if(sg===sig)return;sig=sg;code=null;pack(o).then(c=>{if(sig===sg)code=c})}
+function obj(){const n=draft();if(!n.id){n.id=uid();lset(PNK,n)}return {v:1,n:{id:n.id,t:n.t.trim(),c:n.c,b:n.b.trim(),a:n.a.trim(),im:imgs.length,at:Date.now()}}}
+function prep(){const o=obj(),sg=JSON.stringify([o.n.id,o.n.t,o.n.c,o.n.b,o.n.a,o.n.im]);if(sg===sig)return;sig=sg;code=null;pack(o).then(c=>{if(sig===sg)code=c})}
 function nota(){const el=document.getElementById('nota'),n=draft(),sent=ls(PNS,[]),pub=new Set(((data&&data.voci)||[]).map(v=>v.id));
   const when=t=>new Date(t).toLocaleString('it-IT',{dateStyle:'short',timeStyle:'short'});
   const list=sent.length?sent.slice(0,8).map(x=>`<div class="sent"><span class="grow">${esc(x.t||'Senza titolo')}<br><span class="small muted">inviata ${when(x.at)}</span></span><span class="st${pub.has(x.id)?' on':''}">${pub.has(x.id)?'Nel diario':'Al master'}</span></div>`).join(''):'';
@@ -121,19 +133,28 @@ function nota(){const el=document.getElementById('nota'),n=draft(),sent=ls(PNS,[
   <label for="nc">Categoria</label><select id="nc" data-f="c">${Object.keys(CAT).map(c=>`<option value="${c}"${c===n.c?' selected':''}>${CAT[c]}</option>`).join('')}</select>
   <label for="nb">Testo</label><textarea id="nb" data-f="b" maxlength="4000" placeholder="Cosa è successo, cosa ha visto o pensato il tuo personaggio...">${esc(n.b)}</textarea>
   <p class="small muted">Puoi usare **grassetto** e righe che iniziano con - per gli elenchi. La bozza resta salvata su questo dispositivo.</p>
+  <label>Immagini (${imgs.length}/4)</label>${imgs.length?`<div class="thumbs">${imgs.map((x,k)=>`<figure><img src="${x.u}" alt=""><button data-n="rm" data-i="${k}" aria-label="Togli immagine">×</button></figure>`).join('')}</div>`:''}
+  ${imgs.length<4?`<label class="btn filebtn" style="text-transform:none;letter-spacing:0;font:700 15px/1 var(--display);color:var(--ink)">${busy?'Preparo le immagini...':'Aggiungi immagini'}<input type="file" accept="image/*" multiple id="nimg"></label>`:''}
+  <p class="small muted">Le immagini partono insieme alla nota; non restano nella bozza se chiudi la pagina.</p>
   <div class="row"><button class="btn grow" data-n="close">Chiudi</button><button class="btn pri grow" data-n="send">${dcOk(dcUrl())?'Invia al master su Discord':'Invia al master'}</button></div>
   <p class="small muted">${dcOk(dcUrl())?'Arriva da sola nel canale privato del master.':'Si apre la condivisione: manda il messaggio al master in chat.'} Solo lui la vede finché non la approva.</p>`}
+document.getElementById('nota').addEventListener('change',async e=>{if(e.target.id!=='nimg')return;const fs=[...e.target.files].slice(0,4-imgs.length);e.target.value='';if(!fs.length)return;busy=true;nota();
+  for(const f of fs){try{const b=await shrink(f);imgs.push({b,u:URL.createObjectURL(b)})}catch(err){toast('Immagine non letta: '+err.message)}}busy=false;prep();nota()});
 document.getElementById('nota').addEventListener('input',e=>{const f=e.target.dataset.f;if(!f)return;const n=draft();n[f]=e.target.value;lset(PNK,n);prep()});
 document.getElementById('nota').addEventListener('click',async e=>{const b=e.target.closest('[data-n]');if(!b)return;const a=b.dataset.n;
   if(a==='open'||a==='close'){nOpen=a==='open';nota();return}
+  if(a==='rm'){const x=imgs.splice(+b.dataset.i,1)[0];if(x)URL.revokeObjectURL(x.u);prep();nota();return}
   const n=draft();if(!n.a.trim()){toast('Scrivi il tuo nome');return}if(!n.t.trim()&&!n.b.trim()){toast('Scrivi almeno un titolo o un testo');return}
   const o=obj(),c=code||await pack(o),url=appUrl()+'#imp='+c,text='Nota per il diario da '+n.a.trim()+': «'+(n.t.trim()||'senza titolo')+'». Master: apri il link, oppure incolla questo messaggio in Diario → Incolla una nota.';
   let ok=false;
-  if(dcOk(dcUrl())&&!dcFail){const p=dcMsg('📝 **Nota per il diario** da **'+dcE(n.a.trim())+'**: '+dcE(n.t.trim()||'senza titolo')+' ('+(CAT[n.c]||'Note')+')',n.b.trim(),url);
-    if(p){if(await dcPost(p)){ok=true;toast('Inviata al master su Discord')}else{dcFail=1;toast('Discord non risponde: tocca di nuovo per mandarla in chat');return}}}
-  if(ok){}else{dcFail=0;if(navigator.share){try{await navigator.share({title:'Nota per il diario',text,url});ok=true}catch(err){if(err&&err.name==='AbortError')return}}
+  const fl=files();
+  if(dcOk(dcUrl())&&!dcFail){const p=dcMsg('📝 Nota per il diario · '+(CAT[n.c]||'Note')+'\n**'+dcE(n.t.trim()||'Senza titolo')+'**',n.b.trim(),url,n.a.trim());
+    if(p){if(await dcPost(p,fl)){ok=true;toast('Inviata al master su Discord'+(fl.length?' con '+(fl.length===1?'1 immagine':fl.length+' immagini'):''))}else{dcFail=1;toast('Discord non risponde: tocca di nuovo per mandarla in chat');return}}}
+  if(ok){}else{dcFail=0;
+  if(fl.length&&navigator.share&&navigator.canShare&&navigator.canShare({files:fl})){try{await navigator.share({title:'Nota per il diario',text:text+'\n'+url,files:fl});ok=true}catch(err){if(err&&err.name==='AbortError')return}}
+  if(!ok&&navigator.share){try{await navigator.share({title:'Nota per il diario',text,url});ok=true;if(fl.length)toast('Le immagini mandale a parte nella stessa chat')}catch(err){if(err&&err.name==='AbortError')return}}
   if(!ok){try{await navigator.clipboard.writeText(text+'\n'+url);toast('Copiato: incollalo nella chat con il master')}catch(err){prompt('Copia questo messaggio e mandalo al master:',text+'\n'+url)}}}
-  const L=ls(PNS,[]).filter(x=>x.id!==o.n.id);L.unshift({id:o.n.id,t:o.n.t,at:Date.now()});lset(PNS,L.slice(0,30));lset(PNK,{a:n.a,t:'',c:n.c,b:''});sig='';nOpen=false;nota()});
+  const L=ls(PNS,[]).filter(x=>x.id!==o.n.id);L.unshift({id:o.n.id,t:o.n.t,at:Date.now()});lset(PNS,L.slice(0,30));lset(PNK,{a:n.a,t:'',c:n.c,b:''});imgs.forEach(x=>URL.revokeObjectURL(x.u));imgs=[];sig='';nOpen=false;nota()});
 document.getElementById('cats').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;cat=b.dataset.c;render()});
 document.getElementById('q').addEventListener('input',e=>{q=e.target.value;render()});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')load()});

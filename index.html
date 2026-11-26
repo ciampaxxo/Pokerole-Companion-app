@@ -281,7 +281,7 @@ nav.tabs{padding-bottom:env(safe-area-inset-bottom)}
 <body>
 <div class="app">
   <header class="top">
-    <span class="ball" aria-hidden="true"></span><div class="brand">Master <b>Pokérole</b><small>Compagno del master · regole 3.0 · <span class="appv">v1.28</span></small></div>
+    <span class="ball" aria-hidden="true"></span><div class="brand">Master <b>Pokérole</b><small>Compagno del master · regole 3.0 · <span class="appv">v1.29</span></small></div>
     <button class="btn sm ghost" data-a="open" data-k="backup" aria-label="Impostazioni e backup">Opzioni</button>
   </header>
   <main id="main"></main>
@@ -641,7 +641,7 @@ function sImp(){const d=ui.impd;
   <div class="field"><label for="impt">Messaggio o codice</label><textarea id="impt" data-i="impt" placeholder="Incolla qui...">${esc(ui.impt||'')}</textarea></div>
   <div class="row">${navigator.clipboard&&navigator.clipboard.readText?'<button class="btn grow" data-a="impclip">Incolla dagli appunti</button>':''}<button class="btn pri grow" data-a="impread">Leggi</button></div></div>`;
   if(d&&d.n){const n=d.n,dup=(S.prop||[]).some(x=>x.id===n.id)||S.diary.some(x=>x.id===n.id);
-    h+=`<div class="card"><div class="row small"><span class="vis on">${dcat(n.c)}</span><span class="muted">Nota di ${esc(n.a||'un giocatore')}</span></div><h3 style="text-transform:none;letter-spacing:0;font-size:17px;color:var(--ink);margin:6px 0">${esc(n.t||'Senza titolo')}</h3><div class="md">${md(n.b||'')}</div></div>
+    h+=`<div class="card"><div class="row small"><span class="vis on">${dcat(n.c)}</span><span class="muted">Nota di ${esc(n.a||'un giocatore')}${n.im?' · 📷 '+n.im:''}</span></div><h3 style="text-transform:none;letter-spacing:0;font-size:17px;color:var(--ink);margin:6px 0">${esc(n.t||'Senza titolo')}</h3><div class="md">${md(n.b||'')}</div></div>
     ${!isMaster()?'<div class="card"><p class="note">È una nota per il master: la può aggiungere solo chi ha la chiave del master.</p></div>':dup?'<div class="card"><p class="small">Questa nota è già arrivata.</p><button class="btn" data-a="impdo" data-i="nota">Aggiornala con questa versione</button></div>':'<button class="btn pri" data-a="impdo" data-i="nota">Aggiungi alle proposte dei giocatori</button>'}`;
     return h}
   if(d&&d.p){const P=d.p,M=MON[P.m],ex=findMonAny(P.id),tgt=ui.impto||(ex?ex.o:(pgs()[0]||{}).id||'saved');
@@ -954,18 +954,24 @@ const dcUrl=()=>{try{return localStorage.getItem(DCK)||''}catch(e){return ''}};
 const dcOk=u=>/^https:\/\/(?:(?:canary|ptb)\.)?discord(?:app)?\.com\/api\/webhooks\/\d+\/[\w-]+$/.test(String(u||''));
 const dcOn=()=>dcOk(dcUrl());
 const dcE=s=>String(s||'').replace(/([\\*_~`|>])/g,'\\$1');
-function dcMsg(head,prev,url){const b={username:'Master Pokérole',allowed_mentions:{parse:[]}},q=prev?'\n> '+dcE(String(prev).replace(/\s+/g,' ').slice(0,280)):'';
+const dcWho=w=>{const v=String(w||'').replace(/discord|clyde|[@#:`]/gi,'').replace(/\s+/g,' ').trim().slice(0,60);return v?v+' · Diario Pokérole':'Master Pokérole'};
+function dcMsg(head,prev,url,who){const b={username:dcWho(who),allowed_mentions:{parse:[]}},q=prev?'\n> '+dcE(String(prev).replace(/\s+/g,' ').slice(0,280)):'';
   let c=head+q+'\n'+url;if(c.length>2000)c=head+'\n'+url;if(c.length<=2000)return Object.assign(b,{content:c});
   if(url.length>3900)return null;return Object.assign(b,{content:head+q,embeds:[{description:'[Apri nell’app del master]('+url+')\nSu iPhone: tieni premuto il link → Copia, poi incollalo nell’app.',color:0xc4283c}]})}
-async function dcPost(payload,u){u=u||dcUrl();if(!dcOk(u))return false;
+async function dcPost(payload,u,files){u=u||dcUrl();if(!dcOk(u))return false;
+  if(files&&files.length){/* con allegati: richiesta in modulo, una sola volta (Discord la riceve anche se il browser non può leggere la risposta) */
+    const f=new FormData();f.append('payload_json',JSON.stringify(Object.assign({},payload,{attachments:files.map((x,i)=>({id:i,filename:x.name}))})));files.forEach((x,i)=>f.append('files['+i+']',x,x.name));
+    try{await fetch(u,{method:'POST',mode:'no-cors',body:f});return true}catch(e){return false}}
   try{const r=await fetch(u+'?wait=true',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});return r.ok}
   catch(e){try{const f=new FormData();f.append('payload_json',JSON.stringify(payload));await fetch(u,{method:'POST',mode:'no-cors',body:f});return true}catch(e2){return false}}}
 /* condivisione dei giocatori: Discord se attivo, altrimenti (o se Discord non risponde) la condivisione in chat di sempre */
 async function shareOut(o){
-  if(dcOn()&&!isMaster()&&!ui.dcFail){const p=dcMsg(o.head,o.prev,o.url);if(p){if(await dcPost(p)){toast('Inviato al master su Discord');return 'dc'}ui.dcFail=1;toast('Discord non risponde: tocca di nuovo per mandarlo in chat');return 'fail'}}
+  const files=o.files||[];
+  if(dcOn()&&!isMaster()&&!ui.dcFail){const p=dcMsg(o.head,o.prev,o.url,o.who);if(p){if(await dcPost(p,null,files)){toast('Inviato al master su Discord'+(files.length?' con '+(files.length===1?'1 immagine':files.length+' immagini'):''));return 'dc'}ui.dcFail=1;toast('Discord non risponde: tocca di nuovo per mandarlo in chat');return 'fail'}}
   ui.dcFail=0;
-  if(navigator.share){try{await navigator.share({title:o.title,text:o.text,url:o.url});return 'share'}catch(e){if(e&&e.name==='AbortError')return 'abort'}}
-  copy(o.text+'\n'+o.url,o.copied||'Link copiato: incollalo in chat');return 'copy'}
+  if(files.length&&navigator.share&&navigator.canShare&&navigator.canShare({files})){try{await navigator.share({title:o.title,text:o.text+'\n'+o.url,files});return 'share'}catch(e){if(e&&e.name==='AbortError')return 'abort'}}
+  if(navigator.share){try{await navigator.share({title:o.title,text:o.text,url:o.url});if(files.length)toast('Le immagini mandale a parte nella stessa chat');return 'share'}catch(e){if(e&&e.name==='AbortError')return 'abort'}}
+  copy(o.text+'\n'+o.url,o.copied||'Link copiato: incollalo in chat');if(files.length)setTimeout(()=>toast('Le immagini mandale a parte nella stessa chat'),2000);return 'copy'}
 function dcHash(){const m=(location.hash||'').match(/^#dc=([A-Za-z0-9_-]+)$/);if(!m)return false;try{history.replaceState(null,'',location.pathname)}catch(e){}
   let u='';try{u=new TextDecoder().decode(unb64url(m[1]))}catch(e){}if(!dcOk(u)){toast('Link di Discord non valido');return true}
   if(dcUrl()===u){toast('Invio al master su Discord già attivo');return true}
@@ -1048,8 +1054,9 @@ function pnGet(){if(!ui.pn){try{ui.pn=JSON.parse(localStorage.getItem(PNK))}catc
 function pnSave(){try{localStorage.setItem(PNK,JSON.stringify(ui.pn))}catch(e){}pnPrep()}
 function pnSent(){try{return JSON.parse(localStorage.getItem(PNS))||[]}catch(e){return []}}
 let pnCode=null,pnSig='';
-function pnObj(){const n=pnGet();if(!n.id)n.id=uid();return {v:1,n:{id:n.id,t:n.t.trim(),c:n.c,b:n.b.trim(),a:n.a.trim(),at:Date.now()}}}
-function pnPrep(){const o=pnObj(),sig=JSON.stringify([o.n.id,o.n.t,o.n.c,o.n.b,o.n.a]);if(sig===pnSig)return;pnSig=sig;pnCode=null;packObj(o).then(c=>{if(pnSig===sig)pnCode=c}).catch(()=>{})}
+function pnObj(){const n=pnGet();if(!n.id)n.id=uid();return {v:1,n:{id:n.id,t:n.t.trim(),c:n.c,b:n.b.trim(),a:n.a.trim(),im:(ui.pnImg||[]).length,at:Date.now()}}}
+const pnFiles=()=>(ui.pnImg||[]).map((x,i)=>new File([x.blob],'immagine-'+(i+1)+'.jpg',{type:'image/jpeg'}));
+function pnPrep(){const o=pnObj(),sig=JSON.stringify([o.n.id,o.n.t,o.n.c,o.n.b,o.n.a,o.n.im]);if(sig===pnSig)return;pnSig=sig;pnCode=null;packObj(o).then(c=>{if(pnSig===sig)pnCode=c}).catch(()=>{})}
 function pnoteCard(){const S2=pnSent(),pubIds=new Set(((ui.pubd&&ui.pubd.voci)||[]).map(v=>v.id));
   return `<div class="card"><div class="row"><h3 class="grow">Le tue note</h3><button class="btn sm pri" data-a="open" data-k="pnote">Scrivi una nota</button></div><p class="small muted">Racconta una scena, un luogo o un personaggio: la mandi al master, che la legge e decide se aggiungerla al diario con il tuo nome.</p>
   ${S2.length?`<div class="list">${S2.slice(0,8).map(x=>`<div class="item"><span class="grow"><span class="t">${esc(x.t||'Senza titolo')}</span><br><span class="small muted">inviata ${fmtWhen(x.at)}</span></span><span class="vis${pubIds.has(x.id)?' on':''}">${pubIds.has(x.id)?'Nel diario':'Al master'}</span></div>`).join('')}</div>`:''}</div>`}
@@ -1057,11 +1064,15 @@ function sPnote(){const n=pnGet();pnPrep();return `<div class="card"><div class=
   <div class="field"><label for="pnt">Titolo</label><input id="pnt" type="text" data-i="pn:t" value="${esc(n.t)}" placeholder="Es. La notte al faro" maxlength="120"></div>
   ${selectH('pnc','pnc',n.c,DCAT,'Categoria')}
   <div class="field"><label for="pnb">Testo</label><textarea id="pnb" class="tall" data-i="pn:b" maxlength="4000" placeholder="Cosa è successo, cosa ha visto o pensato il tuo personaggio...">${esc(n.b)}</textarea></div>
-  <p class="small muted">Puoi usare **grassetto** e righe che iniziano con - per gli elenchi. La bozza resta salvata su questo dispositivo.</p></div>
+  <p class="small muted">Puoi usare **grassetto** e righe che iniziano con - per gli elenchi. La bozza resta salvata su questo dispositivo.</p>
+  <h3>Immagini (${(ui.pnImg||[]).length}/4)</h3>${(ui.pnImg||[]).length?`<div class="gal">${ui.pnImg.map((x,k)=>`<figure><img src="${x.u}" alt=""><button class="rm" data-a="pnimgdel" data-i="${k}" aria-label="Togli immagine">×</button></figure>`).join('')}</div>`:''}
+  ${(ui.pnImg||[]).length<4?`<label class="btn filebtn"${ui.imbusy?' style="opacity:.6"':''}>${ui.imbusy?'Preparo le immagini...':'Aggiungi immagini'}<input type="file" accept="image/*" multiple data-c="pnimg"></label>`:''}
+  <p class="small muted">Le immagini partono insieme alla nota${dcOn()&&!isMaster()?' nel canale del master':''}; non restano nella bozza se chiudi la pagina.</p></div>
   <button class="btn pri" data-a="pnsend">${dcOn()&&!isMaster()?'Invia al master su Discord':'Invia al master'}</button><p class="small muted">${dcOn()&&!isMaster()?'Arriva da sola nel canale privato del master.':'Si apre la condivisione: manda il messaggio al master in chat.'} Solo lui la vede finché non la approva.</p>`}
 function propH(){const L=S.prop||[];return `<div class="card"><div class="row"><h3 class="grow">Proposte dei giocatori${L.length?' ('+L.length+')':''}</h3><button class="btn sm" data-a="open" data-k="imp">Incolla una nota</button></div>
-  ${L.length?`<div class="list">${L.map(x=>`<button class="item ent" data-a="open" data-k="prop" data-i="${esc(x.id)}"><span class="grow"><span class="t">${esc(x.t||'Senza titolo')}</span><br><span class="small muted">${dcat(x.c)} · di ${esc(x.a||'un giocatore')} · ${fmtWhen(x.rx||x.at)}</span><span class="snip">${esc((x.b||'').replace(/\*\*/g,'').replace(/\s+/g,' ').slice(0,90))}</span></span><span class="vis">Da approvare</span></button>`).join('')}</div>`:'<p class="small muted">I giocatori ti mandano le note dal loro diario con un link: aprilo qui o incollalo con “Incolla una nota”. Le vedi solo tu finché non le approvi.</p>'}</div>`}
+  ${L.length?`<div class="list">${L.map(x=>`<button class="item ent" data-a="open" data-k="prop" data-i="${esc(x.id)}"><span class="grow"><span class="t">${esc(x.t||'Senza titolo')}</span><br><span class="small muted">${dcat(x.c)} · di ${esc(x.a||'un giocatore')}${x.im?' · 📷 '+x.im:''} · ${fmtWhen(x.rx||x.at)}</span><span class="snip">${esc((x.b||'').replace(/\*\*/g,'').replace(/\s+/g,' ').slice(0,90))}</span></span><span class="vis">Da approvare</span></button>`).join('')}</div>`:'<p class="small muted">I giocatori ti mandano le note dal loro diario con un link: aprilo qui o incollalo con “Incolla una nota”. Le vedi solo tu finché non le approvi.</p>'}</div>`}
 function sProp(x){return `<div class="card"><div class="row small"><span class="vis on">${dcat(x.c)}</span><span class="muted">di <b>${esc(x.a||'un giocatore')}</b> · ricevuta ${fmtWhen(x.rx||x.at)}</span></div><h3 style="text-transform:none;letter-spacing:0;font-size:17px;color:var(--ink);margin:6px 0">${esc(x.t||'Senza titolo')}</h3><div class="md">${md(x.b||'')}</div></div>
+  ${x.im?`<div class="card"><p class="note">📷 ${x.im===1?'C’è 1 immagine':'Ci sono '+x.im+' immagini'}: le trovi nel messaggio su Discord (o in chat). Salvale sul telefono, poi usa <b>Approva e modifica</b> → Aggiungi immagini.</p></div>`:''}
   <div class="card"><p class="small muted">Approvandola diventa una voce del diario con l’autore indicato. Puoi pubblicarla subito o prima sistemarla.</p>
   <button class="btn pri" data-a="papp" data-i="pub"${ui.busy?' disabled':''}>Approva e pubblica</button><div class="row" style="margin-top:8px"><button class="btn grow" data-a="papp" data-i="edit">Approva e modifica</button><button class="btn grow danger" data-a="prej">${ui.arm==='prej'?'Tocca ancora: scarta':'Scarta'}</button></div></div>`}
 let schedErr=0;
@@ -1721,7 +1732,7 @@ const VIEW={on:false,code:null,g:null,pc:null,sub:null,st:null,ok:false,fb:null,
     requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll('#tav .hpb i[data-p]').forEach(i=>{const v=+i.dataset.p;i.style.width=100*v+'%';i.style.background=v>.5?'#3fbf6a':v>.2?'#f0b429':'#e5484d'})))}};
 
 /* ---------- schede e render ---------- */
-const APPV='1.28',APPD='26 novembre 2026';
+const APPV='1.29',APPD='26 novembre 2026';
 function sBackup(){return sBackup0()+`<div class="card"><h3>Versione</h3><p>Master Pokérole <b>v${APPV}</b> · pubblicata il ${APPD}</p><p class="small muted">Quando esce una versione nuova l’app la scarica da sola e lo segnala con un avviso: basta riaprirla.</p></div>`}
 function sBackup0(){return `<div class="card"><h3>Danno minimo</h3><div class="seg"><button data-a="omin" data-i="1" aria-pressed="${S.opt.min1!==false}">Sempre almeno 1</button><button data-a="omin" data-i="0" aria-pressed="${S.opt.min1===false}">Le resistenze possono azzerarlo</button></div><p class="small muted">Vale per l’assistente di battaglia. Le immunità danno sempre 0.</p></div>
 <div class="card"><h3>Difese</h3><div class="seg"><button data-a="odef" data-i="2" aria-pressed="${S.opt.def===2}">Sp. Def = Insight</button><button data-a="odef" data-i="1" aria-pressed="${S.opt.def===1}">Sp. Def = Vitality</button></div><p class="small muted">Il manuale chiede di scegliere un metodo per tutta la campagna (p. 27).</p></div>
@@ -1922,16 +1933,17 @@ const ACT={
   mbuy(d){const m=ui.mart,t=S.trainers.find(x=>x.id===m.to),a=IT[+d.i],q=m.q[d.i]||1,cost=a.pr*q;if((+t.cash||0)<cost){toast('Denaro insufficiente');return}t.cash=(+t.cash||0)-cost;invAdd(t,a.n,q);m.q[d.i]=1;save();toast(q+'× '+a.n+' nello zaino di '+(t.name||''));render(true)},
   async tshare(){const t=curTrainer();if(!t)return;try{const c=SHC[t.id],code=c&&c.code&&c.sig===JSON.stringify(shareObj(t))?c.code:await packTrainer(t),url=appUrl()+'#imp='+code,nm=t.name||'allenatore';
     const text='Scheda di '+nm+' per Master Pokérole. Apri il link, oppure copia questo messaggio e incollalo nell’app in Allenatori → Giocatori → Importa.';
-    await shareOut({title:'Scheda di '+nm,text,url,head:'🧑 **Scheda allenatore: '+dcE(nm)+'**'+(t.player?' · di '+dcE(t.player):''),prev:RK[t.rk]+(t.team.length?' · '+t.team.map(P=>P.nick||MON[P.m].n).join(', '):'')})}catch(e){toast('Non riesco a preparare la scheda: '+(e&&e.message||'errore sconosciuto'))}},
+    await shareOut({title:'Scheda di '+nm,text,url,who:t.player||nm,head:'🧑 **Scheda allenatore: '+dcE(nm)+'**'+(t.player?' · di '+dcE(t.player):''),prev:RK[t.rk]+(t.team.length?' · '+t.team.map(P=>P.nick||MON[P.m].n).join(', '):'')})}catch(e){toast('Non riesco a preparare la scheda: '+(e&&e.message||'errore sconosciuto'))}},
   async ishare(){const c0=curInst();if(!c0||!c0.P)return;const P=c0.P,from=c0.t&&c0.t.name||'',nm=P.nick||MON[P.m].n;
     try{const c=SHC['m:'+P.id],code=c&&c.code&&c.sig===JSON.stringify(P)+'|'+from?c.code:await packMon(P,from),url=appUrl()+'#imp='+code;
       const text=nm+(P.nick?' ('+MON[P.m].n+')':'')+(from?' di '+from:'')+' per Master Pokérole. Apri il link, oppure copia questo messaggio e incollalo nell’app in Allenatori → Giocatori → Importa.';
-      await shareOut({title:nm,text,url,head:'🔴 **Pokémon: '+dcE(nm)+'**'+(P.nick?' ('+dcE(MON[P.m].n)+')':'')+(from?' · di '+dcE(from):''),prev:RK[P.rk]+' · '+MON[P.m].ty.map(x=>TYIT[x]).join('/')+(P.ab?' · '+P.ab:'')})}catch(e){toast('Non riesco a preparare il Pokémon: '+(e&&e.message||'errore sconosciuto'))}},
+      await shareOut({title:nm,text,url,who:from,head:'🔴 **Pokémon: '+dcE(nm)+'**'+(P.nick?' ('+dcE(MON[P.m].n)+')':'')+(from?' · di '+dcE(from):''),prev:RK[P.rk]+' · '+MON[P.m].ty.map(x=>TYIT[x]).join('/')+(P.ab?' · '+P.ab:'')})}catch(e){toast('Non riesco a preparare il Pokémon: '+(e&&e.message||'errore sconosciuto'))}},
   noop(){},
+  pnimgdel(d){const x=(ui.pnImg||[]).splice(+d.i,1)[0];if(x)URL.revokeObjectURL(x.u);pnPrep();render(true)},
   async impclip(){try{ui.impt=await navigator.clipboard.readText();ui.impd=null;await ACT.impread()}catch(e){toast('Non posso leggere gli appunti: incolla a mano nel riquadro')}},
   async impread(d){const el=$('#impt');if(d&&el)ui.impt=el.value;try{ui.impd=await unpackTrainer(ui.impt);render(true)}catch(e){ui.impd=null;toast('Codice non valido: '+e.message);render(true)}},
   impdo(d){const o=ui.impd;if(!o)return;
-    if(o.n){if(!isMaster())return;const n=o.n,L=S.prop=S.prop||[],x={id:n.id,t:String(n.t||'').slice(0,120),c:DCAT.some(c=>c[0]===n.c)?n.c:'not',b:String(n.b||'').slice(0,4000),a:String(n.a||'').slice(0,40),at:n.at||Date.now(),rx:Date.now()};
+    if(o.n){if(!isMaster())return;const n=o.n,L=S.prop=S.prop||[],x={id:n.id,t:String(n.t||'').slice(0,120),c:DCAT.some(c=>c[0]===n.c)?n.c:'not',b:String(n.b||'').slice(0,4000),a:String(n.a||'').slice(0,40),im:Math.max(0,Math.min(10,+n.im||0)),at:n.at||Date.now(),rx:Date.now()};
       const j=L.findIndex(y=>y.id===x.id);if(j>=0)L[j]=x;else if(!S.diary.some(y=>y.id===x.id))L.unshift(x);
       ui.impd=null;ui.impt='';save();ui.tab='diario';ui.dmode='edit';ui.stack=[{k:'prop',i:x.id}];render();toast('Nota di '+(x.a||'un giocatore')+' tra le proposte');return}
     if(o.p){const P=JSON.parse(JSON.stringify(o.p)),ex=findMonAny(P.id);let msg='Pokémon aggiunto',dest;
@@ -1952,7 +1964,7 @@ const ACT={
   prej(){if(ui.arm!=='prej'){ui.arm='prej';render(true);return}ui.arm=null;const top=ui.stack.pop();S.prop=(S.prop||[]).filter(y=>y.id!==top.i);save();render();toast('Proposta scartata')},
   async pnsend(){const n=pnGet();if(!n.a.trim()){toast('Scrivi il tuo nome');return}if(!n.t.trim()&&!n.b.trim()){toast('Scrivi almeno un titolo o un testo');return}
     try{const o=pnObj(),code=pnCode||await packObj(o),url=appUrl()+'#imp='+code,text='Nota per il diario da '+n.a.trim()+': «'+(n.t.trim()||'senza titolo')+'». Master: apri il link, oppure incolla questo messaggio in Diario → Incolla una nota.';
-      const r=await shareOut({title:'Nota per il diario',text,url,copied:'Copiato: incollalo nella chat con il master',head:'📝 **Nota per il diario** da **'+dcE(n.a.trim())+'**: '+dcE(n.t.trim()||'senza titolo')+' ('+dcat(n.c)+')',prev:n.b.trim()});if(r==='abort'||r==='fail')return;
+      const r=await shareOut({title:'Nota per il diario',text,url,files:pnFiles(),who:n.a.trim(),copied:'Copiato: incollalo nella chat con il master',head:'📝 Nota per il diario · '+dcat(n.c)+'\n**'+dcE(n.t.trim()||'Senza titolo')+'**',prev:n.b.trim()});if(r==='abort'||r==='fail')return;(ui.pnImg||[]).forEach(x=>URL.revokeObjectURL(x.u));ui.pnImg=[];
       const L=pnSent().filter(x=>x.id!==o.n.id);L.unshift({id:o.n.id,t:o.n.t,at:Date.now()});try{localStorage.setItem(PNS,JSON.stringify(L.slice(0,30)))}catch(e){}
       ui.pn={a:n.a,t:'',c:n.c,b:''};pnSig='';pnSave();ui.stack.pop();render()}catch(e){toast('Non riesco a preparare la nota: '+(e&&e.message||'errore'))}},
   dcsave(){const v=String(ui.dcw!=null?ui.dcw:($('#dcw')||{}).value||'').trim();if(!v){toast('Incolla l’URL del webhook');return}if(!dcOk(v)){toast('Non sembra un webhook di Discord: deve iniziare con https://discord.com/api/webhooks/');return}try{localStorage.setItem(DCK,v)}catch(e){}ui.dcw=null;toast('Webhook salvato');render(true)},
@@ -2125,6 +2137,8 @@ document.addEventListener('change',e=>{const t=e.target,k=t.dataset.c;if(!k)retu
   else if(k==='tavhp'){S.opt.tavHp=t.checked;save();TAV.send(true)}
   else if(k==='rw:multi'||k==='rw:diary'||k==='rw:keep'){ui.rw[k.slice(3)]=t.checked;render(true)}
   else if(k.startsWith('rwp:')||k.startsWith('rwk:')){const r=ui.rw.rows[k.slice(4)];r[k[2]==='p'?'part':'ko']=t.checked;render(true)}
+  else if(k==='pnimg'){const fs=[...t.files].slice(0,4-(ui.pnImg||[]).length);t.value='';if(!fs.length)return;ui.imbusy=true;render(true);
+    (async()=>{for(const f of fs){try{const r=await shrink(f);(ui.pnImg=ui.pnImg||[]).push({blob:r.blob,u:URL.createObjectURL(r.blob)})}catch(err){toast('Immagine non letta: '+err.message)}}ui.imbusy=false;pnPrep();render(true)})()}
   else if(k==='deimg'){const e=curDent(),fs=[...t.files];t.value='';if(!e||!fs.length)return;ui.imbusy=true;render(true);
     (async()=>{let n=0;for(const f of fs){try{const r=await shrink(f),id=uid();await IDB.put(id,r.blob);(e.img=e.img||[]).push({id,d:'',w:r.w,h:r.h});n++}catch(err){toast('Immagine non letta: '+err.message)}}
       e.u=Date.now();save();ui.imbusy=false;render(true);if(n)toast(n===1?'Immagine aggiunta':n+' immagini aggiunte')})()}
