@@ -1,6 +1,23 @@
 {
- "aggiornato": "2026-11-26T11:49:20.664Z",
+ "aggiornato": "2026-11-26T11:51:13.518Z",
  "voci": [
+  {
+   "id": "mwxhpi9h7yj5",
+   "t": "Professor Popler",
+   "c": "png",
+   "w": "",
+   "b": "Un eccentrico professore Pokémon globalmente riconosciuto per i suoi sforzi nello studio e nella tutela degli ecosistemi.\n\nIl rapido sviluppo industriale della regione lo sta preoccupando abbastanza, anche per via di alcune pratiche spregiudicate portate avanti da alcune bande criminali",
+   "u": 1795693863814,
+   "img": [
+    {
+     "id": "mwxhrgxwck48",
+     "f": "diario-img/mwxhrgxwck48.jpg",
+     "d": "",
+     "w": 512,
+     "h": 512
+    }
+   ]
+  },
   {
    "id": "mwxhla9ij8iz",
    "t": "Mappa della regione",
