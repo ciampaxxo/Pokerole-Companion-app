@@ -63,6 +63,24 @@ let fails=0;const ok=(c,m)=>{console.log((c?'OK   ':'FAIL ')+m);if(!c)fails++};
   ok(sh.noimg&&sh.team,'scheda importata senza immagine ma con la squadra');
   ok(sh.keep,'aggiornando la scheda resta la propria immagine');
   ok(/incompleto/.test(sh.err),'codice tagliato: messaggio chiaro');
+  // condivisione di un singolo Pokémon
+  const ms=await pg.evaluate(async()=>{const t=S.trainers[0];if(!t.team.length){const mi=MON.findIndex(m=>m.n==='Pikachu');t.team.push(generate(mi,1,'bal'))}
+    const P=t.team[0];P.nick='Saetta';ui.stack=[{k:'trainer',i:t.id},{k:'inst',i:P.id,o:t.id}];render();const btn=!!document.querySelector('[data-a=ishare]');
+    const code=await packMon(P,t.name),o=await unpackTrainer('Guarda! '+appUrl()+'#imp='+code);
+    // aggiorna: il Pokémon esiste già
+    o.p.nick='Saetta 2';ui.impd=o;ui.stack=[{k:'imp'}];render();const upd=!!document.querySelector('[data-a=impdo][data-i=mupd]');ACT.impdo({i:'mupd'});
+    const upOk=t.team.find(x=>x.id===P.id).nick==='Saetta 2';
+    // nuovo dispositivo: il Pokémon non c'è, va tra i salvati
+    const o2=await unpackTrainer('#imp='+code);t.team=t.team.filter(x=>x.id!==P.id);ui.impd=o2;ui.impto='saved';ACT.impdo({i:'mnew'});
+    const inSaved=S.saved.some(x=>x.id===P.id&&x.nick==='Saetta');
+    return {btn,len:code.length,upd,upOk,inSaved,from:o.from===t.name}});
+  ok(ms.btn,'pulsante Condividi Pokémon nella scheda');
+  ok(ms.len<2000&&ms.from,'link del Pokémon corto con il nome dell’allenatore ('+ms.len+')');
+  ok(ms.upd&&ms.upOk,'importare un Pokémon già presente lo aggiorna');
+  ok(ms.inSaved,'importare un Pokémon nuovo lo aggiunge alla destinazione scelta');
+  // immagine anche per i PNG
+  const npc=await pg.evaluate(()=>{const t=newTrainer();t.pg=0;t.name='PNG';S.trainers.push(t);ui.stack=[{k:'trainer',i:t.id}];render();const r=!!document.querySelector('#sheet [data-c=timg]');ui.stack=[];render();return r});
+  ok(npc,'caricamento immagine disponibile anche per i PNG');
   // salvataggio ritardato mentre si scrive
   const sv=await pg.evaluate(async()=>{const t=S.trainers[0];ui.stack=[{k:'trainer',i:t.id}];render();const el=document.getElementById('tno');el.value='prova note';el.dispatchEvent(new Event('input',{bubbles:true}));
     const before=JSON.parse(localStorage.getItem(SKEY)).trainers[0].notes;await new Promise(r=>setTimeout(r,600));const after=JSON.parse(localStorage.getItem(SKEY)).trainers[0].notes;ui.stack=[];render();return {before,after}});

@@ -281,7 +281,7 @@ nav.tabs{padding-bottom:env(safe-area-inset-bottom)}
 <body>
 <div class="app">
   <header class="top">
-    <span class="ball" aria-hidden="true"></span><div class="brand">Master <b>Pokérole</b><small>Compagno del master · regole 3.0 · <span class="appv">v1.23</span></small></div>
+    <span class="ball" aria-hidden="true"></span><div class="brand">Master <b>Pokérole</b><small>Compagno del master · regole 3.0 · <span class="appv">v1.24</span></small></div>
     <button class="btn sm ghost" data-a="open" data-k="backup" aria-label="Impostazioni e backup">Opzioni</button>
   </header>
   <main id="main"></main>
@@ -623,18 +623,29 @@ const unb64url=s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')+'==
 const shareObj=t=>{const o=Object.assign({},t);delete o.img;return o};
 const SHC={};
 function prepShare(t){const sig=JSON.stringify(shareObj(t)),c=SHC[t.id];if(c&&c.sig===sig)return;SHC[t.id]={sig,code:null};packTrainer(t).then(code=>{if(SHC[t.id]&&SHC[t.id].sig===sig)SHC[t.id].code=code}).catch(()=>{})}
-async function packTrainer(t){const raw=new TextEncoder().encode(JSON.stringify({v:1,t:shareObj(t),at:Date.now()}));
+async function packMon(P,from){return packObj({v:1,p:JSON.parse(JSON.stringify(P)),from:from||'',at:Date.now()})}
+function prepShareMon(P,from){const k='m:'+P.id,sig=JSON.stringify(P)+'|'+from,c=SHC[k];if(c&&c.sig===sig)return;SHC[k]={sig,code:null};packMon(P,from).then(code=>{if(SHC[k]&&SHC[k].sig===sig)SHC[k].code=code}).catch(()=>{})}
+function findMonAny(id){let r=null;const i=S.saved.findIndex(x=>x.id===id);if(i>=0)return {arr:S.saved,i,o:'saved'};
+  S.trainers.some(t=>[t.team,t.box||[]].some(a=>{const j=a.findIndex(x=>x.id===id);if(j>=0){r={arr:a,i:j,o:t.id,t};return true}}));return r}
+async function packTrainer(t){return packObj({v:1,t:shareObj(t),at:Date.now()})}
+async function packObj(obj){const raw=new TextEncoder().encode(JSON.stringify(obj));
   if(window.CompressionStream){try{const z=new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer());return 'z'+b64url(z)}catch(e){}}
   return 'u'+b64url(raw)}
 async function unpackTrainer(text){const m=String(text||'').match(/imp=([A-Za-z0-9_-]+)/)||String(text||'').trim().match(/^([zu][A-Za-z0-9_-]{20,})$/);if(!m)throw new Error('nessun codice trovato');
   const code=m[1],bytes=unb64url(code.slice(1));let raw=bytes;
   const cut=new Error('il codice è incompleto: forse il messaggio è stato tagliato. Fatti rimandare il link intero');
   if(code[0]==='z'){if(!window.DecompressionStream)throw new Error('browser troppo vecchio per questo codice');try{raw=new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer())}catch(e){throw cut}}
-  let o;try{o=JSON.parse(new TextDecoder().decode(raw))}catch(e){throw cut}if(!o||!o.t||!Array.isArray(o.t.team))throw new Error('codice non valido');return o}
+  let o;try{o=JSON.parse(new TextDecoder().decode(raw))}catch(e){throw cut}if(o&&o.p){if(typeof o.p.m!=='number'||!MON[o.p.m])throw new Error('Pokémon non riconosciuto');return o}if(!o||!o.t||!Array.isArray(o.t.team))throw new Error('codice non valido');return o}
 function sImp(){const d=ui.impd;
-  let h=`<div class="card"><p class="small">Incolla il messaggio o il link ricevuto. Funziona in entrambe le direzioni: i giocatori mandano a te la loro scheda, tu puoi rimandarla aggiornata dopo una sessione.</p>
+  let h=`<div class="card"><p class="small">Incolla il messaggio o il link ricevuto: una scheda allenatore o un singolo Pokémon. Funziona in entrambe le direzioni: i giocatori mandano a te la loro scheda, tu puoi rimandarla aggiornata dopo una sessione.</p>
   <div class="field"><label for="impt">Messaggio o codice</label><textarea id="impt" data-i="impt" placeholder="Incolla qui...">${esc(ui.impt||'')}</textarea></div>
   <div class="row">${navigator.clipboard&&navigator.clipboard.readText?'<button class="btn grow" data-a="impclip">Incolla dagli appunti</button>':''}<button class="btn pri grow" data-a="impread">Leggi</button></div></div>`;
+  if(d&&d.p){const P=d.p,M=MON[P.m],ex=findMonAny(P.id),tgt=ui.impto||(ex?ex.o:(pgs()[0]||{}).id||'saved');
+    h+=`<div class="card"><div class="list">${instItem(P,'saved').replace('data-a="open"','data-a="noop"')}</div>
+    <p class="small muted">${d.from?'Da '+esc(d.from)+' · ':''}Pokémon del ${new Date(d.at).toLocaleString('it-IT',{dateStyle:'short',timeStyle:'short'})}.${ex?' Hai già questo Pokémon'+(ex.t?' (in '+esc(ex.t.name||'allenatore')+')':' (tra i salvati)')+': aggiornandolo, la tua versione viene sostituita.':''}</p>
+    ${ex?'':`<div class="row">${selectH('impto','impto',tgt,targetOpts(),'Aggiungi a')}</div>`}
+    <div class="row">${ex?'<button class="btn pri grow" data-a="impdo" data-i="mupd">Aggiorna il Pokémon</button><button class="btn grow" data-a="impdo" data-i="mnew">Aggiungi come copia</button>':'<button class="btn pri grow" data-a="impdo" data-i="mnew">Aggiungi</button>'}</div></div>`;
+    return h}
   if(d){const t=d.t,ex=S.trainers.find(x=>x.id===t.id);
     h+=`<div class="card"><div class="row">${trAv(t)}<div class="grow"><span class="t">${esc(t.name||'Senza nome')}</span><div class="small muted">${t.player?esc(t.player)+' · ':''}${RK[t.rk]}${t.pg?' · '+money(t.cash):''} · ${t.team.length} Pokémon${(t.box||[]).length?' + '+t.box.length+' nel box':''}</div></div>${strip(t.team)}</div>
     <p class="small muted">Scheda del ${new Date(d.at).toLocaleString('it-IT',{dateStyle:'short',timeStyle:'short'})}.${ex?' Hai già questa scheda: aggiornandola, la tua versione viene sostituita.':''}</p>
@@ -647,7 +658,7 @@ function sTrainer(t){prepShare(t);
   const pgH=`<div class="seg"><button data-a="tpg" data-i="1" aria-pressed="${!!t.pg}">Personaggio giocante</button><button data-a="tpg" data-i="0" aria-pressed="${!t.pg}">Allenatore PNG</button></div>`;
   return `${pgH}<div class="card">${trHero(t)}${t.team.length?`<div class="team">${t.team.map(P=>`<button data-a="open" data-k="inst" data-i="${P.id}" data-o="${t.id}">${monAv(P.m)}<span>${esc(P.nick||MON[P.m].n)}</span></button>`).join('')}</div>`:''}<div class="row"><div class="field"><label for="tn">Nome</label><input id="tn" type="text" data-i="tf:name" value="${esc(t.name)}" placeholder="Es. Capopalestra Livia"></div><div class="field"><label for="tr">Ruolo</label><input id="tr" type="text" data-i="tf:role" value="${esc(t.role)}" placeholder="Rivale, capopalestra, PNG..."></div></div>${t.pg?`<div class="row"><div class="field"><label for="tpl">Giocatore</label><input id="tpl" type="text" data-i="tf:player" value="${esc(t.player||'')}" placeholder="Chi lo interpreta"></div><div class="field"><label for="tca">Denaro (₽)</label><input id="tca" type="number" inputmode="numeric" data-i="tf:cash" value="${+t.cash||0}"></div></div>`:''}
   <div class="row">${selectH('ta','tsel:age',t.age,AGES.map((a,i)=>[i,a[1]]),'Età')}${selectH('tk','tsel:rk',t.rk,RK.map((r,i)=>[i,r]),'Rango')}${t.img?'':selectH('tsp','tspr',trSprKey(t),[['','Nessun ritratto']].concat(TRNAMES.map(n=>[n,n.replace(/_/g,' ').toLowerCase()])),'Ritratto')}</div>
-  ${t.pg?`<div class="row">${selectH('tnat','tnat',t.nat||'',[['','Nessuna']].concat(NAT.map(n=>[n,n])),'Natura')}</div>${t.nat?`<p class="small muted">${esc(t.nat)}: ${esc(NATIT[t.nat])}.</p>`:''}<div class="row"><label class="btn grow">${t.img?'Cambia immagine':'Carica un’immagine del personaggio'}<input type="file" accept="image/*" data-c="timg" hidden></label>${t.img?'<button class="btn" data-a="timgdel">Togli immagine</button>':''}</div>`:''}
+  ${t.pg?`<div class="row">${selectH('tnat','tnat',t.nat||'',[['','Nessuna']].concat(NAT.map(n=>[n,n])),'Natura')}</div>${t.nat?`<p class="small muted">${esc(t.nat)}: ${esc(NATIT[t.nat])}.</p>`:''}`:''}<div class="row"><label class="btn grow">${t.img?'Cambia immagine':t.pg?'Carica un’immagine del personaggio':'Carica un’immagine (al posto del ritratto)'}<input type="file" accept="image/*" data-c="timg" hidden></label>${t.img?'<button class="btn" data-a="timgdel">Togli immagine</button>':''}</div>
   <div class="derived"><div><b>${d.hp}</b><span>HP</span></div><div><b>${d.will}</b><span>Will</span></div><div><b>${d.init}</b><span>Init +1d6</span></div><div><b>${R.t}</b><span>Bersagli max</span></div></div>
   <div class="hp"><b class="num">HP ${hpNow}/${d.hp}</b><div class="bar"><i style="width:${100*hpNow/d.hp}%"></i></div>${stepper('tdmg','',"")}</div></div>
   ${t.pg?(()=>{const D=dexOf(t);return `<div class="card"><div class="srow"><span>Medaglie</span>${stepper('tbadge','',t.badges||0)}</div>
@@ -737,11 +748,11 @@ function addToTrainer(t,P){if(t.pg&&t.team.length>=6){(t.box=t.box||[]).push(P);
 function parseMoney(s){const m=String(s||'').match(/\d[\d.]*/);return m?parseInt(m[0].replace(/\./g,''),10)||0:0}
 function md(s){const L=esc(s).split(/\n/);let h='',ul=false;L.forEach(l=>{const b=l.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');if(/^\s*[-•]\s+/.test(l)){if(!ul){h+='<ul>';ul=true}h+='<li>'+b.replace(/^\s*[-•]\s+/,'')+'</li>'}else{if(ul){h+='</ul>';ul=false}if(b.trim())h+='<p>'+b+'</p>'}});if(ul)h+='</ul>';return h}
 function sInst(top){
-  const {P}=findInst(top.i,top.o);if(!P)return '<p class="muted">Pokémon non trovato.</p>';
+  const {P,t:ow}=findInst(top.i,top.o);if(!P)return '<p class="muted">Pokémon non trovato.</p>';if(top.o!=='battle')prepShareMon(P,ow&&ow.name||'');
   return `<div class="card"><div class="row"><div class="field"><label for="ink">Soprannome</label><input id="ink" type="text" data-i="if:nick" value="${esc(P.nick)}" placeholder="${esc(MON[P.m].n)}"></div>${selectH('irk','isel:rk',P.rk,RK.map((r,i)=>[i,r]),'Rango')}</div>
   <div class="row">${selectH('inat','isel:nat',P.nat,NAT.map(n=>[n,n]),'Nature')}${selectH('iab','isel:ab',P.ab,MON[P.m].ab.map(a=>[a,a]),'Ability')}</div></div>
   ${instCard(P,{track:true,edit:!!top.edit})}${isPg(top.o)?bondH(P,top):''}
-  <div class="row"><button class="btn grow" data-a="iedit">${top.edit?'Fine modifica':'Modifica punti e mosse'}</button><button class="btn" data-a="icopy">Copia testo</button><button class="btn" data-a="iheal">Cura</button></div>
+  <div class="row"><button class="btn grow" data-a="iedit">${top.edit?'Fine modifica':'Modifica punti e mosse'}</button><button class="btn" data-a="icopy">Copia testo</button><button class="btn" data-a="iheal">Cura</button></div>${top.o!=='battle'?'<button class="btn" data-a="ishare">Condividi Pokémon</button>':''}
   <div class="card"><div class="field"><label for="ino">Note</label><textarea id="ino" data-i="if:notes">${esc(P.notes)}</textarea></div></div>
   <div class="row"><button class="btn grow" data-a="open" data-k="mon" data-i="${P.m}">Scheda specie</button><button class="btn danger grow" data-a="idel">${ui.arm==='idel'?'Tocca ancora per eliminare':'Elimina'}</button></div>`;
 }
@@ -1585,7 +1596,7 @@ const VIEW={on:false,code:null,g:null,pc:null,sub:null,st:null,ok:false,fb:null,
     requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll('#tav .hpb i[data-p]').forEach(i=>{const v=+i.dataset.p;i.style.width=100*v+'%';i.style.background=v>.5?'#3fbf6a':v>.2?'#f0b429':'#e5484d'})))}};
 
 /* ---------- schede e render ---------- */
-const APPV='1.23',APPD='25 novembre 2026';
+const APPV='1.24',APPD='26 novembre 2026';
 function sBackup(){return sBackup0()+`<div class="card"><h3>Versione</h3><p>Master Pokérole <b>v${APPV}</b> · pubblicata il ${APPD}</p><p class="small muted">Quando esce una versione nuova l’app la scarica da sola e lo segnala con un avviso: basta riaprirla.</p></div>`}
 function sBackup0(){return `<div class="card"><h3>Danno minimo</h3><div class="seg"><button data-a="omin" data-i="1" aria-pressed="${S.opt.min1!==false}">Sempre almeno 1</button><button data-a="omin" data-i="0" aria-pressed="${S.opt.min1===false}">Le resistenze possono azzerarlo</button></div><p class="small muted">Vale per l’assistente di battaglia. Le immunità danno sempre 0.</p></div>
 <div class="card"><h3>Difese</h3><div class="seg"><button data-a="odef" data-i="2" aria-pressed="${S.opt.def===2}">Sp. Def = Insight</button><button data-a="odef" data-i="1" aria-pressed="${S.opt.def===1}">Sp. Def = Vitality</button></div><p class="small muted">Il manuale chiede di scegliere un metodo per tutta la campagna (p. 27).</p></div>
@@ -1784,9 +1795,23 @@ const ACT={
     const text='Scheda di '+nm+' per Master Pokérole. Apri il link, oppure copia questo messaggio e incollalo nell’app in Allenatori → Giocatori → Importa.';
     if(navigator.share){try{await navigator.share({title:'Scheda di '+nm,text,url});return}catch(e){if(e&&e.name==='AbortError')return}}
     copy(text+'\n'+url,'Link copiato: incollalo in chat')}catch(e){toast('Non riesco a preparare la scheda: '+(e&&e.message||'errore sconosciuto'))}},
+  async ishare(){const c0=curInst();if(!c0||!c0.P)return;const P=c0.P,from=c0.t&&c0.t.name||'',nm=P.nick||MON[P.m].n;
+    try{const c=SHC['m:'+P.id],code=c&&c.code&&c.sig===JSON.stringify(P)+'|'+from?c.code:await packMon(P,from),url=appUrl()+'#imp='+code;
+      const text=nm+(P.nick?' ('+MON[P.m].n+')':'')+(from?' di '+from:'')+' per Master Pokérole. Apri il link, oppure copia questo messaggio e incollalo nell’app in Allenatori → Giocatori → Importa.';
+      if(navigator.share){try{await navigator.share({title:nm,text,url});return}catch(e){if(e&&e.name==='AbortError')return}}
+      copy(text+'\n'+url,'Link copiato: incollalo in chat')}catch(e){toast('Non riesco a preparare il Pokémon: '+(e&&e.message||'errore sconosciuto'))}},
+  noop(){},
   async impclip(){try{ui.impt=await navigator.clipboard.readText();ui.impd=null;await ACT.impread()}catch(e){toast('Non posso leggere gli appunti: incolla a mano nel riquadro')}},
   async impread(d){const el=$('#impt');if(d&&el)ui.impt=el.value;try{ui.impd=await unpackTrainer(ui.impt);render(true)}catch(e){ui.impd=null;toast('Codice non valido: '+e.message);render(true)}},
-  impdo(d){const o=ui.impd;if(!o)return;const t=JSON.parse(JSON.stringify(o.t));t.box=t.box||[];
+  impdo(d){const o=ui.impd;if(!o)return;
+    if(o.p){const P=JSON.parse(JSON.stringify(o.p)),ex=findMonAny(P.id);let msg='Pokémon aggiunto',dest;
+      if(d.i==='mupd'&&ex){ex.arr[ex.i]=P;msg='Pokémon aggiornato';dest=ex.o}
+      else{if(ex){P.id=uid();P.nick=(P.nick||MON[P.m].n)+' (copia)'}const to=ex?ex.o:(ui.impto||(pgs()[0]||{}).id||'saved'),t=S.trainers.find(x=>x.id===to);
+        if(t){if(addToTrainer(t,P)==='box')msg='Squadra piena: messo nel box';dest=t.id}else{S.saved.unshift(P);dest='saved'}}
+      ui.impd=null;ui.impt='';ui.impto=null;save();const t=S.trainers.find(x=>x.id===dest);
+      if(t){ui.tab='allenatori';ui.tv=t.pg?'pg':'npc';ui.stack=[{k:'trainer',i:t.id},{k:'inst',i:P.id,o:t.id}]}else{ui.tab='genera';ui.stack=[{k:'inst',i:P.id,o:'saved'}]}
+      render();toast(msg);return}
+    const t=JSON.parse(JSON.stringify(o.t));t.box=t.box||[];
     if(d.i==='upd'){const j=S.trainers.findIndex(x=>x.id===t.id);if(j>=0){if(!t.img&&S.trainers[j].img)t.img=S.trainers[j].img;S.trainers[j]=t}else S.trainers.unshift(t)}
     else{const ex=S.trainers.some(x=>x.id===t.id);if(ex){t.id=uid();t.name=(t.name||'Allenatore')+' (copia)';t.team.concat(t.box).forEach(P=>P.id=uid())}S.trainers.unshift(t)}
     ui.impd=null;ui.impt='';ui.tv=t.pg?'pg':'npc';ui.tab='allenatori';save();ui.stack=[{k:'trainer',i:t.id}];render();toast(d.i==='upd'?'Scheda aggiornata':'Scheda aggiunta')},
@@ -1907,6 +1932,7 @@ document.addEventListener('input',e=>{const t=e.target,k=t.dataset.i;if(!k)retur
 document.addEventListener('change',e=>{const t=e.target,k=t.dataset.c;if(!k)return;const v=t.value;
   if(k.startsWith('gf:')){ui.gen.f[k.slice(3)]=v;render(true)}
   else if(k==='gtarget'){ui.gen.target=v}
+  else if(k==='impto'){ui.impto=v}
   else if(k==='gi:cat'){ui.gi.cat=v}
   else if(k==='bsrc'){ui.bt.src=v;render(true)}
   else if(k==='bwr'){ui.bt.rk=+v}
