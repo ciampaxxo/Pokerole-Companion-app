@@ -1,6 +1,23 @@
 {
- "aggiornato": "2026-11-26T11:51:13.518Z",
+ "aggiornato": "2026-11-26T11:52:46.435Z",
  "voci": [
+  {
+   "id": "mwxhryhn36ri",
+   "t": "Belgiro",
+   "c": "ses",
+   "w": "",
+   "b": "Piccolo borgo sulle rive del lago.\nÈ la sede scelta dal professore Popler per il suo laboratorio, funge anche da punto di partenza per molti giovani allenatori che si rivolgono a lui per chiedere il loro primo Pokémon ",
+   "u": 1795693959521,
+   "img": [
+    {
+     "id": "mwxhtg4k48r6",
+     "f": "diario-img/mwxhtg4k48r6.jpg",
+     "d": "",
+     "w": 1600,
+     "h": 1600
+    }
+   ]
+  },
   {
    "id": "mwxhpi9h7yj5",
    "t": "Professor Popler",
