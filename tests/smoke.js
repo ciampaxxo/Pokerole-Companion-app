@@ -10,8 +10,9 @@ let fails=0;const ok=(c,m)=>{console.log((c?'OK   ':'FAIL ')+m);if(!c)fails++};
   await new Promise(r=>srv.listen(0,r));const url='http://127.0.0.1:'+srv.address().port+'/';
   const br=await chromium.launch(),ctx=await br.newContext({viewport:{width:420,height:860},acceptDownloads:true}),pg=await ctx.newPage();
   // niente rete esterna nei test (GitHub, ntfy...): solo il server locale
-const puts=[];
-  await ctx.route(r=>!r.href.startsWith(url),r=>{const q=r.request();if(/api\.github\.com/.test(q.url())){if(q.method()==='PUT'){puts.push(JSON.parse(q.postData()));return r.fulfill({status:200,contentType:'application/json',body:'{}'})}return r.fulfill({status:404,contentType:'application/json',body:'{}'})}return r.abort()});
+const puts=[],dcs=[];let dcStatus=200,dcNoCors=false;
+  await ctx.route(r=>!r.href.startsWith(url),r=>{const q=r.request();if(/discord\.com\/api\/webhooks/.test(q.url())){const H={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'content-type','Access-Control-Allow-Methods':'POST'};if(q.method()==='OPTIONS')return dcNoCors?r.fulfill({status:404,body:''}):r.fulfill({status:204,headers:H});if(q.method()==='POST'){const raw=q.postData()||'';if(dcNoCors){const buf=q.postDataBuffer(),txt=buf?buf.toString('utf8'):raw,m=txt.match(/name="payload_json"\r?\n\r?\n([\s\S]*?)\r?\n--/);dcs.push(m?JSON.parse(m[1]):{raw:txt.slice(0,200)});return r.fulfill({status:200,contentType:'application/json',body:'{}'})}dcs.push(JSON.parse(raw));return r.fulfill({status:dcStatus,headers:H,contentType:'application/json',body:'{}'})}}
+    if(/api\.github\.com/.test(q.url())){if(q.method()==='PUT'){puts.push(JSON.parse(q.postData()));return r.fulfill({status:200,contentType:'application/json',body:'{}'})}return r.fulfill({status:404,contentType:'application/json',body:'{}'})}return r.abort()});
   const errs=[];pg.on('pageerror',e=>errs.push(e.message));pg.on('console',m=>{if(m.type()==='error'&&!/Failed to load resource/.test(m.text()))errs.push(m.text())});
   await pg.goto(url);await pg.waitForSelector('#main *');
   ok(errs.length===0,'nessun errore al caricamento '+errs.join('|'));
@@ -145,6 +146,47 @@ const puts=[];
     ui.pn={a:'Giulia',t:'Diario di Giulia',c:'png',b:'testo'};const o=pnObj(),code=await packObj(o),back=await unpackTrainer('#imp='+code);return {card,ok:back.n.a==='Giulia'&&back.n.c==='png'}});
   ok(appSend.card&&appSend.ok,'anche nell\'app i giocatori possono scrivere una nota');
   await pg.evaluate(()=>{S.diary=[];S.prop=[];ui.stack=[];render()});
+  // Discord: il master salva il webhook, i giocatori lo attivano con un link e le condivisioni arrivano da sole
+  const HOOK='https://discord.com/api/webhooks/123456/abc-DEF_9';pg.on('dialog',d=>d.accept());
+  await pg.evaluate(h=>{localStorage.setItem('master-pokerole-gh',JSON.stringify({tok:'x',ok:true,repo:'a/b'}));ui.stack=[{k:'backup'}];render();ui.dcw=h;ACT.dcsave()},HOOK);
+  ok(await pg.evaluate(()=>dcOn()&&document.getElementById('sheet').innerHTML.includes('Link per il diario')),'il master salva il webhook e vede i link per i giocatori');
+  await pg.evaluate(async()=>{await ACT.dctest()});ok(dcs.length===1&&/riuscito/.test(dcs[0].content),'il pulsante Prova scrive nel canale');
+  ok(await pg.evaluate(()=>{ui.dcw='https://example.com/x';ACT.dcsave();return localStorage.getItem('mp-discord')!=='https://example.com/x'}),'un indirizzo che non è di Discord viene rifiutato');
+  const link=await pg.evaluate(()=>dcLink(''));
+  // diventa un giocatore: niente chiave, niente webhook, poi apre il link del master
+  await pg.evaluate(()=>{localStorage.removeItem('master-pokerole-gh');localStorage.removeItem('mp-discord');ui.dcw=null;ui.stack=[];render()});
+  await pg.evaluate(l=>{location.hash=l.split('#')[1]},link);await pg.waitForTimeout(300);
+  ok(await pg.evaluate(h=>localStorage.getItem('mp-discord')===h,HOOK),'il giocatore attiva Discord aprendo il link');
+  const nd=dcs.length;
+  await pg.evaluate(async()=>{const t=S.trainers.find(x=>x.team.length)||S.trainers[0];ui.stack=[{k:'trainer',i:t.id}];render();await ACT.tshare()});
+  ok(dcs.length===nd+1&&/Scheda allenatore/.test(dcs[nd].content)&&/#imp=/.test(dcs[nd].content||dcs[nd].embeds[0].description),'la scheda allenatore arriva su Discord');
+  ok(await pg.evaluate(()=>document.getElementById('sheet').innerHTML.includes('Invia la scheda al master')),'il pulsante dice che va al master');
+  await pg.evaluate(async()=>{const t=S.trainers.find(x=>x.team.length);ui.stack=[{k:'trainer',i:t.id},{k:'inst',i:t.team[0].id,o:t.id}];render();await ACT.ishare()});
+  ok(dcs.length===nd+2&&/Pokémon/.test(dcs[nd+1].content),'il Pokémon arriva su Discord');
+  await pg.evaluate(async()=>{ui.pn={a:'Marco',t:'Al faro',c:'ses',b:'**testo**'};ui.stack=[{k:'pnote'}];await ACT.pnsend()});
+  ok(dcs.length===nd+3&&/Nota per il diario/.test(dcs[nd+2].content)&&/\\\*\\\*testo/.test(dcs[nd+2].content),'la nota arriva su Discord (con il testo protetto)');
+  // il link nel messaggio Discord si apre davvero come nota nel master
+  const back=await pg.evaluate(async c=>{const o=await unpackTrainer(c);return o.n&&o.n.a},dcs[nd+2].content);ok(back==='Marco','il link nel messaggio Discord apre la nota');
+  // Discord non risponde: avviso, e al tocco successivo si torna alla chat
+  dcStatus=500;const n2=dcs.length;
+  await pg.evaluate(async()=>{const t=S.trainers.find(x=>x.team.length);ui.stack=[{k:'trainer',i:t.id}];render();await ACT.tshare();window.__dcf=ui.dcFail});
+  ok(await pg.evaluate(()=>window.__dcf===1),'se Discord non risponde, avvisa');
+  await pg.evaluate(async()=>{navigator.share=async o=>{window.__sh=o};await ACT.tshare()});
+  ok(await pg.evaluate(()=>!!window.__sh)&&dcs.length===n2+1,'al tocco successivo si usa la condivisione in chat');
+  dcStatus=200;
+  // se Discord non permette l'invio diretto dal browser (niente CORS), si usa l'invio semplice in modulo
+  dcNoCors=true;const n4=dcs.length;await pg.evaluate(async()=>{const f0=window.fetch;window.__f0=f0;window.fetch=(u,o)=>/discord/.test(u)&&o&&o.headers&&!o.mode?Promise.reject(new TypeError('Failed to fetch')):f0(u,o);ui.dcFail=0;delete navigator.share;const t=S.trainers.find(x=>x.team.length);ui.stack=[{k:'trainer',i:t.id}];render();await ACT.tshare()});
+  await pg.waitForTimeout(300);ok(dcs.length===n4+1&&/Scheda allenatore/.test(dcs[n4].content||''),'invio di riserva senza CORS: il messaggio arriva comunque');dcNoCors=false;await pg.evaluate(()=>{window.fetch=window.__f0});
+  // pagina dei giocatori
+  const p3=await ctx.newPage();p3.on('dialog',d=>d.accept());const e3=[];p3.on('pageerror',e=>e3.push(e.message));
+  await p3.goto(url+'diario.html');await p3.evaluate(()=>localStorage.removeItem('mp-discord'));
+  await p3.goto(url+'diario.html#'+link.split('#')[1]);await p3.waitForSelector('#nota [data-n=open]');
+  ok(await p3.evaluate(h=>localStorage.getItem('mp-discord')===h,HOOK),'diario.html: il link attiva Discord');
+  await p3.click('#nota [data-n=open]');ok((await p3.innerHTML('#nota')).includes('Invia al master su Discord'),'diario.html: il pulsante dice Discord');
+  await p3.fill('#na','Giulia');await p3.fill('#nt','Il bosco');await p3.fill('#nb','testo');const n3=dcs.length;await p3.click('#nota [data-n=send]');await p3.waitForTimeout(300);
+  ok(dcs.length===n3+1&&/Giulia/.test(dcs[n3].content),'diario.html: la nota arriva su Discord');
+  ok(!e3.length,'diario.html senza errori '+e3.join('|'));await p3.close();
+  await pg.evaluate(()=>{localStorage.removeItem('mp-discord');delete navigator.share;ui.stack=[];render()});
   // salvataggio ritardato mentre si scrive
   const sv=await pg.evaluate(async()=>{const t=S.trainers[0];ui.stack=[{k:'trainer',i:t.id}];render();const el=document.getElementById('tno');el.value='prova note';el.dispatchEvent(new Event('input',{bubbles:true}));
     const before=JSON.parse(localStorage.getItem(SKEY)).trainers[0].notes;await new Promise(r=>setTimeout(r,600));const after=JSON.parse(localStorage.getItem(SKEY)).trainers[0].notes;ui.stack=[];render();return {before,after}});

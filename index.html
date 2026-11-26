@@ -281,7 +281,7 @@ nav.tabs{padding-bottom:env(safe-area-inset-bottom)}
 <body>
 <div class="app">
   <header class="top">
-    <span class="ball" aria-hidden="true"></span><div class="brand">Master <b>Pokérole</b><small>Compagno del master · regole 3.0 · <span class="appv">v1.27</span></small></div>
+    <span class="ball" aria-hidden="true"></span><div class="brand">Master <b>Pokérole</b><small>Compagno del master · regole 3.0 · <span class="appv">v1.28</span></small></div>
     <button class="btn sm ghost" data-a="open" data-k="backup" aria-label="Impostazioni e backup">Opzioni</button>
   </header>
   <main id="main"></main>
@@ -674,7 +674,7 @@ function sTrainer(t){prepShare(t);
   ${t.team.length?`<div class="list">${t.team.map(P=>instItem(P,t.id)).join('')}</div>`:'<p class="small muted">Squadra vuota. Genera un Pokémon e salvalo qui.</p>'}
   ${t.pg?`<h3>Box (${(t.box||[]).length})</h3>${(t.box||[]).length?`<div class="list">${t.box.map(P=>instItem(P,t.id)).join('')}</div>`:'<p class="small muted">Vuoto. Oltre il sesto Pokémon le catture finiscono qui.</p>'}`:''}</div>
   <div class="card">${t.pg?`<div class="field"><label for="tinv">Zaino</label><textarea id="tinv" data-i="tf:inv" placeholder="Pokéball, pozioni, oggetti chiave...">${esc(t.inv||'')}</textarea></div>`:`<div class="field"><label for="tm">Denaro e oggetti</label><input id="tm" type="text" data-i="tf:money" value="${esc(t.money)}" placeholder="Es. 3000 ₽, Pozione"></div>`}<div class="field"><label for="tno">Note</label><textarea id="tno" data-i="tf:notes" placeholder="Personalità, obiettivi, tattiche...">${esc(t.notes)}</textarea></div></div>
-  <button class="btn pri" data-a="tshare">Condividi scheda</button>${t.img?'<p class="small muted">L’immagine del personaggio non viaggia nel link: chi riceve la scheda tiene la propria.</p>':''}<p class="small muted">Manda la scheda (squadra, box, soldi e zaino) con un link: chi la riceve la aggiunge o la aggiorna con un tocco.</p>
+  <button class="btn pri" data-a="tshare">${dcOn()&&!isMaster()?'Invia la scheda al master':'Condividi scheda'}</button>${t.img?'<p class="small muted">L’immagine del personaggio non viaggia nel link: chi riceve la scheda tiene la propria.</p>':''}<p class="small muted">Manda la scheda (squadra, box, soldi e zaino) con un link: chi la riceve la aggiunge o la aggiorna con un tocco.</p>
   <div class="row"><button class="btn grow" data-a="tdup">Duplica</button><button class="btn danger grow" data-a="tdel">${ui.arm==='tdel'?'Tocca ancora per eliminare':'Elimina allenatore'}</button></div>`;
 }
 /* ---------- creazione guidata del personaggio (manuale p. 40–46) ---------- */
@@ -796,7 +796,7 @@ function sInst(top){
   return `<div class="card"><div class="row"><div class="field"><label for="ink">Soprannome</label><input id="ink" type="text" data-i="if:nick" value="${esc(P.nick)}" placeholder="${esc(MON[P.m].n)}"></div>${selectH('irk','isel:rk',P.rk,RK.map((r,i)=>[i,r]),'Rango')}</div>
   <div class="row">${selectH('inat','isel:nat',P.nat,NAT.map(n=>[n,n]),'Nature')}${selectH('iab','isel:ab',P.ab,MON[P.m].ab.map(a=>[a,a]),'Ability')}</div></div>
   ${instCard(P,{track:true,edit:!!top.edit})}${isPg(top.o)?bondH(P,top):''}
-  <div class="row"><button class="btn grow" data-a="iedit">${top.edit?'Fine modifica':'Modifica punti e mosse'}</button><button class="btn" data-a="icopy">Copia testo</button><button class="btn" data-a="iheal">Cura</button></div>${top.o!=='battle'?'<button class="btn" data-a="ishare">Condividi Pokémon</button>':''}
+  <div class="row"><button class="btn grow" data-a="iedit">${top.edit?'Fine modifica':'Modifica punti e mosse'}</button><button class="btn" data-a="icopy">Copia testo</button><button class="btn" data-a="iheal">Cura</button></div>${top.o!=='battle'?`<button class="btn" data-a="ishare">${dcOn()&&!isMaster()?'Invia il Pokémon al master':'Condividi Pokémon'}</button>`:''}
   <div class="card"><div class="field"><label for="ino">Note</label><textarea id="ino" data-i="if:notes">${esc(P.notes)}</textarea></div></div>
   <div class="row"><button class="btn grow" data-a="open" data-k="mon" data-i="${P.m}">Scheda specie</button><button class="btn danger grow" data-a="idel">${ui.arm==='idel'?'Tocca ancora per eliminare':'Elimina'}</button></div>`;
 }
@@ -948,6 +948,35 @@ async function verifyKey(quiet){const c=ghCfg();if(!c.tok){ghSet({ok:false});ret
     if(!r.ok){if(r.status===401||r.status===403||r.status===404)ghSet({ok:false});if(!quiet)toast('Prova fallita: '+ghErr(r.status));render(true);return false}
     const o=await r.json(),ok=!!(o.permissions&&o.permissions.push);ghSet({ok});if(!quiet)toast(ok?'Chiave OK: modalità master attiva su questo dispositivo':'La chiave legge il repository ma non può scrivere');render(true);return ok}
   catch(e){if(!quiet)toast('Serve internet per verificare la chiave');return false}}
+/* ---------- Discord: le condivisioni dei giocatori arrivano da sole nel canale privato del master (webhook) ---------- */
+const DCK='mp-discord';
+const dcUrl=()=>{try{return localStorage.getItem(DCK)||''}catch(e){return ''}};
+const dcOk=u=>/^https:\/\/(?:(?:canary|ptb)\.)?discord(?:app)?\.com\/api\/webhooks\/\d+\/[\w-]+$/.test(String(u||''));
+const dcOn=()=>dcOk(dcUrl());
+const dcE=s=>String(s||'').replace(/([\\*_~`|>])/g,'\\$1');
+function dcMsg(head,prev,url){const b={username:'Master Pokérole',allowed_mentions:{parse:[]}},q=prev?'\n> '+dcE(String(prev).replace(/\s+/g,' ').slice(0,280)):'';
+  let c=head+q+'\n'+url;if(c.length>2000)c=head+'\n'+url;if(c.length<=2000)return Object.assign(b,{content:c});
+  if(url.length>3900)return null;return Object.assign(b,{content:head+q,embeds:[{description:'[Apri nell’app del master]('+url+')\nSu iPhone: tieni premuto il link → Copia, poi incollalo nell’app.',color:0xc4283c}]})}
+async function dcPost(payload,u){u=u||dcUrl();if(!dcOk(u))return false;
+  try{const r=await fetch(u+'?wait=true',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});return r.ok}
+  catch(e){try{const f=new FormData();f.append('payload_json',JSON.stringify(payload));await fetch(u,{method:'POST',mode:'no-cors',body:f});return true}catch(e2){return false}}}
+/* condivisione dei giocatori: Discord se attivo, altrimenti (o se Discord non risponde) la condivisione in chat di sempre */
+async function shareOut(o){
+  if(dcOn()&&!isMaster()&&!ui.dcFail){const p=dcMsg(o.head,o.prev,o.url);if(p){if(await dcPost(p)){toast('Inviato al master su Discord');return 'dc'}ui.dcFail=1;toast('Discord non risponde: tocca di nuovo per mandarlo in chat');return 'fail'}}
+  ui.dcFail=0;
+  if(navigator.share){try{await navigator.share({title:o.title,text:o.text,url:o.url});return 'share'}catch(e){if(e&&e.name==='AbortError')return 'abort'}}
+  copy(o.text+'\n'+o.url,o.copied||'Link copiato: incollalo in chat');return 'copy'}
+function dcHash(){const m=(location.hash||'').match(/^#dc=([A-Za-z0-9_-]+)$/);if(!m)return false;try{history.replaceState(null,'',location.pathname)}catch(e){}
+  let u='';try{u=new TextDecoder().decode(unb64url(m[1]))}catch(e){}if(!dcOk(u)){toast('Link di Discord non valido');return true}
+  if(dcUrl()===u){toast('Invio al master su Discord già attivo');return true}
+  if(confirm('Attivare l’invio automatico al master su Discord? Schede, Pokémon e note che condividi arriveranno nel suo canale.')){try{localStorage.setItem(DCK,u)}catch(e){}toast('Invio al master su Discord attivato')}return true}
+const dcLink=(page)=>appUrl()+(page||'')+'#dc='+b64url(new TextEncoder().encode(dcUrl()));
+function sDiscord(){const on=dcOn();
+  if(!isMaster())return `<div class="card"><h3>Invio al master su Discord</h3>${on?'<p class="small"><span class="vis on">Attivo</span> Schede, Pokémon e note che condividi arrivano da sole nel canale del master.</p><button class="btn" data-a="dcdel">Disattiva</button>':'<p class="small muted">Se il master usa Discord ti manda un link: aprilo una volta e le tue condivisioni gli arriveranno da sole.</p>'}</div>`;
+  return `<div class="card"><h3>Discord</h3><p class="small muted">Con un webhook del tuo canale privato, le schede, i Pokémon e le note che i giocatori condividono ti arrivano lì da soli, con il link da aprire. Il webhook può solo scrivere nel canale, non leggerlo.</p>
+  <div class="field"><label for="dcw">URL del webhook</label><input id="dcw" type="password" data-i="dcw" value="${esc(ui.dcw!=null?ui.dcw:dcUrl())}" placeholder="https://discord.com/api/webhooks/..." autocapitalize="off" autocomplete="off"></div>
+  <div class="row"><button class="btn pri grow" data-a="dcsave">Salva</button>${on?'<button class="btn grow" data-a="dctest">Prova</button><button class="btn" data-a="dcdel">Rimuovi</button>':''}</div>
+  ${on?`<h3>Da mandare ai giocatori</h3><p class="small muted">Ogni giocatore apre il link una volta. Su iPhone l’app e la pagina del diario installate tengono i dati separati: se le usa entrambe, mandagli tutti e due i link.</p><div class="row"><button class="btn grow" data-a="dclink" data-i="">Link per l’app</button><button class="btn grow" data-a="dclink" data-i="diario.html">Link per il diario</button></div><p class="small muted">Tienili riservati: chi ha il link può scrivere nel canale. Se gira dove non deve, elimina il webhook su Discord e creane uno nuovo.</p>`:''}</div>`}
 function playersUrl(){const [o,r]=ghRepo().split('/');return 'https://'+o.toLowerCase()+'.github.io/'+r+'/diario.html'}
 function b64u(s){const b=new TextEncoder().encode(s);let bin='';for(let i=0;i<b.length;i+=0x8000)bin+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(bin)}
 function ghErr(st){return st===401?'chiave non valida o scaduta':st===403||st===404?'la chiave non ha accesso al repository '+ghRepo():'errore di GitHub ('+st+')'}
@@ -1029,7 +1058,7 @@ function sPnote(){const n=pnGet();pnPrep();return `<div class="card"><div class=
   ${selectH('pnc','pnc',n.c,DCAT,'Categoria')}
   <div class="field"><label for="pnb">Testo</label><textarea id="pnb" class="tall" data-i="pn:b" maxlength="4000" placeholder="Cosa è successo, cosa ha visto o pensato il tuo personaggio...">${esc(n.b)}</textarea></div>
   <p class="small muted">Puoi usare **grassetto** e righe che iniziano con - per gli elenchi. La bozza resta salvata su questo dispositivo.</p></div>
-  <button class="btn pri" data-a="pnsend">Invia al master</button><p class="small muted">Si apre la condivisione: manda il messaggio al master in chat. Solo lui la vede finché non la approva.</p>`}
+  <button class="btn pri" data-a="pnsend">${dcOn()&&!isMaster()?'Invia al master su Discord':'Invia al master'}</button><p class="small muted">${dcOn()&&!isMaster()?'Arriva da sola nel canale privato del master.':'Si apre la condivisione: manda il messaggio al master in chat.'} Solo lui la vede finché non la approva.</p>`}
 function propH(){const L=S.prop||[];return `<div class="card"><div class="row"><h3 class="grow">Proposte dei giocatori${L.length?' ('+L.length+')':''}</h3><button class="btn sm" data-a="open" data-k="imp">Incolla una nota</button></div>
   ${L.length?`<div class="list">${L.map(x=>`<button class="item ent" data-a="open" data-k="prop" data-i="${esc(x.id)}"><span class="grow"><span class="t">${esc(x.t||'Senza titolo')}</span><br><span class="small muted">${dcat(x.c)} · di ${esc(x.a||'un giocatore')} · ${fmtWhen(x.rx||x.at)}</span><span class="snip">${esc((x.b||'').replace(/\*\*/g,'').replace(/\s+/g,' ').slice(0,90))}</span></span><span class="vis">Da approvare</span></button>`).join('')}</div>`:'<p class="small muted">I giocatori ti mandano le note dal loro diario con un link: aprilo qui o incollalo con “Incolla una nota”. Le vedi solo tu finché non le approvi.</p>'}</div>`}
 function sProp(x){return `<div class="card"><div class="row small"><span class="vis on">${dcat(x.c)}</span><span class="muted">di <b>${esc(x.a||'un giocatore')}</b> · ricevuta ${fmtWhen(x.rx||x.at)}</span></div><h3 style="text-transform:none;letter-spacing:0;font-size:17px;color:var(--ink);margin:6px 0">${esc(x.t||'Senza titolo')}</h3><div class="md">${md(x.b||'')}</div></div>
@@ -1692,7 +1721,7 @@ const VIEW={on:false,code:null,g:null,pc:null,sub:null,st:null,ok:false,fb:null,
     requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll('#tav .hpb i[data-p]').forEach(i=>{const v=+i.dataset.p;i.style.width=100*v+'%';i.style.background=v>.5?'#3fbf6a':v>.2?'#f0b429':'#e5484d'})))}};
 
 /* ---------- schede e render ---------- */
-const APPV='1.27',APPD='26 novembre 2026';
+const APPV='1.28',APPD='26 novembre 2026';
 function sBackup(){return sBackup0()+`<div class="card"><h3>Versione</h3><p>Master Pokérole <b>v${APPV}</b> · pubblicata il ${APPD}</p><p class="small muted">Quando esce una versione nuova l’app la scarica da sola e lo segnala con un avviso: basta riaprirla.</p></div>`}
 function sBackup0(){return `<div class="card"><h3>Danno minimo</h3><div class="seg"><button data-a="omin" data-i="1" aria-pressed="${S.opt.min1!==false}">Sempre almeno 1</button><button data-a="omin" data-i="0" aria-pressed="${S.opt.min1===false}">Le resistenze possono azzerarlo</button></div><p class="small muted">Vale per l’assistente di battaglia. Le immunità danno sempre 0.</p></div>
 <div class="card"><h3>Difese</h3><div class="seg"><button data-a="odef" data-i="2" aria-pressed="${S.opt.def===2}">Sp. Def = Insight</button><button data-a="odef" data-i="1" aria-pressed="${S.opt.def===1}">Sp. Def = Vitality</button></div><p class="small muted">Il manuale chiede di scegliere un metodo per tutta la campagna (p. 27).</p></div>
@@ -1700,6 +1729,7 @@ function sBackup0(){return `<div class="card"><h3>Danno minimo</h3><div class="s
 <div class="field"><label for="ghr">Repository</label><input id="ghr" type="text" data-i="ghs:repo" value="${esc(ghCfg().repo||'')}" placeholder="${esc(ghRepo())}" autocapitalize="off" autocomplete="off"></div>
 <div class="field"><label for="ght">Chiave GitHub</label><input id="ght" type="password" data-i="ghs:tok" value="${esc(ghCfg().tok||'')}" placeholder="github_pat_..." autocapitalize="off" autocomplete="off"></div>
 <button class="btn" data-a="ghtest">Prova la chiave</button><p class="small"><b>${isMaster()?'Modalità master attiva':'Modalità giocatore'}</b>: ${isMaster()?'vedi allenatori speciali e scrivi il diario.':'allenatori speciali nascosti, il diario è in sola lettura.'}</p><p class="small muted">Pagina dei giocatori: ${esc(playersUrl())}</p></div>
+${sDiscord()}
 <div class="card"><h3>Backup di allenatori e Pokémon</h3><p class="small muted">I dati restano su questo dispositivo. Copia il testo qui sotto e conservalo per avere una copia di sicurezza.</p><textarea id="bk" readonly style="min-height:120px">${esc(JSON.stringify({trainers:S.trainers,saved:S.saved,opt:S.opt,battle:S.battle,diary:S.diary,pub:S.pub}))}</textarea><button class="btn" data-a="bcopy">Copia backup</button>
 <div class="row" style="margin-top:8px"><button class="btn pri grow" data-a="bdl">Scarica file di backup</button></div><p class="small muted">Il file include anche le immagini del diario. I suoni e le musiche importati restano da reimportare.${S.lastBk?' Ultimo backup: '+new Date(S.lastBk).toLocaleString('it-IT',{dateStyle:'short',timeStyle:'short'})+'.':''}</p></div>
 <div class="card"><h3>Ripristina</h3><textarea id="bi" placeholder="Incolla qui un backup"></textarea><button class="btn" data-a="bimp">Ripristina dal testo incollato</button><div class="field" style="margin-top:8px"><label for="bf">Oppure scegli un file di backup</label><input id="bf" type="file" accept=".json,application/json"></div><button class="btn" data-a="bfile">Ripristina dal file</button><p class="small muted">Sostituisce allenatori, Pokémon salvati e diario.</p></div>`}
@@ -1892,13 +1922,11 @@ const ACT={
   mbuy(d){const m=ui.mart,t=S.trainers.find(x=>x.id===m.to),a=IT[+d.i],q=m.q[d.i]||1,cost=a.pr*q;if((+t.cash||0)<cost){toast('Denaro insufficiente');return}t.cash=(+t.cash||0)-cost;invAdd(t,a.n,q);m.q[d.i]=1;save();toast(q+'× '+a.n+' nello zaino di '+(t.name||''));render(true)},
   async tshare(){const t=curTrainer();if(!t)return;try{const c=SHC[t.id],code=c&&c.code&&c.sig===JSON.stringify(shareObj(t))?c.code:await packTrainer(t),url=appUrl()+'#imp='+code,nm=t.name||'allenatore';
     const text='Scheda di '+nm+' per Master Pokérole. Apri il link, oppure copia questo messaggio e incollalo nell’app in Allenatori → Giocatori → Importa.';
-    if(navigator.share){try{await navigator.share({title:'Scheda di '+nm,text,url});return}catch(e){if(e&&e.name==='AbortError')return}}
-    copy(text+'\n'+url,'Link copiato: incollalo in chat')}catch(e){toast('Non riesco a preparare la scheda: '+(e&&e.message||'errore sconosciuto'))}},
+    await shareOut({title:'Scheda di '+nm,text,url,head:'🧑 **Scheda allenatore: '+dcE(nm)+'**'+(t.player?' · di '+dcE(t.player):''),prev:RK[t.rk]+(t.team.length?' · '+t.team.map(P=>P.nick||MON[P.m].n).join(', '):'')})}catch(e){toast('Non riesco a preparare la scheda: '+(e&&e.message||'errore sconosciuto'))}},
   async ishare(){const c0=curInst();if(!c0||!c0.P)return;const P=c0.P,from=c0.t&&c0.t.name||'',nm=P.nick||MON[P.m].n;
     try{const c=SHC['m:'+P.id],code=c&&c.code&&c.sig===JSON.stringify(P)+'|'+from?c.code:await packMon(P,from),url=appUrl()+'#imp='+code;
       const text=nm+(P.nick?' ('+MON[P.m].n+')':'')+(from?' di '+from:'')+' per Master Pokérole. Apri il link, oppure copia questo messaggio e incollalo nell’app in Allenatori → Giocatori → Importa.';
-      if(navigator.share){try{await navigator.share({title:nm,text,url});return}catch(e){if(e&&e.name==='AbortError')return}}
-      copy(text+'\n'+url,'Link copiato: incollalo in chat')}catch(e){toast('Non riesco a preparare il Pokémon: '+(e&&e.message||'errore sconosciuto'))}},
+      await shareOut({title:nm,text,url,head:'🔴 **Pokémon: '+dcE(nm)+'**'+(P.nick?' ('+dcE(MON[P.m].n)+')':'')+(from?' · di '+dcE(from):''),prev:RK[P.rk]+' · '+MON[P.m].ty.map(x=>TYIT[x]).join('/')+(P.ab?' · '+P.ab:'')})}catch(e){toast('Non riesco a preparare il Pokémon: '+(e&&e.message||'errore sconosciuto'))}},
   noop(){},
   async impclip(){try{ui.impt=await navigator.clipboard.readText();ui.impd=null;await ACT.impread()}catch(e){toast('Non posso leggere gli appunti: incolla a mano nel riquadro')}},
   async impread(d){const el=$('#impt');if(d&&el)ui.impt=el.value;try{ui.impd=await unpackTrainer(ui.impt);render(true)}catch(e){ui.impd=null;toast('Codice non valido: '+e.message);render(true)}},
@@ -1924,10 +1952,13 @@ const ACT={
   prej(){if(ui.arm!=='prej'){ui.arm='prej';render(true);return}ui.arm=null;const top=ui.stack.pop();S.prop=(S.prop||[]).filter(y=>y.id!==top.i);save();render();toast('Proposta scartata')},
   async pnsend(){const n=pnGet();if(!n.a.trim()){toast('Scrivi il tuo nome');return}if(!n.t.trim()&&!n.b.trim()){toast('Scrivi almeno un titolo o un testo');return}
     try{const o=pnObj(),code=pnCode||await packObj(o),url=appUrl()+'#imp='+code,text='Nota per il diario da '+n.a.trim()+': «'+(n.t.trim()||'senza titolo')+'». Master: apri il link, oppure incolla questo messaggio in Diario → Incolla una nota.';
-      let sent=false;if(navigator.share){try{await navigator.share({title:'Nota per il diario',text,url});sent=true}catch(e){if(e&&e.name==='AbortError')return}}
-      if(!sent)copy(text+'\n'+url,'Copiato: incollalo nella chat con il master');
+      const r=await shareOut({title:'Nota per il diario',text,url,copied:'Copiato: incollalo nella chat con il master',head:'📝 **Nota per il diario** da **'+dcE(n.a.trim())+'**: '+dcE(n.t.trim()||'senza titolo')+' ('+dcat(n.c)+')',prev:n.b.trim()});if(r==='abort'||r==='fail')return;
       const L=pnSent().filter(x=>x.id!==o.n.id);L.unshift({id:o.n.id,t:o.n.t,at:Date.now()});try{localStorage.setItem(PNS,JSON.stringify(L.slice(0,30)))}catch(e){}
       ui.pn={a:n.a,t:'',c:n.c,b:''};pnSig='';pnSave();ui.stack.pop();render()}catch(e){toast('Non riesco a preparare la nota: '+(e&&e.message||'errore'))}},
+  dcsave(){const v=String(ui.dcw!=null?ui.dcw:($('#dcw')||{}).value||'').trim();if(!v){toast('Incolla l’URL del webhook');return}if(!dcOk(v)){toast('Non sembra un webhook di Discord: deve iniziare con https://discord.com/api/webhooks/');return}try{localStorage.setItem(DCK,v)}catch(e){}ui.dcw=null;toast('Webhook salvato');render(true)},
+  async dctest(){toast('Invio un messaggio di prova...');const ok=await dcPost({username:'Master Pokérole',content:'✅ Collegamento con Master Pokérole riuscito: qui arriveranno le condivisioni dei giocatori.',allowed_mentions:{parse:[]}});toast(ok?'Fatto: controlla il canale su Discord':'Discord non risponde: controlla l’URL o la connessione')},
+  dcdel(){try{localStorage.removeItem(DCK)}catch(e){}ui.dcw=null;toast('Invio a Discord disattivato');render(true)},
+  dclink(d){copy(dcLink(d.i),'Link copiato: mandalo ai giocatori')},
   mwstart(d){if(!ui.mw||(d&&d.i))ui.mw=mwNew(d&&d.i);ui.stack.push({k:'mpw'});render()},
   mwrestart(){ui.mw=mwNew(ui.mw&&ui.mw.to);render(true)},
   mwgo(d){const m=ui.mw;if(m.mi==null)return;m.s=clamp(m.s+(+d.d),0,4);render(true);pwTop()},
@@ -2054,6 +2085,7 @@ document.addEventListener('input',e=>{const t=e.target,k=t.dataset.i;if(!k)retur
   else if(k.startsWith('if:')){const c=curInst();if(c&&c.P){const f=k.slice(3);c.P[f]=f==='nick'?t.value.trimStart():t.value;saveSoon();if(f==='nick'){const h=document.querySelector('.sheet header h2');if(h)h.textContent=c.P.nick||MON[c.P.m].n}}}
   else if(k==='cnick'){ui.cat.nick=t.value}
   else if(k.startsWith('pw:')&&ui.pw){const f=k.slice(3);if(f.startsWith('q:'))ui.pw.q[f.slice(2)]=t.value;else ui.pw[f]=t.value;if(f==='name'){const ph=document.querySelector('.pwimg .ph');if(ph&&!ui.pw.img)ph.textContent=(t.value||'?')[0]}}
+  else if(k==='dcw'){ui.dcw=t.value}
   else if(k.startsWith('pn:')){pnGet()[k.slice(3)]=t.value;pnSave()}
   else if(k==='mwq'&&ui.mw){ui.mw.mq=t.value;$('#mwsug').innerHTML=mwSug()}
   else if(k==='mwnick'&&ui.mw){ui.mw.nick=t.value}
@@ -2117,9 +2149,10 @@ function start(){
   if(S.tav&&S.tav.code)TAV.host();
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
   setTimeout(diaSched,1500);setInterval(diaSched,30000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')diaSched()});
+  if(dcHash())render(true);
   if(/^#imp=/.test(location.hash)){ui.impt=location.hash;try{history.replaceState(null,'',location.pathname)}catch(e){}ui.tab='allenatori';ui.tv='pg';ui.stack=[{k:'imp'}];render();ACT.impread()}
 }
-window.addEventListener('hashchange',()=>{if(/^#imp=/.test(location.hash)){ui.impt=location.hash;try{history.replaceState(null,'',location.pathname)}catch(e){}ui.tab='allenatori';ui.tv='pg';ui.stack=[{k:'imp'}];render();ACT.impread();return}const h=(location.hash||'').slice(1);if(['genera','allenatori','lotta','diario','database','regole'].includes(h)&&h!==ui.tab){ui.tab=h;render()}});
+window.addEventListener('hashchange',()=>{if(dcHash()){render(true);return}if(/^#imp=/.test(location.hash)){ui.impt=location.hash;try{history.replaceState(null,'',location.pathname)}catch(e){}ui.tab='allenatori';ui.tv='pg';ui.stack=[{k:'imp'}];render();ACT.impread();return}const h=(location.hash||'').slice(1);if(['genera','allenatori','lotta','diario','database','regole'].includes(h)&&h!==ui.tab){ui.tab=h;render()}});
 start();
 </script>
 <script>
