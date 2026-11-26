@@ -119,6 +119,32 @@ const puts=[];
   ok(dj().length>n0&&dj().pop().voci.some(v=>v.t==='Prova')&&await pg.evaluate(()=>S.diary[0].pub&&!S.diary[0].sched),'all\'orario la voce parte da sola');
   ok(!(await pg.innerHTML('#main')).includes('Pubblica per i giocatori ('),'niente numero nel pulsante di pubblicazione');
   await pg.evaluate(()=>{localStorage.removeItem('master-pokerole-gh');S.diary=[];ui.stack=[];render()});
+  // note dei giocatori: invio dalla pagina giocatori, ricezione e approvazione del master
+  const pg2=await ctx.newPage();let shared=null;
+  await pg2.addInitScript(()=>{navigator.share=async o=>{window.__shared=o}});
+  await pg2.goto(url+'diario.html');await pg2.waitForSelector('#nota [data-n=open]');await pg2.click('#nota [data-n=open]');
+  await pg2.fill('#na','Marco');await pg2.fill('#nt','La notte al faro');await pg2.fill('#nb','Abbiamo visto **Lugia**.');await pg2.click('#nota [data-n=send]');
+  shared=await pg2.evaluate(()=>window.__shared);
+  ok(shared&&/#imp=/.test(shared.url)&&/Marco/.test(shared.text),'diario.html: la nota parte come link per il master');
+  ok(await pg2.evaluate(()=>JSON.parse(localStorage.getItem('diario-note-inviate'))[0].t==='La notte al faro'),'diario.html: la nota compare tra quelle inviate');
+  await pg2.close();
+  const np=await pg.evaluate(async u=>{localStorage.setItem('master-pokerole-gh',JSON.stringify({tok:'x',ok:true,repo:'a/b'}));S.diary=[];S.prop=[];
+    ui.impt=u;await ACT.impread();const prev=document.querySelector('#sheet')?1:0;ui.stack=[{k:'imp'}];render();const btn=!!document.querySelector('[data-a=impdo][data-i=nota]');ACT.impdo({i:'nota'});
+    const inProp=S.prop.length===1&&S.prop[0].a==='Marco';ui.stack=[];ui.tab='diario';ui.dmode='edit';render();const sec=document.getElementById('main').innerHTML.includes('Proposte dei giocatori');
+    return {btn,inProp,sec,id:S.prop[0]&&S.prop[0].id}},shared.url);
+  ok(np.btn&&np.inProp,'il master riceve la nota tra le proposte');
+  ok(np.sec,'il diario del master mostra la sezione Proposte dei giocatori');
+  await pg.evaluate(id=>{ui.stack=[{k:'prop',i:id}];render()},np.id);await pg.click('#sheet [data-a=papp][data-i=pub]');await pg.waitForTimeout(400);
+  const last=dj().pop();
+  ok(last&&last.voci.some(v=>v.t==='La notte al faro'&&v.a==='Marco'),'approvata e pubblicata con l\'autore');
+  ok(await pg.evaluate(()=>!S.prop.length&&S.diary[0].a==='Marco'),'la proposta diventa una voce del diario');
+  const shown=await pg.evaluate(()=>{ui.pubd={voci:[{id:'1',t:'X',c:'ses',b:'y',a:'Marco'}]};return dpList(ui.pubd.voci,1).includes('Scritta da <b>Marco</b>')});
+  ok(shown,'i giocatori vedono chi l\'ha scritta');
+  // invio anche dall'app in modalità giocatore
+  const appSend=await pg.evaluate(async()=>{localStorage.removeItem('master-pokerole-gh');ui.tab='diario';ui.stack=[];render();const card=document.getElementById('main').innerHTML.includes('Scrivi una nota');
+    ui.pn={a:'Giulia',t:'Diario di Giulia',c:'png',b:'testo'};const o=pnObj(),code=await packObj(o),back=await unpackTrainer('#imp='+code);return {card,ok:back.n.a==='Giulia'&&back.n.c==='png'}});
+  ok(appSend.card&&appSend.ok,'anche nell\'app i giocatori possono scrivere una nota');
+  await pg.evaluate(()=>{S.diary=[];S.prop=[];ui.stack=[];render()});
   // salvataggio ritardato mentre si scrive
   const sv=await pg.evaluate(async()=>{const t=S.trainers[0];ui.stack=[{k:'trainer',i:t.id}];render();const el=document.getElementById('tno');el.value='prova note';el.dispatchEvent(new Event('input',{bubbles:true}));
     const before=JSON.parse(localStorage.getItem(SKEY)).trainers[0].notes;await new Promise(r=>setTimeout(r,600));const after=JSON.parse(localStorage.getItem(SKEY)).trainers[0].notes;ui.stack=[];render();return {before,after}});

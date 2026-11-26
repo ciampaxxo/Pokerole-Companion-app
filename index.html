@@ -281,7 +281,7 @@ nav.tabs{padding-bottom:env(safe-area-inset-bottom)}
 <body>
 <div class="app">
   <header class="top">
-    <span class="ball" aria-hidden="true"></span><div class="brand">Master <b>Pokérole</b><small>Compagno del master · regole 3.0 · <span class="appv">v1.26</span></small></div>
+    <span class="ball" aria-hidden="true"></span><div class="brand">Master <b>Pokérole</b><small>Compagno del master · regole 3.0 · <span class="appv">v1.27</span></small></div>
     <button class="btn sm ghost" data-a="open" data-k="backup" aria-label="Impostazioni e backup">Opzioni</button>
   </header>
   <main id="main"></main>
@@ -635,11 +635,15 @@ async function unpackTrainer(text){const m=String(text||'').match(/imp=([A-Za-z0
   const code=m[1],cut=new Error('il codice è incompleto: forse il messaggio è stato tagliato. Fatti rimandare il link intero');
   let bytes;try{bytes=unb64url(code.slice(1))}catch(e){throw cut}let raw=bytes;
   if(code[0]==='z'){if(!window.DecompressionStream)throw new Error('browser troppo vecchio per questo codice');try{raw=new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer())}catch(e){throw cut}}
-  let o;try{o=JSON.parse(new TextDecoder().decode(raw))}catch(e){throw cut}if(o&&o.p){if(typeof o.p.m!=='number'||!MON[o.p.m])throw new Error('Pokémon non riconosciuto');return o}if(!o||!o.t||!Array.isArray(o.t.team))throw new Error('codice non valido');return o}
+  let o;try{o=JSON.parse(new TextDecoder().decode(raw))}catch(e){throw cut}if(o&&o.n){if(typeof o.n.b!=='string'||!o.n.id)throw new Error('nota non valida');return o}if(o&&o.p){if(typeof o.p.m!=='number'||!MON[o.p.m])throw new Error('Pokémon non riconosciuto');return o}if(!o||!o.t||!Array.isArray(o.t.team))throw new Error('codice non valido');return o}
 function sImp(){const d=ui.impd;
-  let h=`<div class="card"><p class="small">Incolla il messaggio o il link ricevuto: una scheda allenatore o un singolo Pokémon. Funziona in entrambe le direzioni: i giocatori mandano a te la loro scheda, tu puoi rimandarla aggiornata dopo una sessione.</p>
+  let h=`<div class="card"><p class="small">Incolla il messaggio o il link ricevuto: una scheda allenatore, un singolo Pokémon o una nota per il diario. Funziona in entrambe le direzioni: i giocatori mandano a te la loro scheda, tu puoi rimandarla aggiornata dopo una sessione.</p>
   <div class="field"><label for="impt">Messaggio o codice</label><textarea id="impt" data-i="impt" placeholder="Incolla qui...">${esc(ui.impt||'')}</textarea></div>
   <div class="row">${navigator.clipboard&&navigator.clipboard.readText?'<button class="btn grow" data-a="impclip">Incolla dagli appunti</button>':''}<button class="btn pri grow" data-a="impread">Leggi</button></div></div>`;
+  if(d&&d.n){const n=d.n,dup=(S.prop||[]).some(x=>x.id===n.id)||S.diary.some(x=>x.id===n.id);
+    h+=`<div class="card"><div class="row small"><span class="vis on">${dcat(n.c)}</span><span class="muted">Nota di ${esc(n.a||'un giocatore')}</span></div><h3 style="text-transform:none;letter-spacing:0;font-size:17px;color:var(--ink);margin:6px 0">${esc(n.t||'Senza titolo')}</h3><div class="md">${md(n.b||'')}</div></div>
+    ${!isMaster()?'<div class="card"><p class="note">È una nota per il master: la può aggiungere solo chi ha la chiave del master.</p></div>':dup?'<div class="card"><p class="small">Questa nota è già arrivata.</p><button class="btn" data-a="impdo" data-i="nota">Aggiornala con questa versione</button></div>':'<button class="btn pri" data-a="impdo" data-i="nota">Aggiungi alle proposte dei giocatori</button>'}`;
+    return h}
   if(d&&d.p){const P=d.p,M=MON[P.m],ex=findMonAny(P.id),tgt=ui.impto||(ex?ex.o:(pgs()[0]||{}).id||'saved');
     h+=`<div class="card"><div class="list">${instItem(P,'saved').replace('data-a="open"','data-a="noop"')}</div>
     <p class="small muted">${d.from?'Da '+esc(d.from)+' · ':''}Pokémon del ${new Date(d.at).toLocaleString('it-IT',{dateStyle:'short',timeStyle:'short'})}.${ex?' Hai già questo Pokémon'+(ex.t?' (in '+esc(ex.t.name||'allenatore')+')':' (tra i salvati)')+': aggiornandolo, la tua versione viene sostituita.':''}</p>
@@ -958,11 +962,11 @@ const IDB={p:null,open(){return this.p||(this.p=new Promise((res,rej)=>{const r=
   async all(){const d=await this.open();return new Promise((res,rej)=>{const st=d.transaction('img').objectStore('img'),o={},q=st.openCursor();q.onsuccess=()=>{const c=q.result;if(c){o[c.key]=c.value;c.continue()}else res(o)};q.onerror=()=>rej(q.error)})},
   async del(k){const d=await this.open();return new Promise(res=>{const t=d.transaction('img','readwrite');t.objectStore('img').delete(k);t.oncomplete=()=>res();t.onerror=()=>res()})}};
 const IMU={},IMW={};
-function bkObj(){return {trainers:S.trainers,saved:S.saved,opt:S.opt,battle:S.battle,diary:S.diary,pub:S.pub}}
+function bkObj(){return {trainers:S.trainers,saved:S.saved,opt:S.opt,battle:S.battle,diary:S.diary,pub:S.pub,prop:S.prop||[]}}
 function blobUrl(b){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error);r.readAsDataURL(b)})}
 async function restore(o){if(!o||!Array.isArray(o.trainers)||!Array.isArray(o.saved))throw 0;
   if(o.imgs)for(const k of Object.keys(o.imgs)){const b=await (await fetch(o.imgs[k])).blob();await IDB.put(k,b);delete IMU[k];delete IMW[k]}
-  S.trainers=o.trainers;S.saved=o.saved;S.opt=o.opt||S.opt;S.battle=o.battle||null;if(Array.isArray(o.diary))S.diary=o.diary;if(o.pub)S.pub=o.pub;UNDO.length=0;save();toast('Backup ripristinato');ui.stack=[];render()}
+  S.trainers=o.trainers;S.saved=o.saved;S.opt=o.opt||S.opt;S.battle=o.battle||null;if(Array.isArray(o.diary))S.diary=o.diary;if(o.pub)S.pub=o.pub;if(Array.isArray(o.prop))S.prop=o.prop;UNDO.length=0;save();toast('Backup ripristinato');ui.stack=[];render()}
 const rawUrl=f=>'https://raw.githubusercontent.com/'+ghRepo()+'/main/'+f;
 function imgSrc(im){if(IMU[im.id])return IMU[im.id];if(!IMW[im.id]){IMW[im.id]=1;IDB.get(im.id).then(b=>{if(b){IMU[im.id]=URL.createObjectURL(b);render(true)}}).catch(()=>{})}return im.f?rawUrl(im.f):''}
 function galH(imgs,edit){if(!imgs||!imgs.length)return '';return `<div class="gal${imgs.length===1&&!edit?' one':''}">${imgs.map((im,k)=>{const u=imgSrc(im);return `<figure>${u?`<img src="${esc(u)}" alt="${esc(im.d||'')}" loading="lazy" data-zoom="1">`:'<div class="small muted" style="aspect-ratio:4/3;display:grid;place-items:center;background:var(--sunk);border-radius:10px">Immagine</div>'}${edit?`<button class="rm" data-a="dimgdel" data-i="${k}" aria-label="Togli immagine">×</button><input type="text" data-i="dimgcap:${k}" value="${esc(im.d||'')}" placeholder="Didascalia">`:im.d?`<figcaption>${esc(im.d)}</figcaption>`:''}</figure>`}).join('')}</div>`}
@@ -976,7 +980,7 @@ async function ghPutB64(path,b64,msg){const c=ghCfg();const url='https://api.git
 document.addEventListener('click',e=>{const z=e.target.closest('[data-zoom]');if(z){const o=document.createElement('div');o.className='zoom';o.innerHTML=`<img src="${esc(z.src)}" alt="">`;o.addEventListener('click',()=>o.remove());document.body.appendChild(o);return}});
 function dList(){const q=key(ui.di.q),c=ui.di.c;const L=S.diary.filter(e=>(!c||e.c===c)&&(!q||key(e.t+' '+e.b+' '+e.w).includes(q)));
   if(!L.length)return '<p class="small muted">Nessuna voce.</p>';
-  return `<div class="list">${L.map(e=>`<button class="item ent" data-a="open" data-k="dent" data-i="${e.id}"><span class="grow"><span class="t">${esc(e.t||'Senza titolo')}</span><br><span class="small muted">${dcat(e.c)}${e.w?' · '+esc(e.w):''}</span><span class="snip">${(e.img||[]).length?'▣ '+e.img.length+' · ':''}${esc((e.b||'').replace(/\*\*/g,'').replace(/\s+/g,' ').slice(0,90))}</span></span><span class="vis${e.pub?' on':''}">${e.pub?'Giocatori':e.sched?'Programmata':'Master'}</span></button>`).join('')}</div>`}
+  return `<div class="list">${L.map(e=>`<button class="item ent" data-a="open" data-k="dent" data-i="${e.id}"><span class="grow"><span class="t">${esc(e.t||'Senza titolo')}</span><br><span class="small muted">${dcat(e.c)}${e.w?' · '+esc(e.w):''}${e.a?' · di '+esc(e.a):''}</span><span class="snip">${(e.img||[]).length?'▣ '+e.img.length+' · ':''}${esc((e.b||'').replace(/\*\*/g,'').replace(/\s+/g,' ').slice(0,90))}</span></span><span class="vis${e.pub?' on':''}">${e.pub?'Giocatori':e.sched?'Programmata':'Master'}</span></button>`).join('')}</div>`}
 const PCK='diario-pokerole-cache';
 async function loadPub(){if(ui.pubLoading)return;ui.pubLoading=true;let o=null;
   try{const c=ghCfg(),h={Accept:'application/vnd.github.raw+json'};if(c.tok&&c.ok)h.Authorization='Bearer '+c.tok;const r=await fetch('https://api.github.com/repos/'+ghRepo()+'/contents/diario.json',{headers:h,cache:'no-store'});if(r.ok)o=await r.json()}catch(e){}
@@ -992,14 +996,15 @@ function vDiarioPub(player){
   ${used.length>1?`<div class="seg"><button data-a="dpfil" data-i="" aria-pressed="${!f.c}">Tutto</button>${DCAT.filter(c=>used.includes(c[0])).map(c=>`<button data-a="dpfil" data-i="${c[0]}" aria-pressed="${f.c===c[0]}">${c[1]}</button>`).join('')}</div>`:''}
   ${V.length>3?`<div class="field"><label for="dpq">Cerca</label><input id="dpq" type="search" data-i="dpq" value="${esc(f.q)}" placeholder="Nome, luogo, parola..."></div>`:''}
   <div id="dpl">${dpList(L,V.length)}</div>
+  ${player?pnoteCard():''}
   ${player?'<p class="small muted">Sei il master? Inserisci la tua chiave in <button class="btn sm" data-a="open" data-k="backup">Opzioni</button> per scrivere il diario.</p>':''}`}
-function dpList(L,n){return L.length?L.map(v=>`<div class="card"><div class="row small"><span class="vis on">${dcat(v.c)}</span>${v.w?`<span class="muted">${esc(v.w)}</span>`:''}</div><h3 style="text-transform:none;letter-spacing:0;font-size:17px;color:var(--ink);margin:6px 0">${esc(v.t||'')}</h3><div class="md">${md(v.b||'')}</div>${galH(v.img)}</div>`).join('')
+function dpList(L,n){return L.length?L.map(v=>`<div class="card"><div class="row small"><span class="vis on">${dcat(v.c)}</span>${v.w?`<span class="muted">${esc(v.w)}</span>`:''}${v.a?`<span class="muted">Scritta da <b>${esc(v.a)}</b></span>`:''}</div><h3 style="text-transform:none;letter-spacing:0;font-size:17px;color:var(--ink);margin:6px 0">${esc(v.t||'')}</h3><div class="md">${md(v.b||'')}</div>${galH(v.img)}</div>`).join('')
   :`<div class="card"><p class="muted">${n?'Nessuna voce corrisponde.':ui.pubLoading?'Caricamento del diario...':'Non è ancora stato pubblicato nulla.'}</p></div>`}
 function vDiario(){
   if(!isMaster())return vDiarioPub(true);
   const seg=`<div class="seg"><button data-a="dmode" data-i="edit" aria-pressed="${ui.dmode!=='view'}">Scrivi</button><button data-a="dmode" data-i="view" aria-pressed="${ui.dmode==='view'}">Come lo vedono i giocatori</button></div>`;
   if(ui.dmode==='view')return seg+vDiarioPub(false);
-  return seg+vDiarioEdit()}
+  return seg+propH()+vDiarioEdit()}
 function vDiarioEdit(){const n=S.diary.filter(e=>e.pub).length,ch=S.pub&&S.diary.some(e=>e.pub&&e.u>S.pub.at)||(S.pub&&S.pub.n!==n);
   return `<div class="card"><div class="row"><h2 class="grow">Diario della campagna</h2><button class="btn sm pri" data-a="dnew">Nuova voce</button></div>
   <p class="small muted">Ogni voce si pubblica dalla sua pagina, subito o a un orario programmato. Quelle non pubblicate restano solo sul tuo dispositivo.</p>
@@ -1008,11 +1013,33 @@ function vDiarioEdit(){const n=S.diary.filter(e=>e.pub).length,ch=S.pub&&S.diary
   <div class="seg"><button data-a="dfil" data-i="" aria-pressed="${!ui.di.c}">Tutte</button>${DCAT.map(c=>`<button data-a="dfil" data-i="${c[0]}" aria-pressed="${ui.di.c===c[0]}">${c[1]}</button>`).join('')}</div>
   <div class="field"><label for="diq">Cerca</label><input id="diq" type="search" data-i="diq" value="${esc(ui.di.q)}" placeholder="Nome, luogo, parola..."></div>
   <div id="dil">${dList()}</div><button class="btn sm" data-a="dimp">Recupera le voci già pubblicate</button>`}
+/* ---------- note dei giocatori per il master ---------- */
+const PNK='diario-nota-bozza',PNS='diario-note-inviate';
+function pnGet(){if(!ui.pn){try{ui.pn=JSON.parse(localStorage.getItem(PNK))}catch(e){}ui.pn=Object.assign({a:'',t:'',c:'ses',b:''},ui.pn||{})}return ui.pn}
+function pnSave(){try{localStorage.setItem(PNK,JSON.stringify(ui.pn))}catch(e){}pnPrep()}
+function pnSent(){try{return JSON.parse(localStorage.getItem(PNS))||[]}catch(e){return []}}
+let pnCode=null,pnSig='';
+function pnObj(){const n=pnGet();if(!n.id)n.id=uid();return {v:1,n:{id:n.id,t:n.t.trim(),c:n.c,b:n.b.trim(),a:n.a.trim(),at:Date.now()}}}
+function pnPrep(){const o=pnObj(),sig=JSON.stringify([o.n.id,o.n.t,o.n.c,o.n.b,o.n.a]);if(sig===pnSig)return;pnSig=sig;pnCode=null;packObj(o).then(c=>{if(pnSig===sig)pnCode=c}).catch(()=>{})}
+function pnoteCard(){const S2=pnSent(),pubIds=new Set(((ui.pubd&&ui.pubd.voci)||[]).map(v=>v.id));
+  return `<div class="card"><div class="row"><h3 class="grow">Le tue note</h3><button class="btn sm pri" data-a="open" data-k="pnote">Scrivi una nota</button></div><p class="small muted">Racconta una scena, un luogo o un personaggio: la mandi al master, che la legge e decide se aggiungerla al diario con il tuo nome.</p>
+  ${S2.length?`<div class="list">${S2.slice(0,8).map(x=>`<div class="item"><span class="grow"><span class="t">${esc(x.t||'Senza titolo')}</span><br><span class="small muted">inviata ${fmtWhen(x.at)}</span></span><span class="vis${pubIds.has(x.id)?' on':''}">${pubIds.has(x.id)?'Nel diario':'Al master'}</span></div>`).join('')}</div>`:''}</div>`}
+function sPnote(){const n=pnGet();pnPrep();return `<div class="card"><div class="field"><label for="pna">Il tuo nome</label><input id="pna" type="text" data-i="pn:a" value="${esc(n.a)}" placeholder="Nome del giocatore o del personaggio" maxlength="40"></div>
+  <div class="field"><label for="pnt">Titolo</label><input id="pnt" type="text" data-i="pn:t" value="${esc(n.t)}" placeholder="Es. La notte al faro" maxlength="120"></div>
+  ${selectH('pnc','pnc',n.c,DCAT,'Categoria')}
+  <div class="field"><label for="pnb">Testo</label><textarea id="pnb" class="tall" data-i="pn:b" maxlength="4000" placeholder="Cosa è successo, cosa ha visto o pensato il tuo personaggio...">${esc(n.b)}</textarea></div>
+  <p class="small muted">Puoi usare **grassetto** e righe che iniziano con - per gli elenchi. La bozza resta salvata su questo dispositivo.</p></div>
+  <button class="btn pri" data-a="pnsend">Invia al master</button><p class="small muted">Si apre la condivisione: manda il messaggio al master in chat. Solo lui la vede finché non la approva.</p>`}
+function propH(){const L=S.prop||[];return `<div class="card"><div class="row"><h3 class="grow">Proposte dei giocatori${L.length?' ('+L.length+')':''}</h3><button class="btn sm" data-a="open" data-k="imp">Incolla una nota</button></div>
+  ${L.length?`<div class="list">${L.map(x=>`<button class="item ent" data-a="open" data-k="prop" data-i="${esc(x.id)}"><span class="grow"><span class="t">${esc(x.t||'Senza titolo')}</span><br><span class="small muted">${dcat(x.c)} · di ${esc(x.a||'un giocatore')} · ${fmtWhen(x.rx||x.at)}</span><span class="snip">${esc((x.b||'').replace(/\*\*/g,'').replace(/\s+/g,' ').slice(0,90))}</span></span><span class="vis">Da approvare</span></button>`).join('')}</div>`:'<p class="small muted">I giocatori ti mandano le note dal loro diario con un link: aprilo qui o incollalo con “Incolla una nota”. Le vedi solo tu finché non le approvi.</p>'}</div>`}
+function sProp(x){return `<div class="card"><div class="row small"><span class="vis on">${dcat(x.c)}</span><span class="muted">di <b>${esc(x.a||'un giocatore')}</b> · ricevuta ${fmtWhen(x.rx||x.at)}</span></div><h3 style="text-transform:none;letter-spacing:0;font-size:17px;color:var(--ink);margin:6px 0">${esc(x.t||'Senza titolo')}</h3><div class="md">${md(x.b||'')}</div></div>
+  <div class="card"><p class="small muted">Approvandola diventa una voce del diario con l’autore indicato. Puoi pubblicarla subito o prima sistemarla.</p>
+  <button class="btn pri" data-a="papp" data-i="pub"${ui.busy?' disabled':''}>Approva e pubblica</button><div class="row" style="margin-top:8px"><button class="btn grow" data-a="papp" data-i="edit">Approva e modifica</button><button class="btn grow danger" data-a="prej">${ui.arm==='prej'?'Tocca ancora: scarta':'Scarta'}</button></div></div>`}
 let schedErr=0;
 async function publishDiary(){if(ui.busy)return false;if(!isMaster()&&!ghCfg().tok){toast('Pubblicazione non riuscita: manca la chiave GitHub (Opzioni → Chiave del master)');return false}ui.busy=true;render(true);let ok=false;
   try{const todo=[];S.diary.filter(e=>e.pub).forEach(e=>(e.img||[]).forEach(im=>{if(!im.f)todo.push(im)}));
     for(let k=0;k<todo.length;k++){const im=todo[k],b=await IDB.get(im.id);if(!b)continue;toast('Carico immagine '+(k+1)+' di '+todo.length+'...');const f='diario-img/'+im.id+'.jpg';await ghPutB64(f,await blob64(b),'Diario: immagine');im.f=f;save()}
-    const voci=S.diary.filter(e=>e.pub).map(e=>({id:e.id,t:e.t,c:e.c,w:e.w,b:e.b,u:e.u,img:(e.img||[]).filter(im=>im.f).map(im=>({id:im.id,f:im.f,d:im.d||'',w:im.w,h:im.h}))}));await ghPut('diario.json',JSON.stringify({aggiornato:new Date().toISOString(),voci},null,1),'Diario: '+voci.length+' voci');S.pub={at:Date.now(),n:voci.length};ui.pubd={aggiornato:new Date().toISOString(),voci};try{localStorage.setItem(PCK,JSON.stringify(ui.pubd))}catch(e){}save();toast('Pubblicato: i giocatori lo vedono subito');ok=true}
+    const voci=S.diary.filter(e=>e.pub).map(e=>({id:e.id,t:e.t,c:e.c,w:e.w,b:e.b,u:e.u,a:e.a||undefined,img:(e.img||[]).filter(im=>im.f).map(im=>({id:im.id,f:im.f,d:im.d||'',w:im.w,h:im.h}))}));await ghPut('diario.json',JSON.stringify({aggiornato:new Date().toISOString(),voci},null,1),'Diario: '+voci.length+' voci');S.pub={at:Date.now(),n:voci.length};ui.pubd={aggiornato:new Date().toISOString(),voci};try{localStorage.setItem(PCK,JSON.stringify(ui.pubd))}catch(e){}save();toast('Pubblicato: i giocatori lo vedono subito');ok=true}
   catch(e){toast('Pubblicazione non riuscita: '+e.message)}ui.busy=false;render(true);return ok}
 /* pubblicazioni programmate: partono quando l'app è aperta all'ora indicata o alla prima apertura dopo */
 async function diaSched(){if(ui.busy||!S||!Array.isArray(S.diary)||!isMaster())return;const due=S.diary.filter(e=>!e.pub&&e.sched&&e.sched<=Date.now());if(!due.length)return;
@@ -1032,6 +1059,7 @@ function dPubH(e){const tok=isMaster(),bz=ui.busy?' disabled':'',sch=!e.pub&&e.s
   return h+'</div>'}
 function sDent(e){return `<div class="card"><div class="field"><label for="det">Titolo</label><input id="det" type="text" data-i="de:t" value="${esc(e.t)}" placeholder="Es. Arrivo a Varese"></div>
   <div class="row">${selectH('dec','de:c',e.c,DCAT,'Categoria')}<div class="field"><label for="dew">Quando</label><input id="dew" type="text" data-i="de:w" value="${esc(e.w||'')}" placeholder="Es. Sessione 4"></div></div>
+  <div class="field"><label for="dea">Autore <span class="muted">(compare ai giocatori)</span></label><input id="dea" type="text" data-i="de:a" value="${esc(e.a||'')}" placeholder="Vuoto per le tue voci" maxlength="40"></div>
   <div class="field"><label for="deb">Testo</label><textarea id="deb" class="tall" data-i="de:b" placeholder="Cosa è successo, chi hanno incontrato, cosa sanno...">${esc(e.b||'')}</textarea></div>
   <h3>Immagini (${(e.img||[]).length})</h3>${galH(e.img,true)}
   <label class="btn filebtn"${ui.imbusy?' style="opacity:.6"':''}>${ui.imbusy?'Preparo le immagini...':'Aggiungi immagini'}<input type="file" accept="image/*" multiple data-c="deimg"></label>
@@ -1664,7 +1692,7 @@ const VIEW={on:false,code:null,g:null,pc:null,sub:null,st:null,ok:false,fb:null,
     requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll('#tav .hpb i[data-p]').forEach(i=>{const v=+i.dataset.p;i.style.width=100*v+'%';i.style.background=v>.5?'#3fbf6a':v>.2?'#f0b429':'#e5484d'})))}};
 
 /* ---------- schede e render ---------- */
-const APPV='1.26',APPD='27 novembre 2026';
+const APPV='1.27',APPD='26 novembre 2026';
 function sBackup(){return sBackup0()+`<div class="card"><h3>Versione</h3><p>Master Pokérole <b>v${APPV}</b> · pubblicata il ${APPD}</p><p class="small muted">Quando esce una versione nuova l’app la scarica da sola e lo segnala con un avviso: basta riaprirla.</p></div>`}
 function sBackup0(){return `<div class="card"><h3>Danno minimo</h3><div class="seg"><button data-a="omin" data-i="1" aria-pressed="${S.opt.min1!==false}">Sempre almeno 1</button><button data-a="omin" data-i="0" aria-pressed="${S.opt.min1===false}">Le resistenze possono azzerarlo</button></div><p class="small muted">Vale per l’assistente di battaglia. Le immunità danno sempre 0.</p></div>
 <div class="card"><h3>Difese</h3><div class="seg"><button data-a="odef" data-i="2" aria-pressed="${S.opt.def===2}">Sp. Def = Insight</button><button data-a="odef" data-i="1" aria-pressed="${S.opt.def===1}">Sp. Def = Vitality</button></div><p class="small muted">Il manuale chiede di scegliere un metodo per tutta la campagna (p. 27).</p></div>
@@ -1683,6 +1711,8 @@ function sheetH(keep){
   else if(top.k==='abil'){title=top.i;body=sAbil(top.i)}
   else if(top.k==='item'){title=(IT[+top.i]||{}).n||'Oggetto';body=sItem(top.i)}
   else if(top.k==='pgw'){title='Nuovo personaggio';body=ui.pw?sPgw():''}
+  else if(top.k==='prop'){const x=(S.prop||[]).find(y=>y.id===top.i);title='Proposta';body=x?sProp(x):'<p class="muted">Proposta già gestita.</p>'}
+  else if(top.k==='pnote'){title='Nota per il master';body=sPnote()}
   else if(top.k==='mpw'){title='Nuovo Pokémon';body=ui.mw?sMpw():''}
   else if(top.k==='trainer'){const t=S.trainers.find(x=>x.id===top.i);title=t?(t.name||'Nuovo allenatore'):'Allenatore';body=t?sTrainer(t):'<p class="muted">Allenatore non trovato.</p>'}
   else if(top.k==='inst'){const f=findInst(top.i,top.o);title=f.P?(f.P.nick||MON[f.P.m].n):'Pokémon';body=sInst(top)}
@@ -1873,6 +1903,9 @@ const ACT={
   async impclip(){try{ui.impt=await navigator.clipboard.readText();ui.impd=null;await ACT.impread()}catch(e){toast('Non posso leggere gli appunti: incolla a mano nel riquadro')}},
   async impread(d){const el=$('#impt');if(d&&el)ui.impt=el.value;try{ui.impd=await unpackTrainer(ui.impt);render(true)}catch(e){ui.impd=null;toast('Codice non valido: '+e.message);render(true)}},
   impdo(d){const o=ui.impd;if(!o)return;
+    if(o.n){if(!isMaster())return;const n=o.n,L=S.prop=S.prop||[],x={id:n.id,t:String(n.t||'').slice(0,120),c:DCAT.some(c=>c[0]===n.c)?n.c:'not',b:String(n.b||'').slice(0,4000),a:String(n.a||'').slice(0,40),at:n.at||Date.now(),rx:Date.now()};
+      const j=L.findIndex(y=>y.id===x.id);if(j>=0)L[j]=x;else if(!S.diary.some(y=>y.id===x.id))L.unshift(x);
+      ui.impd=null;ui.impt='';save();ui.tab='diario';ui.dmode='edit';ui.stack=[{k:'prop',i:x.id}];render();toast('Nota di '+(x.a||'un giocatore')+' tra le proposte');return}
     if(o.p){const P=JSON.parse(JSON.stringify(o.p)),ex=findMonAny(P.id);let msg='Pokémon aggiunto',dest;
       if(d.i==='mupd'&&ex){ex.arr[ex.i]=P;msg='Pokémon aggiornato';dest=ex.o}
       else{if(ex){P.id=uid();P.nick=(P.nick||MON[P.m].n)+' (copia)'}const to=ex?ex.o:(ui.impto||(pgs()[0]||{}).id||'saved'),t=S.trainers.find(x=>x.id===to);
@@ -1884,6 +1917,17 @@ const ACT={
     if(d.i==='upd'){const j=S.trainers.findIndex(x=>x.id===t.id);if(j>=0){if(!t.img&&S.trainers[j].img)t.img=S.trainers[j].img;S.trainers[j]=t}else S.trainers.unshift(t)}
     else{const ex=S.trainers.some(x=>x.id===t.id);if(ex){t.id=uid();t.name=(t.name||'Allenatore')+' (copia)';t.team.concat(t.box).forEach(P=>P.id=uid())}S.trainers.unshift(t)}
     ui.impd=null;ui.impt='';ui.tv=t.pg?'pg':'npc';ui.tab='allenatori';save();ui.stack=[{k:'trainer',i:t.id}];render();toast(d.i==='upd'?'Scheda aggiornata':'Scheda aggiunta')},
+  async papp(d){const top=ui.stack[ui.stack.length-1],L=S.prop||[],j=L.findIndex(y=>y.id===top.i);if(j<0)return;const x=L[j];
+    const e={id:x.id,t:x.t,c:x.c,w:'',b:x.b,a:x.a||'Un giocatore',pub:false,u:Date.now()};L.splice(j,1);S.diary.unshift(e);save();
+    if(d.i==='pub'){if(!isMaster()){toast('Serve la chiave GitHub per pubblicare');}else{e.pub=true;const ok=await publishDiary();if(!ok)e.pub=false;save()}}
+    ui.stack[ui.stack.length-1]={k:'dent',i:e.id};render();if(d.i!=='pub')toast('Approvata: sistemala e pubblicala quando vuoi')},
+  prej(){if(ui.arm!=='prej'){ui.arm='prej';render(true);return}ui.arm=null;const top=ui.stack.pop();S.prop=(S.prop||[]).filter(y=>y.id!==top.i);save();render();toast('Proposta scartata')},
+  async pnsend(){const n=pnGet();if(!n.a.trim()){toast('Scrivi il tuo nome');return}if(!n.t.trim()&&!n.b.trim()){toast('Scrivi almeno un titolo o un testo');return}
+    try{const o=pnObj(),code=pnCode||await packObj(o),url=appUrl()+'#imp='+code,text='Nota per il diario da '+n.a.trim()+': «'+(n.t.trim()||'senza titolo')+'». Master: apri il link, oppure incolla questo messaggio in Diario → Incolla una nota.';
+      let sent=false;if(navigator.share){try{await navigator.share({title:'Nota per il diario',text,url});sent=true}catch(e){if(e&&e.name==='AbortError')return}}
+      if(!sent)copy(text+'\n'+url,'Copiato: incollalo nella chat con il master');
+      const L=pnSent().filter(x=>x.id!==o.n.id);L.unshift({id:o.n.id,t:o.n.t,at:Date.now()});try{localStorage.setItem(PNS,JSON.stringify(L.slice(0,30)))}catch(e){}
+      ui.pn={a:n.a,t:'',c:n.c,b:''};pnSig='';pnSave();ui.stack.pop();render()}catch(e){toast('Non riesco a preparare la nota: '+(e&&e.message||'errore'))}},
   mwstart(d){if(!ui.mw||(d&&d.i))ui.mw=mwNew(d&&d.i);ui.stack.push({k:'mpw'});render()},
   mwrestart(){ui.mw=mwNew(ui.mw&&ui.mw.to);render(true)},
   mwgo(d){const m=ui.mw;if(m.mi==null)return;m.s=clamp(m.s+(+d.d),0,4);render(true);pwTop()},
@@ -2010,6 +2054,7 @@ document.addEventListener('input',e=>{const t=e.target,k=t.dataset.i;if(!k)retur
   else if(k.startsWith('if:')){const c=curInst();if(c&&c.P){const f=k.slice(3);c.P[f]=f==='nick'?t.value.trimStart():t.value;saveSoon();if(f==='nick'){const h=document.querySelector('.sheet header h2');if(h)h.textContent=c.P.nick||MON[c.P.m].n}}}
   else if(k==='cnick'){ui.cat.nick=t.value}
   else if(k.startsWith('pw:')&&ui.pw){const f=k.slice(3);if(f.startsWith('q:'))ui.pw.q[f.slice(2)]=t.value;else ui.pw[f]=t.value;if(f==='name'){const ph=document.querySelector('.pwimg .ph');if(ph&&!ui.pw.img)ph.textContent=(t.value||'?')[0]}}
+  else if(k.startsWith('pn:')){pnGet()[k.slice(3)]=t.value;pnSave()}
   else if(k==='mwq'&&ui.mw){ui.mw.mq=t.value;$('#mwsug').innerHTML=mwSug()}
   else if(k==='mwnick'&&ui.mw){ui.mw.nick=t.value}
   else if(k==='pwmq'&&ui.pw){ui.pw.mq=t.value;$('#pwsug').innerHTML=pwSug()}
@@ -2021,6 +2066,7 @@ document.addEventListener('change',e=>{const t=e.target,k=t.dataset.c;if(!k)retu
   else if(k==='gtarget'){ui.gen.target=v}
   else if(k==='impto'){ui.impto=v}
   else if(k==='dsch'){ui.dsch=v}
+  else if(k==='pnc'){pnGet().c=v;pnSave()}
   else if(k==='mwnat'){ui.mw.nat=v}
   else if(k==='mwab'){ui.mw.ab=v;render(true)}
   else if(k==='mwto'){ui.mw.to=v}
