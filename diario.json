@@ -1,20 +1,71 @@
 {
- "aggiornato": "2026-11-26T11:43:48.000Z",
+ "aggiornato": "2026-11-26T12:10:36.779Z",
  "voci": [
   {
-   "id": "poplerp63a96",
+   "id": "mwxi4sg8kmi4",
+   "t": "Il master",
+   "c": "png",
+   "w": "",
+   "b": "Captato da suo cugino dal primo istante in cui ha toccato il suo primo Ds, gioca a Pokémon da ormai quasi vent'anni. \nReputa HGSS l'apice raggiunto dalla compagnia dal punto di vista visivo e di gioco e B&W 1 e 2 dal punto di vista di trama e personaggi.\nNutre profondo rancore per chi odia indiscriminatamente i design più recenti recriminando che la foca a forma di foca o il passero a forma di passero siano design più ispirati di quelli attuali.\n\nIl suo Pokémon preferito dell'intanzia è luxray fin da quando il suo primo shinx ha soppiantato chimchar come starter della sua squadra\n\nAttualmente la sua top 6 è composta da Luxray, furret, mudsdale, dragalge, toxtricity e whiskcash\n\nMastica il competitivo: player avvisato player mezzo salvato",
+   "u": 1795695028122,
+   "img": [
+    {
+     "id": "mwxifd6bdfxn",
+     "f": "diario-img/mwxifd6bdfxn.jpg",
+     "d": "",
+     "w": 1024,
+     "h": 1024
+    }
+   ]
+  },
+  {
+   "id": "mwxhryhn36ri",
+   "t": "Belgiro",
+   "c": "ses",
+   "w": "",
+   "b": "Piccolo borgo sulle rive del lago.\nÈ la sede scelta dal professore Popler per il suo laboratorio, funge anche da punto di partenza per molti giovani allenatori che si rivolgono a lui per chiedere il loro primo Pokémon ",
+   "u": 1795693959521,
+   "img": [
+    {
+     "id": "mwxhtg4k48r6",
+     "f": "diario-img/mwxhtg4k48r6.jpg",
+     "d": "",
+     "w": 1600,
+     "h": 1600
+    }
+   ]
+  },
+  {
+   "id": "mwxhpi9h7yj5",
    "t": "Professor Popler",
    "c": "png",
    "w": "",
-   "b": "Popler è il Professore Pokémon della regione e studia i Pokémon insieme agli ecosistemi in cui vivono.\nAll'inizio dà lo starter e il Pokédex.\nÈ preoccupato che la rapida crescita industriale della regione possa avere un impatto troppo grande sugli habitat della regione.",
-   "u": 1795693428851,
+   "b": "Un eccentrico professore Pokémon globalmente riconosciuto per i suoi sforzi nello studio e nella tutela degli ecosistemi.\n\nIl rapido sviluppo industriale della regione lo sta preoccupando abbastanza, anche per via di alcune pratiche spregiudicate portate avanti da alcune bande criminali",
+   "u": 1795693863814,
    "img": [
     {
-     "id": "1a217ab4pop63a96",
-     "f": "diario-img/1a217ab4pop63a96.jpg",
-     "d": "Il Professor Popler",
+     "id": "mwxhrgxwck48",
+     "f": "diario-img/mwxhrgxwck48.jpg",
+     "d": "",
      "w": 512,
      "h": 512
+    }
+   ]
+  },
+  {
+   "id": "mwxhla9ij8iz",
+   "t": "Mappa della regione",
+   "c": "luo",
+   "w": "",
+   "b": "La regione di Insubria era famosa per la presenza di grandi biomi incontaminati ed ecosistemi diversi ma interconnessi tra di loro.\nUltimamente però, la rapida crescita della Caveari Holding S.p.A., che ha contribuito ad una improvvisa prosperità economica, sta causando direttamente o indirettamente un peggioramento delle condizioni degli habitat della regione\n\nLe città principali sono (in ordine di medaglia):\n-Vergate\n-Nebbiate\n-Valforno\n-Valsonda\n-Cerchia\n-Verdepista\n-Lo scorso nome mi faceva completamente schifo devo ripensare da zero a questa città \n-Mediolanum\n",
+   "u": 1795694370315,
+   "img": [
+    {
+     "id": "mwxhlh0ycajd",
+     "f": "diario-img/mwxhlh0ycajd.jpg",
+     "d": "",
+     "w": 960,
+     "h": 640
     }
    ]
   }
