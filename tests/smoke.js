@@ -81,6 +81,22 @@ let fails=0;const ok=(c,m)=>{console.log((c?'OK   ':'FAIL ')+m);if(!c)fails++};
   // immagine anche per i PNG
   const npc=await pg.evaluate(()=>{const t=newTrainer();t.pg=0;t.name='PNG';S.trainers.push(t);ui.stack=[{k:'trainer',i:t.id}];render();const r=!!document.querySelector('#sheet [data-c=timg]');ui.stack=[];render();return r});
   ok(npc,'caricamento immagine disponibile anche per i PNG');
+  // creazione guidata di un Pokémon, con clic reali
+  await pg.evaluate(()=>{ui.stack=[];ui.tab='genera';ui.gen.mode='mon';render()});
+  await pg.click('[data-a=mwstart]');await pg.fill('#mwq','eevee');await pg.click('[data-a=mwmon]');
+  const dest=await pg.evaluate(()=>{const t=S.trainers.find(x=>x.pg)||S.trainers[0];return t.id});
+  await pg.selectOption('#mwto',dest);await pg.fill('#mwnick','Pelo');
+  await pg.click('[data-a=mwgo][data-d="1"]');
+  for(let i=0;i<20;i++){const b=await pg.$('[data-a=mwat][data-k="1"][data-d="1"]');await b.click()}
+  const at=await pg.evaluate(()=>{const m=ui.mw,b=mwBud(m);return {ua:b.ua,a:b.a,ok:m.at.every((v,i)=>v>=b.base[i]&&v<=b.cap[i])}});
+  ok(at.ua<=at.a&&at.ok,'attributi entro budget e limiti della specie ('+at.ua+'/'+at.a+')');
+  await pg.click('[data-a=mwgo][data-d="1"]');await pg.click('[data-a=mwsk][data-k=Evasion][data-d="1"]');
+  await pg.click('[data-a=mwgo][data-d="1"]');await pg.click('[data-a=mwauto]');
+  const nmv=await pg.evaluate(()=>{const m=ui.mw;return {n:m.mv.length,max:mwBud(m).nmv,pool:mwPool(m).length}});
+  ok(nmv.n===Math.min(nmv.max,nmv.pool),'mosse scelte in automatico ('+nmv.n+'/'+nmv.max+')');
+  await pg.click('[data-a=mwgo][data-d="1"]');await pg.click('[data-a=mwdone]');
+  const made=await pg.evaluate(id=>{const t=S.trainers.find(x=>x.id===id),P=t.team.concat(t.box||[]).find(x=>x.nick==='Pelo');return P?{sp:MON[P.m].n,ev:P.sk.Evasion,mv:P.mv.length,sheet:ui.stack.length&&ui.stack[ui.stack.length-1].k}:null},dest);
+  ok(made&&made.sp==='Eevee'&&made.ev===1&&made.mv===nmv.n&&made.sheet==='inst','Pokémon creato e aggiunto all’allenatore');
   // salvataggio ritardato mentre si scrive
   const sv=await pg.evaluate(async()=>{const t=S.trainers[0];ui.stack=[{k:'trainer',i:t.id}];render();const el=document.getElementById('tno');el.value='prova note';el.dispatchEvent(new Event('input',{bubbles:true}));
     const before=JSON.parse(localStorage.getItem(SKEY)).trainers[0].notes;await new Promise(r=>setTimeout(r,600));const after=JSON.parse(localStorage.getItem(SKEY)).trainers[0].notes;ui.stack=[];render();return {before,after}});
