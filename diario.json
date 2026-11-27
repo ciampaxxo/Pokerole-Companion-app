@@ -1,6 +1,24 @@
 {
- "aggiornato": "2026-11-26T13:59:08.660Z",
+ "aggiornato": "2026-11-27T15:37:39.361Z",
  "voci": [
+  {
+   "id": "mwz4xvt7acb4",
+   "t": "Lily Background",
+   "c": "png",
+   "w": "",
+   "b": "",
+   "u": 1795793851893,
+   "a": "Ema",
+   "img": [
+    {
+     "id": "mwz5ak8b486v",
+     "f": "diario-img/mwz5ak8b486v.jpg",
+     "d": "",
+     "w": 1131,
+     "h": 1600
+    }
+   ]
+  },
   {
    "id": "mwxm5bdgh26v",
    "t": "Giocatore - Nicola",
@@ -24,8 +42,8 @@
    "t": "Il master",
    "c": "png",
    "w": "",
-   "b": "Captato da suo cugino dal primo istante in cui ha toccato il suo primo Ds, gioca a Pokémon da ormai quasi vent'anni. \nReputa HGSS l'apice raggiunto dalla compagnia dal punto di vista visivo e di gioco e B&W 1 e 2 dal punto di vista di trama e personaggi.\nNutre profondo rancore per chi odia indiscriminatamente i design più recenti recriminando che la foca a forma di foca o il passero a forma di passero siano design più ispirati di quelli attuali.\n\nIl suo Pokémon preferito dell'intanzia è luxray fin da quando il suo primo shinx ha soppiantato chimchar come starter della sua squadra\n\nAttualmente la sua top 6 è composta da Luxray, furret, mudsdale, dragalge, toxtricity e whiskcash\n\nMastica il competitivo: player avvisato player mezzo salvato",
-   "u": 1795695028122,
+   "b": "Captato da suo cugino dal primo istante in cui ha toccato il suo primo Ds, gioca a Pokémon da ormai quasi vent'anni. \nReputa HGSS l'apice raggiunto dalla compagnia dal punto di vista visivo e di gioco e B&W 1 e 2 dal punto di vista di trama e personaggi.\nNutre profondo rancore per chi odia indiscriminatamente i design più recenti recriminando che la foca a forma di foca o il passero a forma di passero siano design più ispirati di quelli attuali.\n\nIl suo Pokémon preferito dell'infanzia è luxray fin da quando il suo primo shinx ha soppiantato chimchar come starter della sua squadra\n\nAttualmente la sua top 6 è composta da Luxray, furret, mudsdale, dragalge, toxtricity e whiscash\n\nMastica il competitivo: player avvisato player mezzo salvato",
+   "u": 1795704363219,
    "img": [
     {
      "id": "mwxifd6bdfxn",
