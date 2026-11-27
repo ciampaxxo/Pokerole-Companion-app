@@ -200,6 +200,27 @@ const puts=[],dcs=[];let dcStatus=200,dcNoCors=false;
   const sh7=await pg.evaluate(async()=>{localStorage.removeItem('mp-discord');let got=null;Object.defineProperty(navigator,'canShare',{value:()=>true,configurable:true});Object.defineProperty(navigator,'share',{value:async o=>{got=o},configurable:true});const b=await (await fetch('icon-192.png')).blob();ui.pnImg=[{blob:b,u:''}];ui.pn={a:'Marco',t:'Chat',c:'ses',b:'x'};await ACT.pnsend();return got&&got.files&&got.files.length});
   ok(sh7===1,'senza Discord le immagini partono nella condivisione in chat');
   await pg.evaluate(()=>{localStorage.removeItem('mp-discord');delete navigator.share;delete navigator.canShare;S.prop=[];ui.stack=[];render()});
+  // punti: base, punti del rango, budget e limiti (Pokémon e allenatori)
+  const pts=await pg.evaluate(()=>{const mi=MON.findIndex(m=>m.n==='Eevee'),P=generate(mi,2,'bal');S.saved.unshift(P);ui.stack=[{k:'inst',i:P.id,o:'saved',edit:true}];render();
+    const b=monBud(P),html=document.getElementById('sheet').innerHTML;
+    // togli tutti i punti del rango, poi prova a scendere sotto la base
+    for(let i=0;i<5;i++)while(P.at[i]>b.base[i])ACT.iat({k:i,d:-1});const atBase=P.at.every((v,i)=>v===b.base[i]);ACT.iat({k:0,d:-1});const noBelow=P.at[0]===b.base[0];
+    // aggiungi oltre il budget
+    for(let n=0;n<20;n++)ACT.iat({k:n%5,d:1});const nb=monBud(P);
+    const cap=P.at.every((v,i)=>v<=nb.cap[i]);
+    // skill oltre il limite del rango
+    PSK.forEach(k=>P.sk[k]=0);for(let n=0;n<10;n++)ACT.isk({k:'Evasion',d:1});
+    S.saved.shift();ui.stack=[];
+    return {legend:/base della specie/.test(html)&&/punti del rango/.test(html)&&/Da dove vengono i punti/.test(html),atBase,noBelow,used:nb.ua,tot:nb.R.a,cap,ev:P.sk.Evasion,lim:RKPTS[2].l}});
+  ok(pts.legend,'scheda Pokémon: legenda base/rango e origine dei punti');
+  ok(pts.atBase&&pts.noBelow,'gli attributi non scendono sotto la base della specie');
+  ok(pts.used===pts.tot&&pts.cap,'non si superano i punti del rango né il massimo della specie ('+pts.used+'/'+pts.tot+')');
+  ok(pts.ev===pts.lim,'le skill si fermano al limite del rango');
+  const tp=await pg.evaluate(()=>{const t=newTrainer();t.pg=1;t.age=2;t.rk=1;t.at=[1,1,1,1];t.so=[1,1,1,1,1];S.trainers.push(t);ui.stack=[{k:'trainer',i:t.id}];render();const html=document.getElementById('sheet').innerHTML;
+    for(let n=0;n<30;n++)ACT.tat({k:n%4,d:1});const b=trBud(t);S.trainers.pop();ui.stack=[];render();
+    return {txt:/per l’età \(Adulto\)/.test(html)&&/per il rango Rookie/.test(html),used:b.ua,tot:b.ta,max:Math.max(...t.at)<=5}});
+  ok(tp.txt,'scheda allenatore: punti di età e di rango spiegati');
+  ok(tp.used===tp.tot&&tp.max,'allenatore: non si superano i punti di età e rango ('+tp.used+'/'+tp.tot+')');
   // salvataggio ritardato mentre si scrive
   const sv=await pg.evaluate(async()=>{const t=S.trainers[0];ui.stack=[{k:'trainer',i:t.id}];render();const el=document.getElementById('tno');el.value='prova note';el.dispatchEvent(new Event('input',{bubbles:true}));
     const before=JSON.parse(localStorage.getItem(SKEY)).trainers[0].notes;await new Promise(r=>setTimeout(r,600));const after=JSON.parse(localStorage.getItem(SKEY)).trainers[0].notes;ui.stack=[];render();return {before,after}});

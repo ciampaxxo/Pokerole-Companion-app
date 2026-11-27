@@ -171,6 +171,15 @@ nav.tabs button[aria-current="page"] svg{color:var(--accent)}
 .pwopts button[aria-pressed=true]{border-color:var(--accent,#d33);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent,#d33) 25%,transparent)}
 .pwl{font-size:12px;font-weight:700;padding:3px 8px;border-radius:99px;background:var(--sunk);white-space:nowrap}
 .pwl.done{background:#dff3e4;color:#1d6b35}.pwl.over{background:#fde2e2;color:#a01d1d}
+.attrs{display:flex;flex-direction:column}
+.arow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}.arow:first-child{border-top:0}
+.arow .an{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.arow .an>b{font:700 13px/1.1 var(--display);letter-spacing:.06em;text-transform:uppercase}
+.arow .split{font-size:12px;color:var(--muted)}.arow .split b{color:var(--add)}
+.arow .big2{font:800 22px/1 var(--display);min-width:28px;text-align:center}
+.ptsh{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 4px}.ptsh h3{margin:0;flex:1}
+.legend{display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--muted);margin:2px 0 6px}.legend .dot{display:inline-block;vertical-align:-2px;margin-right:4px}
+.ladder td,.ladder th{text-align:center}.ladder td:first-child,.ladder th:first-child{text-align:left}.ladder tr.cur td{font-weight:700}.ladder tr.ini td:first-child::after{content:" · iniziale";font-weight:400;color:var(--muted);font-size:11px}
 .pwnav{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg,#f5f5f5) 30%);padding-top:14px}
 .hero .ph{position:relative;z-index:1;font:700 64px/1 var(--display);color:rgba(255,255,255,.75);margin-bottom:40px}
 .hero .badge{position:absolute;left:10px;top:10px;z-index:2;display:flex;gap:5px}
@@ -281,7 +290,7 @@ nav.tabs{padding-bottom:env(safe-area-inset-bottom)}
 <body>
 <div class="app">
   <header class="top">
-    <span class="ball" aria-hidden="true"></span><div class="brand">Master <b>Pokérole</b><small>Compagno del master · regole 3.0 · <span class="appv">v1.30</span></small></div>
+    <span class="ball" aria-hidden="true"></span><div class="brand">Master <b>Pokérole</b><small>Compagno del master · regole 3.0 · <span class="appv">v1.31</span></small></div>
     <button class="btn sm ghost" data-a="open" data-k="backup" aria-label="Impostazioni e backup">Opzioni</button>
   </header>
   <main id="main"></main>
@@ -388,7 +397,7 @@ function generate(mi,rk,style){
   const sk={};PSK.forEach(k=>sk[k]=0);const need={Evasion:1.5,Clash:1,Alert:1};
   sel.forEach(x=>{const mv=mvOf(x[1]);if(mv)mv.a.split(/[+\/]/).forEach(t=>{t=t.replace(/[.*]/g,'').trim();t=FIX[t.toLowerCase()]||t;if(PSK.includes(t))need[t]=(need[t]||0)+2})});
   pts=R.k;while(pts>0){const o=PSK.filter(k=>sk[k]<R.l);if(!o.length)break;sk[wpick(o,k=>need[k]||.2)]++;pts--}
-  return {id:uid(),m:mi,nick:'',rk,at,so,sk,mv:sel.map(x=>x[1]),ab:M.ab.length?pick(M.ab):'',nat:pick(NAT),dmg:0,wsp:0,notes:'',left};
+  return {id:uid(),m:mi,nick:'',rk,rk0:rk,at,so,sk,mv:sel.map(x=>x[1]),ab:M.ab.length?pick(M.ab):'',nat:pick(NAT),dmg:0,wsp:0,notes:'',left};
 }
 function randomMon(){
   const f=ui.gen.f,rk=ui.gen.rk;
@@ -451,6 +460,20 @@ function moveRow(ref,P,d,M,rk){
   else pools=`<div class="pool">Precisione ${esc(mv.a)} · Danno ${esc(mv.d)}</div>`;
   return `<div class="mv"><div class="h">${rk!=null?`<i class="pip" title="${RK[rk]}" style="--pc:${RKCOL[rk]}"></i>`:''}<button class="n" data-a="open" data-k="move" data-i="${ref}">${esc(mv.n)}</button>${tchip(mv.t)}<span class="small muted">${esc(mv.c)}${mv.p!=='-'?' · Power '+esc(mv.p):''}</span></div>${pools}<div class="eff">${esc(mv.e)}</div></div>`;
 }
+/* ---------- punti: base, punti guadagnati e budget del rango, uguali per allenatori e Pokémon ---------- */
+const LEG=(b,a)=>`<div class="legend"><span><i class="dot b"></i>${b}</span><span><i class="dot a"></i>${a}</span><span><i class="dot"></i>ancora possibile</span></div>`;
+function attrRows(L,base,cur,cap,act,desc,aLab){return `<div class="attrs">${L.map((a,i)=>{const e=cur[i]-base[i];return `<div class="arow"><div class="an"><b>${a}</b>${desc&&desc[i]?`<span class="small muted">${desc[i]}</span>`:''}${dots(base[i],cur[i],cap[i])}<span class="split">base ${base[i]}${e>0?` + <b>${e}</b> ${aLab}`:e<0?' − '+(-e):''} · max ${cap[i]}</span></div>${act?stepper(act,i,cur[i]):`<span class="big2">${cur[i]}</span>`}</div>`}).join('')}</div>`}
+function ptsHead(title,left,lab){return `<div class="ptsh"><h3>${title}</h3>${pwLeft(left,lab)}</div>`}
+/* da dove vengono i punti: età (allenatori) e un gradino per ogni rango raggiunto */
+function ladderH(rk,rk0,age){let h=`<details class="gl"><summary><span>Da dove vengono i punti</span><small>${RK[rk]}</small></summary><div class="gb">`;
+  if(age!=null){const A=AGES[age];h+=`<p class="small">Età <b>${A[1]}</b>: +${A[2]} attributi, +${A[3]} social (si decidono alla creazione).</p>`}
+  h+=`<div class="scroll"><table class="t ladder"><tr><th>Rango</th><th>Attributi</th><th>Social</th><th>Skill</th><th>Limite skill</th></tr>${RK.slice(0,rk+1).map((r,i)=>{const A=RKPTS[i],B=i?RKPTS[i-1]:{a:0,s:0,k:0};const d=(x,y)=>i?'+'+(x-y):x;return `<tr class="${i===rk?'cur':''}${rk0!=null&&i===rk0?' ini':''}"><td>${r}</td><td>${d(A.a,B.a)}</td><td>${d(A.s,B.s)}</td><td>${d(A.k,B.k)}</td><td>${A.l}</td></tr>`}).join('')}<tr><td><b>Totale</b></td><td><b>${RKPTS[rk].a}</b></td><td><b>${RKPTS[rk].s}</b></td><td><b>${RKPTS[rk].k}</b></td><td><b>${RKPTS[rk].l}</b></td></tr></table></div>`;
+  h+=age!=null?'<p class="small muted">Un allenatore sale di rango completando i <b>traguardi</b> (in questa scheda): a ogni rango nuovo riceve i punti della riga corrispondente.</p>'
+    :'<p class="small muted">Un Pokémon sale di rango spendendo i <b>Punti Addestramento</b> guadagnati in lotta e con gli allenamenti (Crescita): a ogni rango nuovo riceve i punti della riga corrispondente. Non può superare il rango del suo allenatore.</p>';
+  return h+'</div></details>'}
+function monBud(P){const M=MON[P.m],R=RKPTS[P.rk],base=M.st.map(x=>x[0]);return {R,base,cap:M.st.map(x=>x[1]+(P.rk===7?2:0)),ua:P.at.reduce((x,y,i)=>x+Math.max(0,y-base[i]),0),us:P.so.reduce((x,y)=>x+y,0)-5,uk:Object.values(P.sk).reduce((x,y)=>x+y,0)}}
+function trBud(t){const A=AGES[t.age]||AGES[1],R=RKPTS[t.rk],lim=5+(t.rk===7?2:0);return {A,R,lim,ta:A[2]+R.a,ts:A[3]+R.s,ua:t.at.reduce((x,y)=>x+y,0)-4,us:t.so.reduce((x,y)=>x+y,0)-5,uk:Object.values(t.sk).reduce((x,y)=>x+y,0)}}
+const PSKD={Brawl:'mosse fisiche a contatto',Channel:'mosse speciali',Clash:'contrastare un attacco',Evasion:'schivare',Alert:'iniziativa, accorgersi',Athletic:'correre, saltare',Nature:'orientarsi, ambiente',Stealth:'nascondersi',Charm:'conquistare',Etiquette:'buone maniere',Intimidate:'spaventare',Perform:'esibirsi'};
 function instCard(P,o){
   o=o||{};const M=MON[P.m],d=derive(P),R=RKPTS[P.rk];
   const hpNow=Math.max(0,d.hp-(P.dmg||0)),wNow=Math.max(0,d.will-(P.wsp||0));
@@ -458,14 +481,17 @@ function instCard(P,o){
   <div class="row">${M.ty.map(tchip).join('')}${P.ab?`<button class="btn sm" data-a="open" data-k="abil" data-i="${esc(P.ab)}">Ability: ${esc(P.ab)}</button>`:''}</div>`;
   if(o.track)h+=`<div class="hp"><b class="num">HP ${hpNow}/${d.hp}</b><div class="bar"><i style="width:${d.hp?100*hpNow/d.hp:0}%"></i></div>${stepper('idmg',P.id,'')}</div>
   <div class="hp"><b class="num">Will ${wNow}/${d.will}</b><div class="bar"><i style="width:${d.will?100*wNow/d.will:0}%;background:var(--add)"></i></div>${stepper('iwsp',P.id,'')}</div>${hpNow<=1&&d.hp>1?`<p class="note">Dolore: ${hpNow===0?'KO':'2 successi rimossi'}.</p>`:hpNow<=Math.floor(d.hp/2)?'<p class="note">Dolore: 1 successo rimosso dai tiri.</p>':''}`;
-  h+=`<div class="stats">${ATTR.map((a,i)=>`<span class="lab">${a}</span>${dots(M.st[i][0],P.at[i],M.st[i][1]+(P.rk===7?2:0))}${o.edit?stepper('iat',i,P.at[i]):`<b class="num">${P.at[i]}</b>`}`).join('')}</div>
+  const bu=monBud(P);
+  h+=`${ptsHead('Attributi',R.a-bu.ua,'punti')}${LEG('base della specie','punti del rango '+RK[P.rk])}${attrRows(ATTR,bu.base,P.at,bu.cap,o.edit?'iat':null,o.edit?PATTRD:null,'dal rango')}
+  ${!o.edit&&R.a-bu.ua>0&&o.track?`<p class="note">Ha ancora ${R.a-bu.ua} punti attributo da assegnare: tocca <b>Modifica punti e mosse</b>.</p>`:''}
   <div class="derived"><div><b>${d.hp}</b><span>HP</span></div><div><b>${d.will}</b><span>Will</span></div><div><b>${d.def}</b><span>Def</span></div><div><b>${d.sdef}</b><span>Sp. Def</span></div><div><b>${d.init}</b><span>Init +1d6</span></div><div><b>${d.eva}</b><span>Evasion</span></div><div><b>${d.clash}</b><span>Clash</span></div></div>`;
   if(o.edit){
-    h+=`<h3>Social</h3><div class="grid2">${SOC.map((a,i)=>`<div class="srow"><span>${a}</span>${stepper('iso',i,P.so[i])}</div>`).join('')}</div>
-    <h3>Skills <span class="small">(limite ${R.l}, punti ${Object.values(P.sk).reduce((a,b)=>a+b,0)}/${R.k})</span></h3><div class="grid2">${PSK.map(k=>`<div class="srow"><span>${k}</span>${stepper('isk',k,P.sk[k]||0)}</div>`).join('')}</div>
+    h+=`${ptsHead('Attributi sociali',R.s-bu.us,'punti')}<p class="small muted">Partono tutti da 1, massimo 5. Il rango ${RK[P.rk]} dà ${R.s} punti.</p>${attrRows(SOC,[1,1,1,1,1],P.so,[5,5,5,5,5],'iso',SOCD,'dal rango')}
+    ${ptsHead('Skill',R.k-bu.uk,'punti')}<p class="small muted">Partono da 0. Il rango ${RK[P.rk]} dà ${R.k} punti, al massimo <b>${R.l}</b> per skill.</p>${PSKG.map(([g,L])=>`<h3>${g}</h3><div class="grid2">${L.map(k=>`<div class="srow"><span>${k}<br><span class="small muted">${PSKD[k]}</span></span>${stepper('isk',k,P.sk[k]||0)}</div>`).join('')}</div>`).join('')}
+    ${ladderH(P.rk,P.rk0)}
     <h3>Mosse <span class="small">(${P.mv.length}/${P.at[4]+3})</span></h3><div class="seg">${M.mv.map(x=>`<button data-a="imv" data-i="${esc(x[1])}" aria-pressed="${P.mv.some(r=>String(r)===String(x[1]))}"><i class="pip" style="--pc:${RKCOL[x[0]]}"></i>${esc(mvName(x[1]))}</button>`).join('')}</div>`;
   }else{
-    h+=`<div class="kv">${SOC.map((a,i)=>`<span>${a} <b>${P.so[i]}</b></span>`).join('')}</div>
+    h+=`${o.track?ladderH(P.rk,P.rk0):''}<div class="kv">${SOC.map((a,i)=>`<span>${a} <b>${P.so[i]}</b></span>`).join('')}</div>
     <div class="kv">${Object.keys(P.sk).filter(k=>P.sk[k]).map(k=>`<span>${k} <b>${P.sk[k]}</b></span>`).join('')||'<span>Nessuna skill</span>'}</div>
     <h3>Mosse <span class="small">(${P.mv.length} di ${P.at[4]+3} possibili)</span></h3><div>${P.mv.map(r=>{const x=M.mv.find(y=>String(y[1])===String(r));return moveRow(r,P,d,M,x?x[0]:null)}).join('')||'<p class="muted small">Nessuna mossa a questo rango.</p>'}</div>`;
   }
@@ -667,9 +693,11 @@ function sTrainer(t){prepShare(t);
   <div class="hp"><b class="num">HP ${hpNow}/${d.hp}</b><div class="bar"><i style="width:${100*hpNow/d.hp}%"></i></div>${stepper('tdmg','',"")}</div></div>
   ${t.pg?(()=>{const D=dexOf(t);return `<div class="card"><div class="srow"><span>Medaglie</span>${stepper('tbadge','',t.badges||0)}</div>
   <div class="row"><button class="btn grow" data-a="open" data-k="dex" data-i="${t.id}">Pokédex · ${D.s.size} viste · ${D.c.size} prese</button><button class="btn grow" data-a="theal">${ui.arm==='theal'?'Tocca ancora: cura tutto':'Centro Pokémon'}</button></div></div>${achH(t)}`})():''}
-  <div class="card"><h3>Attributi <span class="small">(punti ${spentA}/${A[2]+R.a}, max 5)</span></h3><div class="grid2">${TATTR.map((a,i)=>`<div class="srow"><span>${a}</span>${stepper('tat',i,t.at[i])}</div>`).join('')}</div>
-  <h3>Social <span class="small">(punti ${spentS}/${A[3]+R.s}, max 5)</span></h3><div class="grid2">${SOC.map((a,i)=>`<div class="srow"><span>${a}</span>${stepper('tso',i,t.so[i])}</div>`).join('')}</div>
-  <h3>Skills <span class="small">(punti ${spentK}/${R.k}, limite ${R.l})</span></h3><div class="grid2">${TSK.map(k=>`<div class="srow"><span>${k}</span>${stepper('tsk',k,t.sk[k]||0)}</div>`).join('')}</div></div>
+  ${(()=>{const b=trBud(t),cap=[b.lim,b.lim,b.lim,b.lim],cs=[b.lim,b.lim,b.lim,b.lim,b.lim];return `<div class="card">
+  ${ptsHead('Attributi',b.ta-b.ua,'punti')}<p class="small muted">Partono tutti da 1, massimo ${b.lim}. Punti: <b>${b.A[2]}</b> per l’età (${b.A[1]}) + <b>${b.R.a}</b> per il rango ${RK[t.rk]} = ${b.ta}.</p>${LEG('base','punti di età e rango')}${attrRows(TATTR,[1,1,1,1],t.at,cap,'tat',TATTRD,'da età e rango')}
+  ${ptsHead('Attributi sociali',b.ts-b.us,'punti')}<p class="small muted">Partono tutti da 1, massimo ${b.lim}. Punti: <b>${b.A[3]}</b> per l’età + <b>${b.R.s}</b> per il rango = ${b.ts}.</p>${attrRows(SOC,[1,1,1,1,1],t.so,cs,'tso',SOCD,'da età e rango')}
+  ${ptsHead('Skill',b.R.k-b.uk,'punti')}<p class="small muted">Partono da 0. Il rango ${RK[t.rk]} dà ${b.R.k} punti, al massimo <b>${b.R.l}</b> per skill.</p>${TSKG.map(([g,L])=>`<h3>${g}</h3><div class="grid2">${L.map(k=>`<div class="srow"><span>${k}</span>${stepper('tsk',k,t.sk[k]||0)}</div>`).join('')}</div>`).join('')}
+  ${ladderH(t.rk,t.rk0,t.age)}</div>`})()}
   <div class="card"><div class="row"><h3 class="grow">Squadra (${t.team.length}/6)</h3><button class="btn sm" data-a="mwstart" data-i="${t.id}">Crea guidato</button><button class="btn sm pri" data-a="tgen">Genera per la squadra</button></div>
   ${t.team.length?`<div class="list">${t.team.map(P=>instItem(P,t.id)).join('')}</div>`:'<p class="small muted">Squadra vuota. Genera un Pokémon e salvalo qui.</p>'}
   ${t.pg?`<h3>Box (${(t.box||[]).length})</h3>${(t.box||[]).length?`<div class="list">${t.box.map(P=>instItem(P,t.id)).join('')}</div>`:'<p class="small muted">Vuoto. Oltre il sesto Pokémon le catture finiscono qui.</p>'}`:''}</div>
@@ -701,7 +729,7 @@ function mwBud(m){const M=MON[m.mi],R=RKPTS[m.rk],base=M.st.map(x=>x[0]);return 
 function mwPool(m){return MON[m.mi].mv.filter(x=>x[0]<=m.rk)}
 function mwFix(){const m=ui.mw;if(m.mi==null)return;const b=mwBud(m);if(b.ua>b.a||m.at.some((v,i)=>v>b.cap[i]))m.at=b.base.slice();if(b.us>b.s)m.so=[1,1,1,1,1];if(b.uk>b.k||Object.values(m.sk).some(v=>v>b.l))PSK.forEach(k=>m.sk[k]=0);
   const ok=new Set(mwPool(m).map(x=>String(x[1])));m.mv=m.mv.filter(r=>ok.has(String(r))).slice(0,mwBud(m).nmv)}
-function mwMon(m){return {id:uid(),m:m.mi,nick:(m.nick||'').trim(),rk:m.rk,at:m.at.slice(),so:m.so.slice(),sk:Object.assign({},m.sk),mv:m.mv.slice(),ab:m.ab,nat:m.nat||pick(NAT),dmg:0,wsp:0,notes:'',left:0}}
+function mwMon(m){return {id:uid(),m:m.mi,nick:(m.nick||'').trim(),rk:m.rk,rk0:m.rk,at:m.at.slice(),so:m.so.slice(),sk:Object.assign({},m.sk),mv:m.mv.slice(),ab:m.ab,nat:m.nat||pick(NAT),dmg:0,wsp:0,notes:'',left:0}}
 function mwSug(){const q=ui.mw.mq;if(!q)return '';const r=monMatches(q,6);return r.length?`<div class="list">${r.map(i=>`<button class="item" data-a="mwmon" data-i="${i}">${monAv(i,'sm')}<span class="grow"><span class="t">${esc(MON[i].n)}</span><br><span class="small muted">${esc(MON[i].num)} · suggerito ${RK[MON[i].rk]}</span></span>${MON[i].ty.map(tchip).join('')}</button>`).join('')}</div>`:'<p class="small muted">Nessuna specie trovata.</p>'}
 function sMpw(){const m=ui.mw;let h=`<div class="pwsteps">${MWSTEPS.map((x,i)=>`<button data-a="mwto" data-i="${i}" aria-current="${m.s===i?'step':'false'}"${i<m.s?' class="past"':''}${i&&m.mi==null?' disabled':''}><b>${i+1}</b><span>${x}</span></button>`).join('')}</div>`;
   if(m.s===0||m.mi==null){
@@ -730,7 +758,7 @@ function sMpw(){const m=ui.mw;let h=`<div class="pwsteps">${MWSTEPS.map((x,i)=>`
     <div class="card"><div class="row">${selectH('mwto2','mwto',m.to,targetOpts(),'Dove va')}</div><button class="btn pri" data-a="mwdone">Crea il Pokémon</button></div>`}
   h+=`<div class="row pwnav">${m.s>0?'<button class="btn grow" data-a="mwgo" data-d="-1">Indietro</button>':'<button class="btn grow" data-a="mwrestart">Ricomincia da capo</button>'}${m.s<4&&m.mi!=null?'<button class="btn pri grow" data-a="mwgo" data-d="1">Avanti</button>':''}</div>`;
   return h}
-function pwLeft(n,lab){return `<span class="pwl${n<0?' over':n===0?' done':''}">${n===0?'Tutti assegnati':n>0?'Restano '+n+' '+lab:'Troppi punti'}</span>`}
+function pwLeft(n,lab){return `<span class="pwl${n<0?' over':n===0?' done':''}">${n===0?'Tutti assegnati':n===1?'Resta 1 '+({punti:'punto',mosse:'mossa'}[lab]||lab):n>0?'Restano '+n+' '+lab:'Troppi punti'}</span>`}
 function pwSug(){const q=ui.pw.mq;if(!q)return '';const r=monMatches(q,6);return r.length?`<div class="list">${r.map(i=>`<button class="item" data-a="pwmon" data-i="${i}">${monAv(i,'sm')}<span class="grow"><span class="t">${esc(MON[i].n)}</span><br><span class="small muted">${esc(MON[i].num)} · suggerito ${RK[MON[i].rk]}</span></span>${MON[i].ty.map(tchip).join('')}</button>`).join('')}</div>`:'<p class="small muted">Nessuna specie trovata.</p>'}
 function pwNotes(p){const L=[['exp','Cosa si aspetta dal mondo Pokémon'],['goal','Obiettivo'],['why','Motivazione'],['team','Cosa porta al gruppo']].filter(([k])=>p.q[k].trim()).map(([k,l])=>l+': '+p.q[k].trim());return L.join('\n')}
 function sPgw(){const p=ui.pw,b=pwBud(p),A=AGES[p.age],R=RKPTS[p.rk];let h=`<div class="pwsteps">${PWSTEPS.map((s,i)=>`<button data-a="pwto" data-i="${i}" aria-current="${p.s===i?'step':'false'}"${i<p.s?' class="past"':''}><b>${i+1}</b><span>${s}</span></button>`).join('')}</div>`;
@@ -1732,7 +1760,7 @@ const VIEW={on:false,code:null,g:null,pc:null,sub:null,st:null,ok:false,fb:null,
     requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll('#tav .hpb i[data-p]').forEach(i=>{const v=+i.dataset.p;i.style.width=100*v+'%';i.style.background=v>.5?'#3fbf6a':v>.2?'#f0b429':'#e5484d'})))}};
 
 /* ---------- schede e render ---------- */
-const APPV='1.30',APPD='26 novembre 2026';
+const APPV='1.31',APPD='27 novembre 2026';
 function sBackup(){return sBackup0()+`<div class="card"><h3>Versione</h3><p>Master Pokérole <b>v${APPV}</b> · pubblicata il ${APPD}</p><p class="small muted">Quando esce una versione nuova l’app la scarica da sola e lo segnala con un avviso: basta riaprirla.</p></div>`}
 function sBackup0(){return `<div class="card"><h3>Danno minimo</h3><div class="seg"><button data-a="omin" data-i="1" aria-pressed="${S.opt.min1!==false}">Sempre almeno 1</button><button data-a="omin" data-i="0" aria-pressed="${S.opt.min1===false}">Le resistenze possono azzerarlo</button></div><p class="small muted">Vale per l’assistente di battaglia. Le immunità danno sempre 0.</p></div>
 <div class="card"><h3>Difese</h3><div class="seg"><button data-a="odef" data-i="2" aria-pressed="${S.opt.def===2}">Sp. Def = Insight</button><button data-a="odef" data-i="1" aria-pressed="${S.opt.def===1}">Sp. Def = Vitality</button></div><p class="small muted">Il manuale chiede di scegliere un metodo per tutta la campagna (p. 27).</p></div>
@@ -1823,16 +1851,23 @@ const ACT={
   tgenarch(){let a=+ui.ga.a,rk=+ui.ga.rk,t;const nn=ui.ga.n||0;if((a>=100&&!isMaster())||(a>=0&&a<100&&!archOk(a)))a=-1;if(a>=100)t=genFixed(a-100,nn);else{if(a<0){const ok=ARCH.map((A,i)=>i).filter(archOk);a=pick(ok)}if(rk<0)rk=Math.min(5,pick([1,2,2,3])+(ARCH[a][9]||0));t=genTrainer(a,rk,nn)}S.trainers.unshift(t);save();ui.stack.push({k:'trainer',i:t.id});render();toast(t.role+' '+t.name+' con '+t.team.length+' Pokémon')},
   tnew(){const t=newTrainer();S.trainers.unshift(t);save();ui.stack.push({k:'trainer',i:t.id});render()},
   tgen(){const t=curTrainer();if(!t)return;ui.gen.target=t.id;ui.gen.rk=t.rk;ui.stack=[];ui.tab='genera';render();toast('Il prossimo salvataggio va nella squadra di '+(t.name||'questo allenatore'))},
-  tat(d){const t=curTrainer();t.at[+d.k]=clamp(t.at[+d.k]+(+d.d),1,7);save();render(true)},
-  tso(d){const t=curTrainer();t.so[+d.k]=clamp(t.so[+d.k]+(+d.d),1,7);save();render(true)},
-  tsk(d){const t=curTrainer();t.sk[d.k]=clamp((t.sk[d.k]||0)+(+d.d),0,5);save();render(true)},
+  tat(d){const t=curTrainer(),b=trBud(t),i=+d.k,dd=+d.d;if(dd>0){if(t.at[i]>=b.lim)return toast('Massimo '+b.lim);if(b.ua>=b.ta)return toast('Punti attributo finiti: ne riceve altri salendo di rango con i traguardi')}else if(t.at[i]<=1)return toast('Parte da 1');t.at[i]+=dd;save();render(true)},
+  tso(d){const t=curTrainer(),b=trBud(t),i=+d.k,dd=+d.d;if(dd>0){if(t.so[i]>=b.lim)return toast('Massimo '+b.lim);if(b.us>=b.ts)return toast('Punti social finiti: ne riceve altri salendo di rango con i traguardi')}else if(t.so[i]<=1)return toast('Parte da 1');t.so[i]+=dd;save();render(true)},
+  tsk(d){const t=curTrainer(),b=trBud(t),dd=+d.d,v=t.sk[d.k]||0;if(dd>0){if(v>=b.R.l)return toast('Al rango '+RK[t.rk]+' il massimo per skill è '+b.R.l);if(b.uk>=b.R.k)return toast('Punti skill finiti')}else if(v<=0)return;t.sk[d.k]=v+dd;save();render(true)},
   tdmg(d){const t=curTrainer();t.dmg=clamp((t.dmg||0)-(+d.d),0,tDer(t).hp);save();render(true)},
   tdup(){const t=curTrainer();const c=JSON.parse(JSON.stringify(t));c.id=uid();c.name=(t.name||'Allenatore')+' (copia)';c.team.forEach(p=>p.id=uid());S.trainers.unshift(c);save();ui.stack=[{k:'trainer',i:c.id}];toast('Duplicato');render()},
   tdel(){if(ui.arm!=='tdel'){ui.arm='tdel';render(true);return}const t=curTrainer();S.trainers=S.trainers.filter(x=>x!==t);if(ui.gen.target===t.id)ui.gen.target='saved';save();ui.arm=null;ui.stack=[];render()},
   iedit(){const c=curInst();c.top.edit=!c.top.edit;render(true)},
-  iat(d){const c=curInst(),M=MON[c.P.m],i=+d.k;c.P.at[i]=clamp(c.P.at[i]+(+d.d),1,M.st[i][1]+2);save();render(true)},
-  iso(d){const c=curInst(),i=+d.k;c.P.so[i]=clamp(c.P.so[i]+(+d.d),1,5);save();render(true)},
-  isk(d){const c=curInst();c.P.sk[d.k]=clamp((c.P.sk[d.k]||0)+(+d.d),0,5);save();render(true)},
+  iat(d){const c=curInst(),P=c.P,b=monBud(P),i=+d.k,dd=+d.d;
+    if(dd>0){if(P.at[i]>=b.cap[i])return toast('Massimo della specie per '+ATTR[i]+' ('+b.cap[i]+')');if(b.ua>=b.R.a)return toast('Punti del rango finiti: ne riceve altri salendo di rango (Crescita)')}
+    else if(P.at[i]<=b.base[i])return toast('Non scende sotto il valore base della specie ('+b.base[i]+')');
+    P.at[i]=P.at[i]+dd;save();render(true)},
+  iso(d){const c=curInst(),P=c.P,b=monBud(P),i=+d.k,dd=+d.d;
+    if(dd>0){if(P.so[i]>=5)return toast('Massimo 5');if(b.us>=b.R.s)return toast('Punti social del rango finiti')}else if(P.so[i]<=1)return toast('Parte da 1');
+    P.so[i]+=dd;save();render(true)},
+  isk(d){const c=curInst(),P=c.P,b=monBud(P),dd=+d.d,v=P.sk[d.k]||0;
+    if(dd>0){if(v>=b.R.l)return toast('Al rango '+RK[P.rk]+' il massimo per skill è '+b.R.l);if(b.uk>=b.R.k)return toast('Punti skill del rango finiti')}else if(v<=0)return;
+    P.sk[d.k]=v+dd;save();render(true)},
   imv(d){const c=curInst(),ref=/^\d+$/.test(d.i)?+d.i:d.i;const j=c.P.mv.findIndex(r=>String(r)===String(ref));if(j>=0)c.P.mv.splice(j,1);else c.P.mv.push(ref);save();render(true)},
   idmg(d){const c=curInst();c.P.dmg=clamp((c.P.dmg||0)-(+d.d),0,derive(c.P).hp);save();render(true)},
   iwsp(d){const c=curInst();c.P.wsp=clamp((c.P.wsp||0)-(+d.d),0,derive(c.P).will);save();render(true)},
@@ -2000,7 +2035,7 @@ const ACT={
   pwmon(d){ui.pw.mi=+d.i;ui.pw.mq='';render(true)},
   pwmonx(){ui.pw.mi=null;ui.pw.nick='';render(true)},
   pwdone(){const p=ui.pw;if(!p||!p.name.trim())return;const t=newTrainer();
-    Object.assign(t,{pg:true,name:p.name.trim(),player:p.player.trim(),role:p.role.trim(),nat:p.nat,age:p.age,rk:p.rk,at:p.at.slice(),so:p.so.slice(),sk:Object.assign({},p.sk),notes:pwNotes(p),cash:2000,inv:'',box:[],dex:{s:[],c:[]}});
+    Object.assign(t,{pg:true,name:p.name.trim(),player:p.player.trim(),role:p.role.trim(),nat:p.nat,age:p.age,rk:p.rk,rk0:p.rk,at:p.at.slice(),so:p.so.slice(),sk:Object.assign({},p.sk),notes:pwNotes(p),cash:2000,inv:'',box:[],dex:{s:[],c:[]}});
     if(p.img)t.img=p.img;
     if(p.mi!=null){const P=generate(p.mi,p.rk,'bal');P.hap=2;P.loy=2;P.tp=0;P.ball='poke';if(p.nick.trim())P.nick=p.nick.trim();t.team.push(P);dexAdd(t,MON[p.mi].num,'c')}
     const before=martTier();S.trainers.unshift(t);save();ui.pw=null;ui.stack.pop();ui.tv='pg';ui.stack.push({k:'trainer',i:t.id});render();toast(t.name+' è pronto per partire!'+(martTier()>before?' Il Pokémart ha nuovi articoli.':''))},
