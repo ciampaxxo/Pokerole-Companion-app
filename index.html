@@ -179,6 +179,7 @@ nav.tabs button[aria-current="page"] svg{color:var(--accent)}
 .arow .big2{font:800 22px/1 var(--display);min-width:28px;text-align:center}
 .ptsh{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 4px}.ptsh h3{margin:0;flex:1}
 .legend{display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--muted);margin:2px 0 6px}.legend .dot{display:inline-block;vertical-align:-2px;margin-right:4px}
+.seg button.locked{opacity:.5;border-style:dashed}.item.locked{opacity:.55;cursor:default}
 .ladder td,.ladder th{text-align:center}.ladder td:first-child,.ladder th:first-child{text-align:left}.ladder tr.cur td{font-weight:700}.ladder tr.ini td:first-child::after{content:" · iniziale";font-weight:400;color:var(--muted);font-size:11px}
 .pwnav{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg,#f5f5f5) 30%);padding-top:14px}
 .hero .ph{position:relative;z-index:1;font:700 64px/1 var(--display);color:rgba(255,255,255,.75);margin-bottom:40px}
@@ -290,7 +291,7 @@ nav.tabs{padding-bottom:env(safe-area-inset-bottom)}
 <body>
 <div class="app">
   <header class="top">
-    <span class="ball" aria-hidden="true"></span><div class="brand">Master <b>Pokérole</b><small>Compagno del master · regole 3.0 · <span class="appv">v1.31</span></small></div>
+    <span class="ball" aria-hidden="true"></span><div class="brand">Master <b>Pokérole</b><small>Compagno del master · regole 3.0 · <span class="appv">v1.32</span></small></div>
     <button class="btn sm ghost" data-a="open" data-k="backup" aria-label="Impostazioni e backup">Opzioni</button>
   </header>
   <main id="main"></main>
@@ -489,7 +490,11 @@ function instCard(P,o){
     h+=`${ptsHead('Attributi sociali',R.s-bu.us,'punti')}<p class="small muted">Partono tutti da 1, massimo 5. Il rango ${RK[P.rk]} dà ${R.s} punti.</p>${attrRows(SOC,[1,1,1,1,1],P.so,[5,5,5,5,5],'iso',SOCD,'dal rango')}
     ${ptsHead('Skill',R.k-bu.uk,'punti')}<p class="small muted">Partono da 0. Il rango ${RK[P.rk]} dà ${R.k} punti, al massimo <b>${R.l}</b> per skill.</p>${PSKG.map(([g,L])=>`<h3>${g}</h3><div class="grid2">${L.map(k=>`<div class="srow"><span>${k}<br><span class="small muted">${PSKD[k]}</span></span>${stepper('isk',k,P.sk[k]||0)}</div>`).join('')}</div>`).join('')}
     ${ladderH(P.rk,P.rk0)}
-    <h3>Mosse <span class="small">(${P.mv.length}/${P.at[4]+3})</span></h3><div class="seg">${M.mv.map(x=>`<button data-a="imv" data-i="${esc(x[1])}" aria-pressed="${P.mv.some(r=>String(r)===String(x[1]))}"><i class="pip" style="--pc:${RKCOL[x[0]]}"></i>${esc(mvName(x[1]))}</button>`).join('')}</div>`;
+    ${(()=>{const kn=r=>P.mv.some(y=>String(y)===String(r)),ok=M.mv.filter(x=>x[0]<=P.rk),lk=M.mv.filter(x=>x[0]>P.rk),lim=P.at[4]+3,bad=P.mv.filter(r=>{const x=M.mv.find(y=>String(y[1])===String(r));return x&&x[0]>P.rk});
+      return `${ptsHead('Mosse',Math.min(lim,ok.length)-P.mv.filter(r=>!bad.includes(r)).length,'mosse')}<p class="small muted">Può conoscere <b>Insight + 3 = ${lim}</b> mosse, scelte fra quelle che la specie impara fino al suo rango (${RK[P.rk]}).</p>
+      <div class="seg">${ok.map(x=>`<button data-a="imv" data-i="${esc(x[1])}" aria-pressed="${kn(x[1])}"><i class="pip" style="--pc:${RKCOL[x[0]]}"></i>${esc(mvName(x[1]))}</button>`).join('')}</div>
+      ${bad.length?`<p class="note">${bad.map(r=>esc(mvName(r))).join(', ')}: ${bad.length===1?'è una mossa':'sono mosse'} di un rango superiore a quello del Pokémon. Toccala per toglierla.</p><div class="seg">${bad.map(r=>`<button data-a="imv" data-i="${esc(r)}" aria-pressed="true" class="locked">🔒 ${esc(mvName(r))}</button>`).join('')}</div>`:''}
+      ${lk.length?`<h3>Si sbloccano salendo di rango</h3><div class="seg">${lk.filter(x=>!kn(x[1])).map(x=>`<button data-a="imv" data-i="${esc(x[1])}" class="locked" aria-disabled="true">🔒 <i class="pip" style="--pc:${RKCOL[x[0]]}"></i>${esc(mvName(x[1]))} · ${RK[x[0]]}</button>`).join('')}</div>`:''}`})()}`;
   }else{
     h+=`${o.track?ladderH(P.rk,P.rk0):''}<div class="kv">${SOC.map((a,i)=>`<span>${a} <b>${P.so[i]}</b></span>`).join('')}</div>
     <div class="kv">${Object.keys(P.sk).filter(k=>P.sk[k]).map(k=>`<span>${k} <b>${P.sk[k]}</b></span>`).join('')||'<span>Nessuna skill</span>'}</div>
@@ -750,7 +755,8 @@ function sMpw(){const m=ui.mw;let h=`<div class="pwsteps">${MWSTEPS.map((x,i)=>`
   }else if(m.s===3){const b=mwBud(m),pool=mwPool(m),sel=new Set(m.mv.map(String));
     h+=`<div class="card"><div class="row"><h3 class="grow">Mosse</h3>${pwLeft(Math.min(b.nmv,pool.length)-m.mv.length,'mosse')}</div><p class="small muted">Può conoscere Insight + 3 = ${b.nmv} mosse, scelte tra quelle che la specie impara fino al rango ${RK[m.rk]}.</p>
     <button class="btn sm" data-a="mwauto">Scegli in automatico</button>
-    <div class="list" style="margin-top:8px">${pool.map(x=>{const mv=mvOf(x[1]),r=String(x[1]),on=sel.has(r);return `<button class="item" data-a="mwmv" data-i="${esc(r)}" aria-pressed="${on}"${on?' style="background:rgba(217,52,63,.10)"':''}><span class="grow"><span class="t">${on?'✓ ':''}${esc(mv?mv.n:x[1])}</span><br><span class="small muted">${mv?esc(mv.c)+(mv.p!=='-'?' · Power '+esc(mv.p):'')+' · '+esc(mv.a):''} · da ${RK[x[0]]}</span></span>${mv?tchip(mv.t):''}</button>`}).join('')}</div></div>`;
+    <div class="list" style="margin-top:8px">${pool.map(x=>{const mv=mvOf(x[1]),r=String(x[1]),on=sel.has(r);return `<button class="item" data-a="mwmv" data-i="${esc(r)}" aria-pressed="${on}"${on?' style="background:rgba(217,52,63,.10)"':''}><span class="grow"><span class="t">${on?'✓ ':''}${esc(mv?mv.n:x[1])}</span><br><span class="small muted">${mv?esc(mv.c)+(mv.p!=='-'?' · Power '+esc(mv.p):'')+' · '+esc(mv.a):''} · da ${RK[x[0]]}</span></span>${mv?tchip(mv.t):''}</button>`}).join('')}</div>
+    ${(()=>{const lk=MON[m.mi].mv.filter(x=>x[0]>m.rk);return lk.length?`<h3>Si sbloccano salendo di rango</h3><p class="small muted">Non si possono scegliere ora: le impara quando sale al rango indicato.</p><div class="list">${lk.map(x=>{const mv=mvOf(x[1]);return `<div class="item locked"><span class="grow"><span class="t">🔒 ${esc(mv?mv.n:x[1])}</span><br><span class="small muted">${mv?esc(mv.c)+(mv.p!=='-'?' · Power '+esc(mv.p):''):''} · al rango <b>${RK[x[0]]}</b></span></span>${mv?tchip(mv.t):''}</div>`}).join('')}</div>`:''})()}</div>`;
   }else{const b=mwBud(m),P=mwMon(m),warn=[];
     if(b.a-b.ua>0)warn.push([1,`${b.a-b.ua} punti attributo`]);if(b.s-b.us>0)warn.push([1,`${b.s-b.us} punti social`]);if(b.k-b.uk>0)warn.push([2,`${b.k-b.uk} punti skill`]);const free=Math.min(b.nmv,mwPool(m).length)-m.mv.length;if(free>0)warn.push([3,free+' mosse']);
     if(!m.nat)P.nat='(a caso)';h+=instCard(P,{});
@@ -1760,7 +1766,7 @@ const VIEW={on:false,code:null,g:null,pc:null,sub:null,st:null,ok:false,fb:null,
     requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll('#tav .hpb i[data-p]').forEach(i=>{const v=+i.dataset.p;i.style.width=100*v+'%';i.style.background=v>.5?'#3fbf6a':v>.2?'#f0b429':'#e5484d'})))}};
 
 /* ---------- schede e render ---------- */
-const APPV='1.31',APPD='27 novembre 2026';
+const APPV='1.32',APPD='27 novembre 2026';
 function sBackup(){return sBackup0()+`<div class="card"><h3>Versione</h3><p>Master Pokérole <b>v${APPV}</b> · pubblicata il ${APPD}</p><p class="small muted">Quando esce una versione nuova l’app la scarica da sola e lo segnala con un avviso: basta riaprirla.</p></div>`}
 function sBackup0(){return `<div class="card"><h3>Danno minimo</h3><div class="seg"><button data-a="omin" data-i="1" aria-pressed="${S.opt.min1!==false}">Sempre almeno 1</button><button data-a="omin" data-i="0" aria-pressed="${S.opt.min1===false}">Le resistenze possono azzerarlo</button></div><p class="small muted">Vale per l’assistente di battaglia. Le immunità danno sempre 0.</p></div>
 <div class="card"><h3>Difese</h3><div class="seg"><button data-a="odef" data-i="2" aria-pressed="${S.opt.def===2}">Sp. Def = Insight</button><button data-a="odef" data-i="1" aria-pressed="${S.opt.def===1}">Sp. Def = Vitality</button></div><p class="small muted">Il manuale chiede di scegliere un metodo per tutta la campagna (p. 27).</p></div>
@@ -1868,7 +1874,9 @@ const ACT={
   isk(d){const c=curInst(),P=c.P,b=monBud(P),dd=+d.d,v=P.sk[d.k]||0;
     if(dd>0){if(v>=b.R.l)return toast('Al rango '+RK[P.rk]+' il massimo per skill è '+b.R.l);if(b.uk>=b.R.k)return toast('Punti skill del rango finiti')}else if(v<=0)return;
     P.sk[d.k]=v+dd;save();render(true)},
-  imv(d){const c=curInst(),ref=/^\d+$/.test(d.i)?+d.i:d.i;const j=c.P.mv.findIndex(r=>String(r)===String(ref));if(j>=0)c.P.mv.splice(j,1);else c.P.mv.push(ref);save();render(true)},
+  imv(d){const c=curInst(),P=c.P,M=MON[P.m],ref=/^\d+$/.test(d.i)?+d.i:d.i;const j=P.mv.findIndex(r=>String(r)===String(ref));if(j>=0){P.mv.splice(j,1);save();render(true);return}
+    const x=M.mv.find(y=>String(y[1])===String(ref));if(!x)return;if(x[0]>P.rk)return toast(mvName(ref)+' si sblocca al rango '+RK[x[0]]+': prima deve salire di rango');
+    const lim=P.at[4]+3;if(P.mv.length>=lim)return toast('Ha già '+lim+' mosse (Insight + 3): togline una prima');P.mv.push(ref);save();render(true)},
   idmg(d){const c=curInst();c.P.dmg=clamp((c.P.dmg||0)-(+d.d),0,derive(c.P).hp);save();render(true)},
   iwsp(d){const c=curInst();c.P.wsp=clamp((c.P.wsp||0)-(+d.d),0,derive(c.P).will);save();render(true)},
   iheal(){const c=curInst();c.P.dmg=0;c.P.wsp=0;save();toast('HP e Will al massimo');render(true)},

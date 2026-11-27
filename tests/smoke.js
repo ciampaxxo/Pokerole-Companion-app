@@ -221,6 +221,23 @@ const puts=[],dcs=[];let dcStatus=200,dcNoCors=false;
     return {txt:/per l’età \(Adulto\)/.test(html)&&/per il rango Rookie/.test(html),used:b.ua,tot:b.ta,max:Math.max(...t.at)<=5}});
   ok(tp.txt,'scheda allenatore: punti di età e di rango spiegati');
   ok(tp.used===tp.tot&&tp.max,'allenatore: non si superano i punti di età e rango ('+tp.used+'/'+tp.tot+')');
+  // mosse: quelle di rango superiore si vedono ma non si possono scegliere
+  const mvx=await pg.evaluate(()=>{const mi=MON.findIndex(m=>m.n==='Eevee'),M=MON[mi],P=generate(mi,1,'bal');S.saved.unshift(P);ui.stack=[{k:'inst',i:P.id,o:'saved',edit:true}];render();
+    const hi=M.mv.find(x=>x[0]>P.rk),html=document.getElementById('sheet').innerHTML;const n0=P.mv.length;
+    P.mv=P.mv.slice(0,1);ACT.imv({i:String(hi[1])});const added=P.mv.some(r=>String(r)===String(hi[1]));
+    const btn=document.querySelector('#sheet [data-a=imv].locked');
+    // mossa di rango superiore già presente (scheda vecchia): si può togliere
+    P.mv.push(hi[1]);render();const warn=document.getElementById('sheet').innerHTML.includes('rango superiore');ACT.imv({i:String(hi[1])});const removed=!P.mv.some(r=>String(r)===String(hi[1]));
+    // limite Insight + 3
+    const ok=M.mv.filter(x=>x[0]<=P.rk).map(x=>x[1]);P.mv=ok.slice(0,P.at[4]+3);const before=P.mv.length;ok.forEach(r=>ACT.imv({i:String(r)}));
+    S.saved.shift();ui.stack=[];render();
+    return {listed:/Si sbloccano salendo di rango/.test(html)&&!!btn,added,warn,removed}});
+  ok(mvx.listed,'le mosse future sono elencate con il lucchetto');
+  ok(!mvx.added,'una mossa di rango superiore non si può aggiungere');
+  ok(mvx.warn&&mvx.removed,'una mossa di rango superiore già presente viene segnalata e si può togliere');
+  const wz=await pg.evaluate(()=>{ui.mw=mwNew('saved');mwSetMon(ui.mw,MON.findIndex(m=>m.n==='Eevee'));ui.mw.rk=0;ui.mw.s=3;ui.stack=[{k:'mpw'}];render();
+    const h=document.getElementById('sheet').innerHTML,hi=MON[ui.mw.mi].mv.find(x=>x[0]>0);ACT.mwmv({i:String(hi[1])});const r={listed:/Si sbloccano salendo di rango/.test(h)&&!!document.querySelector('#sheet .item.locked'),added:ui.mw.mv.some(x=>String(x)===String(hi[1]))};ui.mw=null;ui.stack=[];render();return r});
+  ok(wz.listed&&!wz.added,'creazione guidata: mosse future visibili ma non selezionabili');
   // salvataggio ritardato mentre si scrive
   const sv=await pg.evaluate(async()=>{const t=S.trainers[0];ui.stack=[{k:'trainer',i:t.id}];render();const el=document.getElementById('tno');el.value='prova note';el.dispatchEvent(new Event('input',{bubbles:true}));
     const before=JSON.parse(localStorage.getItem(SKEY)).trainers[0].notes;await new Promise(r=>setTimeout(r,600));const after=JSON.parse(localStorage.getItem(SKEY)).trainers[0].notes;ui.stack=[];render();return {before,after}});
