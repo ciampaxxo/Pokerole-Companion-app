@@ -238,6 +238,29 @@ const puts=[],dcs=[];let dcStatus=200,dcNoCors=false;
   const wz=await pg.evaluate(()=>{ui.mw=mwNew('saved');mwSetMon(ui.mw,MON.findIndex(m=>m.n==='Eevee'));ui.mw.rk=0;ui.mw.s=3;ui.stack=[{k:'mpw'}];render();
     const h=document.getElementById('sheet').innerHTML,hi=MON[ui.mw.mi].mv.find(x=>x[0]>0);ACT.mwmv({i:String(hi[1])});const r={listed:/Si sbloccano salendo di rango/.test(h)&&!!document.querySelector('#sheet .item.locked'),added:ui.mw.mv.some(x=>String(x)===String(hi[1]))};ui.mw=null;ui.stack=[];render();return r});
   ok(wz.listed&&!wz.added,'creazione guidata: mosse future visibili ma non selezionabili');
+  // Overclock: solo per il master, bonus nei calcoli e aura sullo schermo dei giocatori
+  const oc=await pg.evaluate(()=>{localStorage.removeItem('master-pokerole-gh');
+    const a=MON.findIndex(m=>m.n==='Pikachu'),b=MON.findIndex(m=>m.n==='Eevee');S.saved.unshift(generate(a,2,'bal'),generate(b,2,'bal'));
+    bNew();bAdd('saved',S.saved[0].id,'A');bAdd('saved',S.saved[1].id,'B');ACT.binit();ACT.bstart();ui.tab='lotta';ui.stack=[];render();
+    const noBtn=!document.querySelector('[data-a=bocp]');const f=S.battle.f[1];ACT.bocp({i:f.id});const blocked=ui.bt.oc!==f.id;
+    localStorage.setItem('master-pokerole-gh',JSON.stringify({tok:'x',ok:true,repo:'a/b'}));render();
+    const btn=!!document.querySelector('[data-a=bocp]');const st0=bEff(f).at[0],def0=bDer(f).def;
+    ACT.bocp({i:f.id});const panel=document.getElementById('main').innerHTML.includes('Attiva overclock');
+    ACT.bocv({k:f.id+':at0',d:1});ACT.bocv({k:f.id+':at0',d:1});ACT.bocv({k:f.id+':def',d:1});ACT.bocv({k:f.id+':dmg',d:2});
+    const before=bEff(f).at[0]===st0;ACT.boct({i:f.id});
+    const st1=bEff(f).at[0],def1=bDer(f).def,card=!!document.querySelector('.fc.oc'),fx=(S.battle.fxl||[]).some(x=>x.k==='oc'&&x.on),snapOc=TAV.snap().f.find(x=>x.id===f.id).oc;
+    // danno: +2 dadi da overclock
+    const atk=S.battle.f[1],tg=S.battle.f[0],mv=bP(atk).mv.find(r=>{const m=mvOf(r);return m&&m.c!=='Support'&&dmgPool(m,bP(atk),MON[bP(atk).m])});
+    let dice=null,dice0=null;if(mv!=null){const keep=atk.oc.b;atk.oc.b={dmg:2};ui.act={fid:atk.id,mv,tg:[tg.id],acc:5,r:{}};dice=bCalc().t[tg.id].dice;atk.oc.on=false;dice0=bCalc().t[tg.id].dice;atk.oc.on=true;atk.oc.b=keep;ui.act=null}
+    ACT.boct({i:f.id});const off=bEff(f).at[0]===st0;
+    return {noBtn,blocked,btn,panel,before,st:[st0,st1],def:[def0,def1],card,fx,snapOc,dice,dice0,off}});
+  ok(oc.noBtn&&oc.blocked,'Overclock: niente pulsante e nessun effetto senza la chiave del master');
+  ok(oc.btn&&oc.panel,'Overclock: il master ha il pulsante e il pannello');
+  ok(oc.before&&oc.st[1]===oc.st[0]+2&&oc.def[1]===oc.def[0]+1,'Overclock: i bonus valgono solo da attivo (+2 Strength, +1 Defense)');
+  ok(oc.dice==null||oc.dice===oc.dice0+2,'Overclock: +2 dadi al danno ('+oc.dice0+' → '+oc.dice+')');
+  ok(oc.card&&oc.fx&&oc.snapOc===1,'Overclock: scheda viola, effetto e segnale allo schermo dei giocatori');
+  ok(oc.off,'Overclock: disattivato, i bonus spariscono');
+  await pg.evaluate(()=>{localStorage.removeItem('master-pokerole-gh');S.battle=null;S.saved.splice(0,2);ui.stack=[];render()});
   // salvataggio ritardato mentre si scrive
   const sv=await pg.evaluate(async()=>{const t=S.trainers[0];ui.stack=[{k:'trainer',i:t.id}];render();const el=document.getElementById('tno');el.value='prova note';el.dispatchEvent(new Event('input',{bubbles:true}));
     const before=JSON.parse(localStorage.getItem(SKEY)).trainers[0].notes;await new Promise(r=>setTimeout(r,600));const after=JSON.parse(localStorage.getItem(SKEY)).trainers[0].notes;ui.stack=[];render();return {before,after}});

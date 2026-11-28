@@ -180,6 +180,9 @@ nav.tabs button[aria-current="page"] svg{color:var(--accent)}
 .ptsh{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 4px}.ptsh h3{margin:0;flex:1}
 .legend{display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--muted);margin:2px 0 6px}.legend .dot{display:inline-block;vertical-align:-2px;margin-right:4px}
 .seg button.locked{opacity:.5;border-style:dashed}.item.locked{opacity:.55;cursor:default}
+.fc.oc{border-color:#8a2be2;box-shadow:0 0 0 2px rgba(138,43,226,.55),0 0 22px -6px #8a2be2}
+.tag.oc{background:#8a2be2;color:#fff;border-color:#8a2be2}.btn.oc{border-color:#8a2be2;color:#8a2be2}.btn.oc.on{background:#8a2be2;color:#fff}
+.ocp{border:1px dashed #8a2be2;border-radius:10px;padding:10px;margin-top:8px;background:color-mix(in srgb,#8a2be2 6%,var(--surface))}
 .ladder td,.ladder th{text-align:center}.ladder td:first-child,.ladder th:first-child{text-align:left}.ladder tr.cur td{font-weight:700}.ladder tr.ini td:first-child::after{content:" · iniziale";font-weight:400;color:var(--muted);font-size:11px}
 .pwnav{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg,#f5f5f5) 30%);padding-top:14px}
 .hero .ph{position:relative;z-index:1;font:700 64px/1 var(--display);color:rgba(255,255,255,.75);margin-bottom:40px}
@@ -214,6 +217,12 @@ main>*,.sheet .body>*{flex-shrink:0}
 #arena .mon .spr.back{animation-duration:3.2s}
 #arena .mon:nth-child(2n) .spr{animation-delay:-1.1s}
 @keyframes idleB{50%{transform:translateY(-3%) scaleY(1.02)}}
+#arena .mon .oca{position:absolute;left:50%;bottom:-2%;transform:translateX(-50%);border-radius:50% 50% 45% 45%;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 62%,rgba(190,90,255,.65),rgba(130,40,230,.38) 45%,rgba(100,20,200,.12) 65%,transparent 74%);filter:blur(5px);animation:ocAura 1.5s ease-in-out infinite}
+#arena .mon.oc .spr{filter:drop-shadow(0 0 4px #c77dff) drop-shadow(0 0 12px #8a2be2);animation:idleB 2.6s ease-in-out infinite,ocGlow 1.5s ease-in-out infinite}
+#arena .mon.oc .plate b::after{content:" ⚡";color:#c77dff}
+@keyframes ocAura{0%,100%{opacity:.75;transform:translateX(-50%) scale(1)}50%{opacity:1;transform:translateX(-50%) scale(1.08)}}
+@keyframes ocGlow{50%{filter:drop-shadow(0 0 7px #d9a3ff) drop-shadow(0 0 20px #9b30ff)}}
 #arena .mon .pf{position:absolute;bottom:-6%;left:50%;transform:translateX(-50%);aspect-ratio:4/1;border-radius:50%;background:radial-gradient(ellipse at 50% 45%,rgba(0,0,0,.42),rgba(0,0,0,.18) 60%,transparent 72%)}
 #arena .mon.cur .pf{background:radial-gradient(ellipse at 50% 50%,rgba(255,215,90,.75),rgba(255,190,40,.35) 55%,transparent 72%);animation:curP 1.2s ease-in-out infinite}
 @keyframes curP{50%{filter:brightness(1.5)}}
@@ -291,7 +300,7 @@ nav.tabs{padding-bottom:env(safe-area-inset-bottom)}
 <body>
 <div class="app">
   <header class="top">
-    <span class="ball" aria-hidden="true"></span><div class="brand">Master <b>Pokérole</b><small>Compagno del master · regole 3.0 · <span class="appv">v1.32</span></small></div>
+    <span class="ball" aria-hidden="true"></span><div class="brand">Master <b>Pokérole</b><small>Compagno del master · regole 3.0 · <span class="appv">v1.33</span></small></div>
     <button class="btn sm ghost" data-a="open" data-k="backup" aria-label="Impostazioni e backup">Opzioni</button>
   </header>
   <main id="main"></main>
@@ -1241,8 +1250,13 @@ function bP(f){return findInst(f.i,f.o).P}
 function bOwner(f){if(f.o==='battle')return 'selvatico';if(f.o==='saved')return 'salvato';const t=S.trainers.find(x=>x.id===f.o);return t?(t.name||'allenatore'):''}
 function bName(f){const P=bP(f);if(!P)return '?';const n=P.nick||MON[P.m].n;const same=B().f.filter(x=>{const Q=bP(x);return Q&&(Q.nick||MON[Q.m].n)===n});return same.length>1?n+' '+(same.indexOf(f)+1):n}
 function bAdd(o,i,side){const b=B();if(b.f.some(x=>x.o===o&&x.i===i))return;const P=findInst(i,o).P;b.f.push({id:uid(),side,o,i,d6:0,acts:0,used:[],st:((P&&P.st)||[]).slice(),mod:[0,0,0,0,0,0,0]})}
-function bEff(f){const P=bP(f),Q=Object.assign({},P,{at:P.at.map((v,k)=>Math.max(0,v+(f.mod[k]||0)))});if(f.st.includes('par'))Q.at[1]=Math.max(0,Q.at[1]-2);return Q}
-function bDer(f){const Q=bEff(f),M=MON[Q.m],d=derive(Q),P=bP(f),w=B().weather;d.hp=derive(P).hp;d.will=derive(P).will;d.def+=f.mod[5]||0;d.sdef+=f.mod[6]||0;if(w==='snow'&&M.ty.includes('Ice'))d.def++;if(w==='sand'&&M.ty.includes('Rock'))d.sdef++;d.hpNow=Math.max(0,d.hp-(P.dmg||0));d.wNow=Math.max(0,d.will-(P.wsp||0));d.pain=d.hpNow<=0?0:d.hpNow<=1&&d.hp>1?2:d.hpNow<=Math.floor(d.hp/2)?1:0;return d}
+/* Overclock (solo master): potenzia attributi, difese o danno di un Pokémon in lotta */
+const OCOPT=[['at0','Strength'],['at1','Dexterity'],['at2','Vitality'],['at3','Special'],['at4','Insight'],['def','Defense'],['sdef','Sp. Defense'],['dmg','Danno']];
+const ocB=f=>f&&f.oc&&f.oc.on?f.oc.b||{}:{};
+const ocOn=f=>Object.values(ocB(f)).some(v=>v>0);
+const ocTxt=f=>OCOPT.filter(o=>(ocB(f)[o[0]]||0)>0).map(o=>'+'+ocB(f)[o[0]]+' '+(o[0]==='dmg'?(ocB(f).dmg===1?'dado':'dadi')+' di danno':o[1])).join(', ');
+function bEff(f){const P=bP(f),ob=ocB(f),Q=Object.assign({},P,{at:P.at.map((v,k)=>Math.max(0,v+(f.mod[k]||0)+(ob['at'+k]||0)))});if(f.st.includes('par'))Q.at[1]=Math.max(0,Q.at[1]-2);return Q}
+function bDer(f){const Q=bEff(f),M=MON[Q.m],d=derive(Q),P=bP(f),w=B().weather;d.hp=derive(P).hp;d.will=derive(P).will;d.def+=(f.mod[5]||0)+(ocB(f).def||0);d.sdef+=(f.mod[6]||0)+(ocB(f).sdef||0);if(w==='snow'&&M.ty.includes('Ice'))d.def++;if(w==='sand'&&M.ty.includes('Rock'))d.sdef++;d.hpNow=Math.max(0,d.hp-(P.dmg||0));d.wNow=Math.max(0,d.will-(P.wsp||0));d.pain=d.hpNow<=0?0:d.hpNow<=1&&d.hp>1?2:d.hpNow<=Math.floor(d.hp/2)?1:0;return d}
 function bFx(fx){const b=B();if(!b)return;b.fxn=(b.fxn||0)+1;fx.n=b.fxn;(b.fxl=b.fxl||[]).push(fx);if(b.fxl.length>6)b.fxl.shift();if((S.opt.audioOut||'off')==='qui'&&AUD.has()){AUD.unlock();fxSound(fx)}}
 function bLog(t){const b=B();b.log.unshift('R'+b.round+' · '+t);b.log.length=Math.min(b.log.length,40)}
 function bHurt(f,n,why){const P=bP(f),d=bDer(f);P.dmg=clamp((P.dmg||0)+n,0,d.hp);if(n)bLog(bName(f)+(n>0?' subisce '+n+' dann'+(n===1?'o':'i'):' recupera '+(-n)+' HP')+(why?' ('+why+')':'')+(d.hp-P.dmg<=0?' ed è KO':''))}
@@ -1279,13 +1293,18 @@ function bInit(){
 function bCard(f,cur){
   const P=bP(f);if(!P)return '';const M=MON[P.m],d=bDer(f),ko=d.hpNow<=0,open=ui.bt.open===f.id;
   const stl=f.st.map(k=>(STATI.find(x=>x[0]===k)||[])[1]);
-  let h=`<div class="card fc ${f.side}${cur?' cur':''}${ko?' ko':''}"><div class="row">${monAv(bP(f).m)}<div class="grow"><span class="t">${esc(bName(f))}</span> <span class="small muted">${esc(bOwner(f))} · iniz. ${d.init+f.d6}</span></div>${M.ty.map(tchip).join('')}</div>
+  const oc=ocOn(f),ma=isMaster();
+  let h=`<div class="card fc ${f.side}${cur?' cur':''}${ko?' ko':''}${oc?' oc':''}"><div class="row">${monAv(bP(f).m)}<div class="grow"><span class="t">${esc(bName(f))}</span> <span class="small muted">${esc(bOwner(f))} · iniz. ${d.init+f.d6}</span></div>${M.ty.map(tchip).join('')}</div>
   <div class="hp"><b class="num">HP ${d.hpNow}/${d.hp}</b><div class="bar"><i style="width:${d.hp?100*d.hpNow/d.hp:0}%"></i></div>${stepper('bhp',f.id,'')}</div>
-  <div class="row small"><span class="tag">Will ${d.wNow}/${d.will}</span><span class="tag">Def ${d.def} · Sp.Def ${d.sdef}</span><span class="tag">Azioni ${f.acts}/5</span>${ko?'<span class="tag no">KO</span>':d.pain?`<span class="tag no">Dolore −${d.pain}</span>`:''}${stl.map(x=>`<span class="tag no">${x}</span>`).join('')}</div>
-  <div class="row"><button class="btn pri sm grow" data-a="bact" data-i="${f.id}"${ko||f.acts>=5?' disabled':''}>Agisci (servono ${f.acts+1} successi)</button><button class="btn sm" data-a="bopen" data-i="${f.id}">${open?'Chiudi':'Stati e bonus'}</button><button class="btn sm" data-a="open" data-k="inst" data-i="${P.id}" data-o="${f.o}">Scheda</button></div>${f.o==='battle'||f.o==='saved'?`<button class="btn sm" data-a="bcatch" data-i="${f.id}">Prova a catturarlo</button>`:''}`;
+  <div class="row small"><span class="tag">Will ${d.wNow}/${d.will}</span><span class="tag">Def ${d.def} · Sp.Def ${d.sdef}</span><span class="tag">Azioni ${f.acts}/5</span>${oc?`<span class="tag oc">⚡ Overclock: ${esc(ocTxt(f))}</span>`:''}${ko?'<span class="tag no">KO</span>':d.pain?`<span class="tag no">Dolore −${d.pain}</span>`:''}${stl.map(x=>`<span class="tag no">${x}</span>`).join('')}</div>
+  <div class="row"><button class="btn pri sm grow" data-a="bact" data-i="${f.id}"${ko||f.acts>=5?' disabled':''}>Agisci (servono ${f.acts+1} successi)</button><button class="btn sm" data-a="bopen" data-i="${f.id}">${open?'Chiudi':'Stati e bonus'}</button>${ma?`<button class="btn sm oc${oc?' on':''}" data-a="bocp" data-i="${f.id}" aria-label="Overclock">⚡</button>`:''}<button class="btn sm" data-a="open" data-k="inst" data-i="${P.id}" data-o="${f.o}">Scheda</button></div>${f.o==='battle'||f.o==='saved'?`<button class="btn sm" data-a="bcatch" data-i="${f.id}">Prova a catturarlo</button>`:''}`;
   if(open)h+=`<div class="seg">${STATI.map(x=>`<button data-a="bst" data-i="${f.id}" data-k="${x[0]}" aria-pressed="${f.st.includes(x[0])}">${x[1]}</button>`).join('')}</div>
   <div class="grid2">${MODL.map((m,k)=>`<div class="srow"><span>${m} ${f.mod[k]>0?'+':''}${f.mod[k]||0}</span>${stepper('bmod',f.id+':'+k,'')}</div>`).join('')}</div>
   <div class="row"><span class="small grow">Will speso</span>${stepper('bwl',f.id,'')}<button class="btn sm" data-a="bfree" data-i="${f.id}">+1 azione generica</button></div>`;
+  if(ma&&ui.bt.oc===f.id){const b=(f.oc&&f.oc.b)||{},any=Object.values(b).some(v=>v>0);
+    h+=`<div class="ocp"><div class="row"><b class="grow">⚡ Overclock</b><span class="small muted">solo master</span></div><p class="small muted">Scegli cosa potenziare e di quanto. I bonus contano nei tiri solo con l’overclock attivo; sullo schermo dei giocatori compare l’aura viola.</p>
+    <div class="grid2">${OCOPT.map(o=>`<div class="srow"><span>${o[1]} <b>${b[o[0]]?'+'+b[o[0]]:'—'}</b>${o[0]==='dmg'?'<br><span class="small muted">dadi in più al danno</span>':''}</span>${stepper('bocv',f.id+':'+o[0],'')}</div>`).join('')}</div>
+    <div class="row" style="margin-top:8px"><button class="btn grow${f.oc&&f.oc.on?'':' pri'}" data-a="boct" data-i="${f.id}"${!any&&!(f.oc&&f.oc.on)?' disabled':''}>${f.oc&&f.oc.on?'Disattiva overclock':'Attiva overclock'}</button></div></div>`}
   return h+'</div>';
 }
 function bFight(){
@@ -1319,7 +1338,7 @@ function bCalc(){
       const phys=/Physical/.test(mv.c)&&!/^Special/.test(mv.c)?(/Special/.test(mv.c)?/Strength/.test(mv.d):true):false;
       x.defv=phys?td.def:td.sdef;x.defl=phys?'Def':'Sp.Def';
       let wd=0;if(w==='sun'&&mv.t==='Fire')wd=1;if(w==='rain'&&mv.t==='Water')wd=1;if(w==='snow'&&mv.t==='Ice')wd=1;if(w==='des'&&mv.t==='Fire')wd=2;x.wd=wd;
-      x.dice=dp?Math.max(1,dp.n+(o.crit?2:0)+wd-x.defv):null;x.stab=dp&&dp.stab;
+      x.oc=ocB(f).dmg||0;x.dice=dp?Math.max(1,dp.n+(o.crit?2:0)+wd+x.oc-x.defv):null;x.stab=dp&&dp.stab;
       let dm=0,note=[];
       if(eff==='i'){dm=0;note.push('immune')}
       else if(w==='des'&&mv.t==='Water'){dm=0;note.push('il sole estremo annulla le mosse Acqua')}
@@ -1348,7 +1367,7 @@ function sAct(){
     ${x.stuck?'<p class="small muted">Non può reagire (azioni finite, Flinch, Sleep, Frozen o KO).</p>':!o.canEva?'<p class="small muted">Questa mossa non si può schivare né contrastare con Clash.</p>':!o.canCla?'<p class="small muted">Clash non possibile contro mosse Support o a danno fisso.</p>':''}
     ${r.re==='cla'?`<p class="small">Mossa usata per il Clash (conta come usata nel round):</p><div class="seg">${x.cmoves.map(m=>`<button data-a="acm" data-i="${id}" data-k="${esc(m)}" aria-pressed="${String(r.cm)===String(m)}">${esc(mvName(m))}</button>`).join('')}</div>`:''}
     ${r.re&&(r.re==='eva'||x.cmv)?`<p>Tira <b class="big">${x.rpool} dadi</b> <span class="small muted">${r.re==='eva'?'Dexterity + Evasion':(/Special/.test(x.cmv.c)&&!/Physical/.test(x.cmv.c)?'Special':'Strength')+' + Clash'}</span></p><div class="srow"><span>Successi della reazione (ne servono ${Math.max(0,o.net)+x.td.pain})</span>${stepper('ars',id,r.rs)}</div><div class="res"><span class="${x.rok?'ok':'no'}">${x.rok?(r.re==='eva'?'Schivato: nessun danno né effetti':'Clash riuscito: '+x.cd[0]+' dann'+(x.cd[0]===1?'o':'i')+' a '+esc(bName(T))+', '+x.cd[1]+' a '+esc(bName(f))+'. Nessun effetto aggiuntivo.'):'Reazione fallita'}</span></div>`:''}
-    ${x.rok||o.support?'':`<p>2 · Danno: tira <b class="big">${x.dice==null?esc(mv.d):x.dice+' dadi'}</b></p><p class="small muted">${x.dice==null?'Danno speciale: calcola a mano e usa i tasti qui sotto.':'Pool '+esc(mv.d)+(x.stab?' +1 STAB':'')+(o.crit?' +2 critico':'')+(x.wd?' +'+x.wd+' meteo':'')+' − '+x.defv+' '+x.defl}</p>
+    ${x.rok||o.support?'':`<p>2 · Danno: tira <b class="big">${x.dice==null?esc(mv.d):x.dice+' dadi'}</b></p><p class="small muted">${x.dice==null?'Danno speciale: calcola a mano e usa i tasti qui sotto.':'Pool '+esc(mv.d)+(x.stab?' +1 STAB':'')+(o.crit?' +2 critico':'')+(x.wd?' +'+x.wd+' meteo':'')+(x.oc?' +'+x.oc+' overclock':'')+' − '+x.defv+' '+x.defl}</p>
     <div class="srow"><span>Successi del danno</span>${stepper('ads',id,r.ds)}</div>
     <div class="res"><div class="srow"><span>Danno finale${x.note.length?' <span class="small muted">('+x.note.join(', ')+')</span>':''}</span><span class="step"><button data-a="aadj" data-k="${id}" data-d="-1" aria-label="Meno">−</button><b class="big">${x.final}</b><button data-a="aadj" data-k="${id}" data-d="1" aria-label="Più">+</button></span></div></div>`}
     </div>`});
@@ -1430,6 +1449,7 @@ async function fxSound(fx){const w=ms=>new Promise(r=>setTimeout(r,ms));
   if(fx.k==='round'){AUD.se('GUI sel decision');return}
   if(fx.k==='intro'){AUD.se('Vs sword');for(const it of fx.items){await w(500);if(it.wild)AUD.cry(it.m);else{AUD.se('Battle recall');await w(300);AUD.cry(it.m)}}return}
   if(fx.k==='tick'){AUD.se('Battle damage normal',{vol:.7});return}
+  if(fx.k==='oc'){if(fx.on)AUD.se('Battle damage super',{vol:.8});return}
   if(fx.k==='catch'){AUD.se('Battle throw');await w(700);AUD.se('Battle recall');await w(700);AUD.se('Battle ball drop');for(let i=0;i<(fx.ok?3:1);i++){await w(680);AUD.se('Battle ball shake')}await w(500);AUD.se(fx.ok?'Battle catch click':'Battle recall');return}
   if(fx.mv){AUD.move(fx.mv);await w(650);const h=fx.tg.filter(x=>x.k==='hit');if(h.length)AUD.hit(h.map(x=>x.e).find(e=>e)||0,fx.crit);if(fx.tg.some(x=>x.k==='eva'))AUD.se('gust');
     if(fx.mv.c==='Support'&&/up|Dance|Swords|Growth|Agility|Calm|Bulk|Nasty|Iron|Amnesia/i.test(fx.mv.n))AUD.se('increase');
@@ -1485,7 +1505,7 @@ const TAV={bc:null,code:null,sub:null,peers:{},last:'',t:null,fb:false,fbT:0,fbL
   chan(){if(!this.bc&&window.BroadcastChannel){this.bc=new BroadcastChannel('master-pokerole-tavolo');this.bc.onmessage=e=>{if(e.data==='hello')this.send(true)}}return this.bc},
   snap(){const b=S.battle;if(!b||b.phase==='setup')return {idle:1,setup:!!b,ar:(S.opt&&S.opt.arena)||'stadio',au:S.opt.audioOut||'off',mu:MUS.state()};const ord=b.phase==='on'?bOrder():b.f,cur=b.phase==='on'?ord[b.ptr%Math.max(1,ord.length)]:null,hp=!!(S.opt&&S.opt.tavHp);
     return {au:S.opt.audioOut||'off',mu:MUS.state(),wt:b.weather?b.wt||0:0,ef:(b.ef||[]).map(e=>({n:e.n,r:e.r,w:e.f&&bF(e.f)?bName(bF(e.f)):''})),ar:(S.opt&&S.opt.arena)||'stadio',fx:(b.fxl||[]).slice(-6),r:b.round,w:b.weather,ph:b.phase,cur:cur?cur.id:null,f:ord.map(f=>{const P=bP(f);if(!P)return null;const d=bDer(f),own=f.side==='A'||hp;const tr=S.trainers.find(t=>t.id===f.o);
-      return {id:f.id,s:f.side,m:P.m,n:bName(f),wl:f.o==='battle'||f.o==='saved'?1:0,o:tr?tr.name||'':'',h:d.hpNow,H:d.hp,x:own?1:0,st:f.st.map(k=>(STATI.find(y=>y[0]===k)||[])[1]).filter(Boolean)}}).filter(Boolean),log:b.log.slice(0,3)}},
+      return {id:f.id,s:f.side,m:P.m,n:bName(f),wl:f.o==='battle'||f.o==='saved'?1:0,o:tr?tr.name||'':'',h:d.hpNow,H:d.hp,x:own?1:0,oc:ocOn(f)?1:0,st:f.st.map(k=>(STATI.find(y=>y[0]===k)||[])[1]).filter(Boolean)}}).filter(Boolean),log:b.log.slice(0,3)}},
   soon(){clearTimeout(this.t);this.t=setTimeout(()=>this.send(),120)},
   send(force){const st=JSON.stringify(this.snap());if(!force&&st===this.last)return;this.last=st;const bc=this.chan();if(bc)bc.postMessage(st);
     Object.values(this.peers).forEach(p=>{if(p.dc&&p.dc.readyState==='open')try{p.dc.send(st)}catch(e){}});
@@ -1711,6 +1731,7 @@ const VIEW={on:false,code:null,g:null,pc:null,sub:null,st:null,ok:false,fb:null,
       if(fx.k==='intro'){if(this.pend){this.st=this.pend;this.pend=null;this.paint()}await this.intro(fx)}
       else if(fx.k==='round'){if(this.pend){this.st=this.pend;this.paint()}this.say('Round '+fx.r);const b=document.createElement('div');b.className='rbanner';b.textContent='Round '+fx.r;FXE.AR().appendChild(b);await FXE.an(b,[{transform:'translate(-50%,-50%) scale(.6)',opacity:0},{transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.2},{opacity:1,offset:.8},{opacity:0}],1100);b.remove()}
       else if(fx.k==='tick'){for(const it of fx.items){const T=FXE.ctr(it.id);if(!T)continue;const t=/Burn/.test(it.why)?'Fire':/Poison/.test(it.why)?'Poison':/Sand/.test(it.why)?'Ground':/Hail/.test(it.why)?'Ice':'Normal';FXE.burst(T,t,8,50);FXE.dmg(T,it.d);this.say(`${nm(it.id)} subisce danni (${it.why})`);await FXE.wait(650)}}
+      else if(fx.k==='oc'){if(this.pend){this.st=this.pend;this.pend=null;this.paint()}const T=FXE.ctr(fx.id);if(T){FXE.burst(T,'Poison',fx.on?16:8,fx.on?90:50);if(fx.on)FXE.burst(T,'Psychic',10,60)}this.say(fx.on?`${fx.nm||nm(fx.id)} entra in OVERCLOCK!`:`${fx.nm||nm(fx.id)} esce dall’Overclock`);await FXE.wait(fx.on?1100:600)}
       else if(fx.k==='catch'){const T=FXE.ctr(fx.id);this.say(`Lancio della ${fx.ball||'Poké Ball'}!`);if(T)await FXE.ball(T,fx.ok,fx.brk);this.say(fx.ok?`${fx.nm} è stato catturato!`:fx.brk?`${fx.nm} si libera e distrugge la Ball!`:`${fx.nm} è uscito dalla Ball!`);await FXE.wait(900)}
       else await playMove(fx,nm)}catch(e){}
       if(!this.q.length&&this.pend){this.st=this.pend;this.pend=null;this.paint()}}
@@ -1752,7 +1773,7 @@ const VIEW={on:false,code:null,g:null,pc:null,sub:null,st:null,ok:false,fb:null,
         const key=SP.i[f.m],back=near&&SP.b&&SP.b[key],src=key?W64+(back?SP.b[key]:SP.s[key]):'',dm=SP.d[(back?'b:':'')+key]||[40,40];
         const z=k0*(near?3.4:2.5)*(n>4?.7:n>3?.76:n>2?.9:1),hh=Math.round(dm[1]*z),ww=Math.round(dm[0]*z);
         const p=f.H?Math.max(0,f.h/f.H):0,pp=this.hpPrev[f.id]!=null?this.hpPrev[f.id]:p,col=v=>v>.5?'#3fbf6a':v>.2?'#f0b429':'#e5484d';this.hpPrev[f.id]=p;
-        return `<div class="mon ${f.s}${f.id===s.cur?' cur':''}${f.h<=0?' ko':''}" data-id="${f.id}" style="left:${x}%;top:${y}%;z-index:${row?1:2}"><i class="pf" style="width:${Math.max(ww*1.5,70*k0*2)}px"></i>
+        return `<div class="mon ${f.s}${f.id===s.cur?' cur':''}${f.h<=0?' ko':''}${f.oc?' oc':''}" data-id="${f.id}" style="left:${x}%;top:${y}%;z-index:${row?1:2}"><i class="pf" style="width:${Math.max(ww*1.5,70*k0*2)}px"></i>${f.oc?`<i class="oca" style="width:${Math.round(ww*1.45)}px;height:${Math.round(hh*1.2)}px"></i>`:''}
           <div class="plate" style="max-width:${Math.min(slot,320)}px;min-width:${Math.min(slot,port?96:150)}px"><b>${esc(f.n)}</b>${f.o?`<small>${esc(f.o)}</small>`:''}<div class="hpb"><i data-p="${p}" style="width:${100*pp}%;background:${col(pp)}"></i></div>${f.x?`<em>PS ${f.h}/${f.H}</em>`:''}${f.st.length?`<div class="sts">${f.st.map(x=>`<span>${esc(x)}</span>`).join('')}</div>`:''}</div>
           ${src?`<img class="spr${near?' back':''}" src="${src}" alt="" style="height:${hh}px;width:${ww}px">`:''}</div>`}).join('');
       mons=place(B,false)+place(A,true);
@@ -1766,7 +1787,7 @@ const VIEW={on:false,code:null,g:null,pc:null,sub:null,st:null,ok:false,fb:null,
     requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll('#tav .hpb i[data-p]').forEach(i=>{const v=+i.dataset.p;i.style.width=100*v+'%';i.style.background=v>.5?'#3fbf6a':v>.2?'#f0b429':'#e5484d'})))}};
 
 /* ---------- schede e render ---------- */
-const APPV='1.32',APPD='27 novembre 2026';
+const APPV='1.33',APPD='28 novembre 2026';
 function sBackup(){return sBackup0()+`<div class="card"><h3>Versione</h3><p>Master Pokérole <b>v${APPV}</b> · pubblicata il ${APPD}</p><p class="small muted">Quando esce una versione nuova l’app la scarica da sola e lo segnala con un avviso: basta riaprirla.</p></div>`}
 function sBackup0(){return `<div class="card"><h3>Danno minimo</h3><div class="seg"><button data-a="omin" data-i="1" aria-pressed="${S.opt.min1!==false}">Sempre almeno 1</button><button data-a="omin" data-i="0" aria-pressed="${S.opt.min1===false}">Le resistenze possono azzerarlo</button></div><p class="small muted">Vale per l’assistente di battaglia. Le immunità danno sempre 0.</p></div>
 <div class="card"><h3>Difese</h3><div class="seg"><button data-a="odef" data-i="2" aria-pressed="${S.opt.def===2}">Sp. Def = Insight</button><button data-a="odef" data-i="1" aria-pressed="${S.opt.def===1}">Sp. Def = Vitality</button></div><p class="small muted">Il manuale chiede di scegliere un metodo per tutta la campagna (p. 27).</p></div>
@@ -1896,6 +1917,12 @@ const ACT={
   bstart(){const b=B();b.fxl=[];b.ef=b.ef||[];if(b.weather&&!b.wt)b.wt=4;b.f.forEach(f=>{if(!isPg(f.o))return;const t=S.trainers.find(x=>x.id===f.o);b.f.filter(x=>x.side!==f.side).forEach(x=>{const Q=bP(x);if(Q)dexAdd(t,MON[Q.m].num,'s')})});b.phase='on';b.round=1;b.ptr=0;b.f.forEach(f=>{f.acts=0;f.used=[]});b.log=[];bLog('Inizia la battaglia');
     const it=f=>{const P=bP(f),t=S.trainers.find(x=>x.id===f.o);return {id:f.id,m:P.m,s:f.side,wild:f.o==='battle'||f.o==='saved',tr:t&&!t.pg?t.name||'':''}};
     bFx({k:'intro',items:b.f.filter(f=>f.side==='B').map(it).concat(b.f.filter(f=>f.side==='A').map(it))});MUS.auto(battleCat());save();render()},
+  bocp(d){if(!isMaster())return;ui.bt.oc=ui.bt.oc===d.i?null:d.i;render(true)},
+  bocv(d){if(!isMaster())return;const [id,k]=d.k.split(':'),f=bF(id);if(!f)return;f.oc=f.oc||{on:false,b:{}};const b=f.oc.b=f.oc.b||{};b[k]=clamp((b[k]||0)+(+d.d),0,5);
+    if(f.oc.on&&!Object.values(b).some(v=>v>0)){f.oc.on=false;bLog(bName(f)+' esce dall’Overclock');bFx({k:'oc',id:f.id,on:false})}save();render(true)},
+  boct(d){if(!isMaster())return;const f=bF(d.i);if(!f||!f.oc)return;if(!f.oc.on&&!Object.values(f.oc.b||{}).some(v=>v>0))return toast('Scegli prima cosa potenziare');
+    f.oc.on=!f.oc.on;if(f.oc.on){bLog('⚡ '+bName(f)+' entra in Overclock ('+ocTxt(f)+')');toast(bName(f)+' in Overclock')}else bLog(bName(f)+' esce dall’Overclock');
+    bFx({k:'oc',id:f.id,on:f.oc.on,nm:bName(f)});save();render(true)},
   bnext(){const b=B(),ord=bOrder();for(let k=0;k<ord.length;k++){b.ptr=(b.ptr+1)%ord.length;if(bDer(ord[b.ptr]).hpNow>0)break}save();render(true)},
   bround(){bEndRound();save();render()},
   bwe_(){},
